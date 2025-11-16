@@ -1,0 +1,5 @@
+[build]
+nixpacks = true
+
+[shell]
+enabled = true
