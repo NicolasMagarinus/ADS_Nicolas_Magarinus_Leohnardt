@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use OpenAI\Laravel\Facades\OpenAI;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Exception;
 
 class GerarBebidasAI extends Command
@@ -154,29 +155,27 @@ class GerarBebidasAI extends Command
                 'n' => 1
             ]);
 
-            error_log(json_encode($result));
-
             $imageBase64 = $result['data'][0]['b64_json'] ?? null;
 
-            if ($imageBase64) {
-                $imageData = base64_decode($imageBase64);
-                $fileName = 'bebida_' . $cd_bebida . '.png';
-                $path = storage_path('app/public/bebidas/' . $fileName);
-
-                if (!is_dir(dirname($path))) {
-                    mkdir(dirname($path), 0777, true);
-                }
-
-                file_put_contents($path, $imageData);
-
-                DB::table('bebida')
-                    ->where('cd_bebida', $cd_bebida)
-                    ->update(['ds_imagem' => 'bebidas/' . $fileName]);
-
-                $this->line("Imagem salva: storage/app/public/bebidas/{$fileName}");
-            } else {
+            if (!$imageBase64) {
                 $this->warn("Falha ao gerar imagem para {$bebida['nome']}");
+                return;
             }
+
+            $dataUri = "data:image/png;base64," . $imageBase64;
+
+            $upload = Cloudinary::upload($dataUri, [
+                'folder' => 'bebidas'
+            ]);
+
+            $url = $upload->getSecurePath();
+
+            DB::table('bebida')
+                ->where('cd_bebida', $cd_bebida)
+                ->update(['ds_imagem' => $url]);
+
+            $this->line("Imagem enviada ao Cloudinary: {$url}");
+
         } catch (\OpenAI\Exceptions\RateLimitException $e) {
             $this->warn('Limite de requisições de imagem atingido, pulando esta bebida.');
         } catch (Exception $e) {

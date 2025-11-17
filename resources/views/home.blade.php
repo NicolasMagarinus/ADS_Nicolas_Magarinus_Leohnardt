@@ -8,7 +8,7 @@
             @foreach($arrAvaliacao as $bebida)
                 <div class="col-md-3 mb-4">
                     <div class="card drink-card h-100">
-                        <img src="{{ asset('storage/' . $bebida->ds_imagem) }}" class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="200" style="object-fit: cover;">
+                        <img src="{{ $bebida->ds_imagem }}" class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="200" style="object-fit: cover;">
                         <div class="card-body">
                             <h5 class="card-title">{{ $bebida->nm_bebida }}</h5>
                             <p class="card-text">
@@ -43,7 +43,7 @@
             @foreach($arrRecente as $index => $bebida)
                 <div class="col-md-3 mb-4">
                     <div class="card drink-card h-100">
-                        <img src="{{ asset('storage/' . $bebida->ds_imagem) }}" class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="150" style="object-fit: cover;">
+                        <img src="{{ $bebida->ds_imagem }}" class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="150" style="object-fit: cover;">
                         <div class="card-body">
                             <h6 class="card-title">{{ $bebida->nm_bebida }}</h6>
                         </div>
