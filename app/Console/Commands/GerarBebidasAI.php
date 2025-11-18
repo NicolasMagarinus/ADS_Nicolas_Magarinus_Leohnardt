@@ -10,12 +10,15 @@ use Exception;
 
 class GerarBebidasAI extends Command
 {
-    protected $signature = 'app:gerar-bebidas-ai {quantidade=5}';
+    protected $signature = 'app:gerar-bebidas-ai '.
+                           '{acao? : Parametros}' . 
+                           '{--qt_receita= : Quantidade de receitas a serem geradas}';
+    
     protected $description = 'Gera receitas originais de bebidas e salva no banco usando GPT-4o-mini';
 
     public function handle()
     {
-        $qtd = (int) $this->argument('quantidade');
+        $qtd = (int) $this->option('qt_receita') ?: 1;
 
         $prompt = "
         Gere {$qtd} receitas originais de bebidas (tipo 1 = alcoólicas, tipo 2 = não alcoólicas), com nome criativo, descrição, ingredientes (com medidas), e modo de preparo.
