@@ -175,3 +175,41 @@ footer {
     border-color: rgba(0, 0, 0, 0.3);
     color: var(--text-light);
 }
+
+.star-rating {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: 8px;
+        font-size: 2.5rem;
+    }
+
+    .star-rating input {
+        display: none;
+    }
+
+    .star-rating label {
+        cursor: pointer;
+        color: #ddd;
+        transition: color 0.2s;
+    }
+
+    .star-rating label:before {
+        content: "\f005";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+    }
+
+    .star-rating label:hover,
+    .star-rating label:hover ~ label {
+        color: #ffc107;
+    }
+
+    .star-rating input:checked ~ label {
+        color: #ffc107;
+    }
+
+    .star-rating input:checked + label:hover,
+    .star-rating input:checked + label:hover ~ label {
+        color: #ffdb70;
+    }

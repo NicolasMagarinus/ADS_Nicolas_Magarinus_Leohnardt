@@ -9,8 +9,8 @@ class RandomDrinkController extends Controller
 {
     public function index()
     {
-        $random = Bebida::getRandomDrink();
-        return view('random')
-            ->with('bebida', $random);
+        $random = Bebida::getBebida();
+
+        return view('random')->with('bebida', $random);
     }
 }

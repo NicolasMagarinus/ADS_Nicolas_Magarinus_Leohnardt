@@ -3,6 +3,8 @@
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\AvaliacaoController;
+use App\Http\Controllers\BebidaController;
 use App\Http\Controllers\RandomDrinkController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SearchController;
@@ -22,6 +24,13 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/random', [RandomDrinkController::class, 'index'])->name('random');
 Route::get('/search', [SearchController::class, 'index'])->name('search');
+
+Route::group(['prefix' => 'bebida'], function () {
+    Route::get('/{cd_bebida?}', [BebidaController::class, 'show'])->name('bebida.show');
+
+    //Avaliação
+    Route::post('/{cd_bebida}/avaliacao', [AvaliacaoController::class, 'store'])->name('avaliacao.store')->middleware('auth');
+});
 
 Route::middleware(['auth'])->group(function () {
     // Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
