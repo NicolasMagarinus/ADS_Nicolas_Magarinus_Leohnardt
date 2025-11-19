@@ -11,10 +11,10 @@ class HomeController extends Controller
     {
         // Ajustar para pegar melhor pela colocação
         $sqlAvaliacao = <<<SQL
-            SELECT b.nm_bebida, b.ds_imagem, ROUND(AVG(a.id_nota), 1) AS nota, COUNT(b.cd_bebida) AS qt_avaliacao
+            SELECT b.cd_bebida, b.nm_bebida, b.ds_imagem, ROUND(AVG(a.id_nota), 1) AS nota, COUNT(b.cd_bebida) AS qt_avaliacao
               FROM bebida b
               JOIN avaliacao a ON a.cd_bebida = b.cd_bebida
-             GROUP BY b.nm_bebida, b.ds_imagem
+             GROUP BY b.cd_bebida, b.nm_bebida
              ORDER BY nota DESC
              LIMIT 4
         SQL;
@@ -33,7 +33,7 @@ SQL;
         $arrIngrediente = DB::select($sqlIngrediente);
 
         $sqlRecente = <<<SQL
-            SELECT b.nm_bebida, b.ds_imagem
+            SELECT b.cd_bebida, b.nm_bebida, b.ds_imagem
               FROM bebida b
              ORDER BY b.created_at DESC
              LIMIT 8
