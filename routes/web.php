@@ -26,10 +26,13 @@ Route::get('/random', [RandomDrinkController::class, 'index'])->name('random');
 Route::get('/search', [SearchController::class, 'index'])->name('search');
 
 Route::group(['prefix' => 'bebida'], function () {
+    Route::get('/buscar-bebidas', [BebidaController::class, 'search'])->name('bebida.search');
     Route::get('/{cd_bebida?}', [BebidaController::class, 'show'])->name('bebida.show');
 
     //Avaliação
     Route::post('/{cd_bebida}/avaliacao', [AvaliacaoController::class, 'store'])->name('avaliacao.store')->middleware('auth');
+    Route::put('/{cd_bebida}/avaliacao/{cd_avaliacao}',    [AvaliacaoController::class, 'update'])->name('avaliacao.update');
+    Route::delete('/{cd_bebida}/avaliacao/{cd_avaliacao}', [AvaliacaoController::class, 'destroy'])->name('avaliacao.destroy');
 });
 
 Route::middleware(['auth'])->group(function () {

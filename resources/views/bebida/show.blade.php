@@ -57,27 +57,48 @@
             <h3 class="mb-4">Avaliações</h3>
 
             @forelse($bebida->avaliacoes as $avaliacao)
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <strong>{{ $avaliacao->nm_usuario }}</strong>
-                                <div class="mt-1">
-                                    @for($i = 1; $i <= 5; $i++)
-                                        <i class="fas fa-star {{ $i <= $avaliacao->nota ? 'text-warning' : 'text-secondary' }}"></i>
-                                    @endfor
-                                </div>
-                                @if($avaliacao->ds_avaliacao)
-                                    <p class="mt-2 mb-0">{{ $avaliacao->ds_avaliacao }}</p>
-                                @endif
-                            </div>
-                            <small class="text-muted">{{ $avaliacao->created_at }}</small>
-                        </div>
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <strong>{{ $avaliacao->nm_usuario }}</strong>
+
+                    <div class="mt-1">
+                        @for($i = 1; $i <= 5; $i++)
+                            <i class="fas fa-star {{ $i <= $avaliacao->nota ? 'text-warning' : 'text-secondary' }}"></i>
+                        @endfor
                     </div>
+
+                    @if($avaliacao->ds_avaliacao)
+                        <p class="mt-2 mb-0">{{ $avaliacao->ds_avaliacao }}</p>
+                    @endif
                 </div>
-            @empty
-                <p class="text-muted">Ainda não há avaliações. Seja o primeiro!</p>
-            @endforelse
+
+                @if(Auth::id() === $avaliacao->id_usuario)
+                    <div class="text-end">
+
+                        <button class="btn btn-sm btn-outline-primary mb-2">
+                            Editar
+                        </button>
+
+                        <form action="{{ route('avaliacao.destroy', [$bebida->cd_bebida, $avaliacao->cd_avaliacao]) }}"
+                              method="POST"
+                              onsubmit="return confirm('Deseja realmente excluir sua avaliação?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                Excluir
+                            </button>
+                        </form>
+
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+@empty
+    <p class="text-muted">Ainda não há avaliações.</p>
+@endforelse
 
             @auth
                 @php

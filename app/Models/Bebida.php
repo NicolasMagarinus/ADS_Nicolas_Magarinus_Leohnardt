@@ -19,6 +19,11 @@ class Bebida extends Model
         'ds_imagem'
     ];
 
+    public function avaliacao()
+    {
+        return $this->hasMany(Avaliacao::class, 'cd_bebida');
+    }
+
     public static function getBebida($cd_bebida = null)
     {
         $whereClause = '';
@@ -61,7 +66,8 @@ SQL;
 
         $bebida->avaliacoes = DB::table('avaliacao as a')
             ->join('users as u', 'a.id_usuario', '=', 'u.id')
-            ->select('u.name as nm_usuario', 'a.ds_avaliacao', 'a.created_at', 'a.id_nota as nota')
+            ->select('u.name as nm_usuario', 'a.ds_avaliacao', 'a.created_at', 'a.id_nota as nota',
+                     'a.id_usuario', 'a.cd_avaliacao')
             ->where('a.cd_bebida', $bebida->cd_bebida)
             ->orderByDesc('a.created_at')
             ->get();

@@ -16,4 +16,21 @@ class BebidaController extends Controller
         return view('bebida.show')
             ->with('bebida', $bebida);
     }
+
+    public function search(Request $request)
+    {
+        $nome = $request->nome;
+
+        if (!$nome) {
+            return response()->json([]);
+        }
+
+        $bebidas = \App\Models\Bebida::select('cd_bebida', 'nm_bebida', 'ds_imagem')
+            ->where('nm_bebida', 'ILIKE', "%{$nome}%")
+            ->orderBy('nm_bebida')
+            ->limit(10)
+            ->get();
+
+        return response()->json($bebidas);
+    }
 }

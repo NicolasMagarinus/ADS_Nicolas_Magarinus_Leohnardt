@@ -8,9 +8,9 @@
             </button>
             
             <div class="collapse navbar-collapse" id="navbarContent">
-                <form class="d-flex mx-auto" style="width: 50%;">
-                    <input class="form-control me-2" type="search" placeholder="Pesquisar..." aria-label="Search">
-                    <button class="btn btn-outline-light" type="submit">Buscar</button>
+                <form class="d-flex mx-auto position-relative" style="width: 50%;" onsubmit=" return false;">
+                    <input class="form-control me-2" type="search" id="searchInput" placeholder="Pesquisar..." autocomplete="off">
+                        <div id="searchResults" class="list-group position-absolute w-100" style="top: 100%; z-index: 2000; display: none;"></div>
                 </form>
                 
                 <ul class="navbar-nav ms-auto">
@@ -56,3 +56,45 @@
         </div>
     </nav>
 </header>
+
+<script>
+    document.getElementById('searchInput').addEventListener('keyup', async function () {
+        const query = this.value.trim();
+        const resultsBox = document.getElementById('searchResults');
+
+        if (query.length < 2) {
+            resultsBox.style.display = 'none';
+            resultsBox.innerHTML = "";
+            return;
+        }
+
+        const response = await fetch(`/bebida/buscar-bebidas?nome=${encodeURIComponent(query)}`);
+        const bebidas = await response.json();
+
+        resultsBox.innerHTML = "";
+        resultsBox.style.display = bebidas.length > 0 ? 'block' : 'none';
+
+        bebidas.forEach(b => {
+            const item = document.createElement('a');
+            item.classList.add('list-group-item', 'list-group-item-action', 'd-flex', 'align-items-center');
+
+            item.href = `/bebida/${b.cd_bebida}`;
+
+            const img = document.createElement('img');
+            img.src = b.ds_imagem ? b.ds_imagem : '/images/default_drink.png'; 
+            img.classList.add('me-2');
+            img.style.width = "40px";
+            img.style.height = "40px";
+            img.style.objectFit = "cover";
+            img.style.borderRadius = "6px";
+
+            const text = document.createElement('span');
+            text.textContent = b.nm_bebida;
+
+            item.appendChild(img);
+            item.appendChild(text);
+
+            resultsBox.appendChild(item);
+        });
+    });
+</script>
