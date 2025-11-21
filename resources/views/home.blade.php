@@ -26,14 +26,16 @@
 
     <section class="mb-5">
         <h2 class="mb-4">Ingredientes Populares</h2>
-        <div class="row text-center">
+        <div class="row">
             @foreach($arrIngrediente as $ingrediente)
                 <div class="col-6 col-md-3 mb-4">
-                    <div class="ingredient-circle mb-2">
-                        <img src="{{ $ingrediente->ds_imagem }}" alt="{{ $ingrediente->nm_ingrediente }}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
+                    <div class="card drink-card h-100 text-center">
+                        <img src="{{ $ingrediente->ds_imagem }}" class="card-img-top" alt="{{ $ingrediente->nm_ingrediente }}" height="200" style="object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ $ingrediente->nm_ingrediente }}</h5>
+                            <p class="card-text">Utilizado em {{ $ingrediente->qt_utilizado }} receitas</p>
+                        </div>
                     </div>
-                    <h5>{{ $ingrediente->nm_ingrediente }}</h5>
-                    <p>Utilizado em {{ $ingrediente->qt_utilizado }} receitas</p>
                 </div>
             @endforeach
         </div>
