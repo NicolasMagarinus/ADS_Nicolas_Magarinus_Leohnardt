@@ -24,6 +24,11 @@ class Bebida extends Model
         return $this->hasMany(Avaliacao::class, 'cd_bebida');
     }
 
+    public function favoritos()
+    {
+        return $this->hasMany(Favorito::class, 'cd_bebida');
+    }
+
     public static function getBebida($cd_bebida = null)
     {
         $whereClause = '';

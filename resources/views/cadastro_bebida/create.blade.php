@@ -53,7 +53,6 @@
                                     <input type="text" name="ingredientes[0][ds_medida]" class="form-control" placeholder="Medida (ex: 50ml)">
                                 </div>
                                 <div class="col-md-1">
-                                    <!-- Placeholder for remove button -->
                                 </div>
                             </div>
                         </div>
@@ -68,7 +67,6 @@
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="fas fa-paper-plane me-2"></i> Enviar para Aprovação
                             </button>
-                            <a href="{{ route('home') }}" class="btn btn-light">Cancelar</a>
                         </div>
                     </form>
                 </div>
@@ -77,7 +75,6 @@
     </div>
 </div>
 
-<!-- Include jQuery and Select2 -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>

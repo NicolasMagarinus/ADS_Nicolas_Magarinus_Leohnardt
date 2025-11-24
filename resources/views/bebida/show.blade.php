@@ -44,7 +44,16 @@
                     </div>
 
                     <div class="mt-4">
-                        <button class="btn btn-primary me-2"><i class="fas fa-heart me-1"></i> Favoritar</button>
+                        @auth
+                            <button class="btn btn-primary me-2" id="favoriteBtn" onclick="toggleFavorite({{ $bebida->cd_bebida }})">
+                                <i class="fas fa-heart me-1" id="favoriteIcon"></i> 
+                                <span id="favoriteText">Favoritar</span>
+                            </button>
+                        @else
+                            <a href="{{ route('login') }}" class="btn btn-primary me-2">
+                                <i class="fas fa-heart me-1"></i> Favoritar
+                            </a>
+                        @endauth
                         <button class="btn btn-outline-primary"><i class="fas fa-share-alt me-1"></i> Compartilhar</button>
                     </div>
                 </div>
@@ -83,7 +92,8 @@
 
                         <form action="{{ route('avaliacao.destroy', [$bebida->cd_bebida, $avaliacao->cd_avaliacao]) }}"
                               method="POST"
-                              onsubmit="return confirm('Deseja realmente excluir sua avaliação?');">
+                              class="delete-comment-form"
+                              onsubmit="return confirmDeleteComment(event);">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -138,4 +148,105 @@
         </div>
     </div>
 </div>
+
+@auth
+<script>
+// Check if the drink is already favorited when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    checkFavoriteStatus({{ $bebida->cd_bebida }});
+});
+
+function checkFavoriteStatus(bebidaId) {
+    fetch(`/favoritos/${bebidaId}/check`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        updateFavoriteButton(data.favorited);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function toggleFavorite(bebidaId) {
+    const btn = document.getElementById('favoriteBtn');
+    btn.disabled = true;
+
+    fetch(`/favoritos/${bebidaId}/toggle`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateFavoriteButton(data.favorited);
+            
+            // Show a brief message
+            const text = document.getElementById('favoriteText');
+            const originalText = text.textContent;
+            text.textContent = data.message;
+            
+            setTimeout(() => {
+                text.textContent = data.favorited ? 'Favoritado' : 'Favoritar';
+            }, 1500);
+        }
+        btn.disabled = false;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            title: 'Erro!',
+            text: 'Erro ao favoritar. Tente novamente.',
+            icon: 'error',
+            confirmButtonColor: '#d33'
+        });
+        btn.disabled = false;
+    });
+}
+
+function updateFavoriteButton(isFavorited) {
+    const btn = document.getElementById('favoriteBtn');
+    const icon = document.getElementById('favoriteIcon');
+    const text = document.getElementById('favoriteText');
+    
+    if (isFavorited) {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-danger');
+        text.textContent = 'Favoritado';
+    } else {
+        btn.classList.remove('btn-danger');
+        btn.classList.add('btn-primary');
+        text.textContent = 'Favoritar';
+    }
+}
+
+function confirmDeleteComment(event) {
+    event.preventDefault();
+    
+    Swal.fire({
+        title: 'Excluir avaliação?',
+        text: 'Deseja realmente excluir sua avaliação?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sim, excluir',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            event.target.submit();
+        }
+    });
+    
+    return false;
+}
+</script>
+@endauth
 @endsection

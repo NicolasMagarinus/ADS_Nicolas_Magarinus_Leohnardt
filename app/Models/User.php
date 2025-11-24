@@ -46,4 +46,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get the user's favorite drinks.
+     */
+    public function favoritos()
+    {
+        return $this->hasMany(Favorito::class, 'id_usuario');
+    }
 }

@@ -25,7 +25,7 @@ class BebidaController extends Controller
             return response()->json([]);
         }
 
-        $bebidas = \App\Models\Bebida::select('cd_bebida', 'nm_bebida', 'ds_imagem')
+        $bebidas = Bebida::select('cd_bebida', 'nm_bebida', 'ds_imagem')
             ->where('nm_bebida', 'ILIKE', "%{$nome}%")
             ->orderBy('nm_bebida')
             ->limit(10)
