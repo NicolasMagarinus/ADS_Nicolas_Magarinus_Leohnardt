@@ -21,12 +21,22 @@
                         <a class="nav-link" href="{{ route('random') }}"><i class="bi bi-dice-5-fill me-1"></i> Aleatória</a>
                     </li>
                     @auth
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('bebida.create') }}"><i class="fas fa-plus-circle me-1"></i> Cadastrar Bebida</a>
+                        </li>
+                        @if(Auth::user()->id_admin)
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('admin.bebidas.index') }}"><i class="fas fa-user-shield me-1"></i> Administração</a>
+                            </li>
+                        @endif
+                    @endauth
+                    @auth
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle me-1"></i> {{ Auth::user()->name }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i> Meu Perfil</a></li>
+                            <li><a class="dropdown-item" href="{{ route('perfil.index') }}"><i class="bi bi-person me-2"></i> Meu Perfil</a></li>
                             <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i> Configurações</a></li>
                             <li><a class="dropdown-item" href="#"><i class="bi bi-heart me-2"></i> Favoritos</a></li>
                             <li><hr class="dropdown-divider"></li>
@@ -81,7 +91,7 @@
             item.href = `/bebida/${b.cd_bebida}`;
 
             const img = document.createElement('img');
-            img.src = b.ds_imagem ? b.ds_imagem : '/images/default_drink.png'; 
+            img.src = b.ds_imagem ? b.ds_imagem : 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png'; 
             img.classList.add('me-2');
             img.style.width = "40px";
             img.style.height = "40px";

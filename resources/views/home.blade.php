@@ -9,7 +9,7 @@
                 <div class="col-md-3 mb-4">
                     <a href="{{ route('bebida.show', $bebida->cd_bebida) }}" class="text-decoration-none text-dark">
                         <div class="card drink-card h-100">
-                            <img src="{{ $bebida->ds_imagem }}" class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="200" style="object-fit: cover;">
+                            <img src="{{ $bebida->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}" class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="200" style="object-fit: cover;">
                             <div class="card-body">
                                 <h5 class="card-title">{{ $bebida->nm_bebida }}</h5>
                                 <p class="card-text">
@@ -30,7 +30,7 @@
             @foreach($arrIngrediente as $ingrediente)
                 <div class="col-6 col-md-3 mb-4">
                     <div class="card drink-card h-100 text-center">
-                        <img src="{{ $ingrediente->ds_imagem }}" class="card-img-top" alt="{{ $ingrediente->nm_ingrediente }}" height="200" style="object-fit: cover;">
+                        <img src="{{ $ingrediente->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}" class="card-img-top" alt="{{ $ingrediente->nm_ingrediente }}" height="200" style="object-fit: cover;">
                         <div class="card-body">
                             <h5 class="card-title">{{ $ingrediente->nm_ingrediente }}</h5>
                             <p class="card-text">Utilizado em {{ $ingrediente->qt_utilizado }} receitas</p>
@@ -48,7 +48,7 @@
                 <div class="col-md-3 mb-4">
                     <a href="{{ route('bebida.show', $bebida->cd_bebida) }}" class="text-decoration-none text-dark">
                         <div class="card drink-card h-100">
-                            <img src="{{ $bebida->ds_imagem }}" class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="150" style="object-fit: cover;">
+                            <img src="{{ $bebida->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}" class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="150" style="object-fit: cover;">
                             <div class="card-body">
                                 <h6 class="card-title">{{ $bebida->nm_bebida }}</h6>
                             </div>

@@ -9,4 +9,6 @@ class Ingrediente extends Model
     protected $table = 'ingrediente';
 
     protected $primaryKey = 'cd_ingrediente';
+
+    protected $fillable = ['nm_ingrediente'];
 }

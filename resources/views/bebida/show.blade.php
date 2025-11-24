@@ -5,7 +5,7 @@
     <div class="row">
         <div class="col-lg-5 mb-4">
             <div class="drink-card">
-                <img src="{{ $bebida->ds_imagem }}" class="card-img-top" alt="{{ $bebida->nm_bebida }}" style="height: 400px; object-fit: cover;">
+                <img src="{{ $bebida->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}" class="card-img-top" alt="{{ $bebida->nm_bebida }}" style="height: 400px; object-fit: cover;">
             </div>
         </div>
 
