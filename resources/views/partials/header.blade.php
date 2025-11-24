@@ -1,16 +1,18 @@
 <header>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{{ route('home') }}">Drinkerito</a>
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold ms-3" href="{{ route('home') }}" style="font-size: 1.5rem; letter-spacing: 0.5px;">
+                <i class="fas fa-cocktail me-2"></i>Drinkerito
+            </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
             <div class="collapse navbar-collapse" id="navbarContent">
-                <form class="d-flex mx-auto position-relative" style="width: 50%;" onsubmit=" return false;">
+                <form class="d-flex flex-grow-1 mx-lg-auto position-relative" style="max-width: 500px;" onsubmit="return false;">
                     <input class="form-control me-2" type="search" id="searchInput" placeholder="Pesquisar..." autocomplete="off">
-                        <div id="searchResults" class="list-group position-absolute w-100" style="top: 100%; z-index: 2000; display: none;"></div>
+                    <div id="searchResults" class="list-group position-absolute w-100" style="top: 100%; z-index: 2000; display: none;"></div>
                 </form>
                 
                 <ul class="navbar-nav ms-auto">
@@ -22,11 +24,11 @@
                     </li>
                     @auth
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('bebida.create') }}"><i class="fas fa-plus-circle me-1"></i> Cadastrar Bebida</a>
+                            <a class="nav-link" href="{{ route('bebida.create') }}"><i class="fas fa-plus-circle me-1"></i> Cadastrar</a>
                         </li>
                         @if(Auth::user()->id_admin)
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('admin.bebidas.index') }}"><i class="fas fa-user-shield me-1"></i> Administração</a>
+                                <a class="nav-link" href="{{ route('admin.bebidas.index') }}"><i class="bi bi-person-fill-lock me-1"></i> Administração</a>
                             </li>
                         @endif
                     @endauth
