@@ -34,7 +34,7 @@
                             @endif
                         @endfor
                         <span class="text-muted ms-2">
-                            {{ number_format($bebida->nota, 1) }} / 5 ({{ $bebida->qt_avaliacao }} avaliações)
+                            {{ number_format($bebida->nota, 1) }} ({{ $bebida->qt_avaliacao }} avaliações)
                         </span>
                     </div>
 
