@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Favorito extends Model
 {
-    protected $table = 'favoritos';
+    protected $table = 'favorito';
+    protected $primaryKey = 'cd_favorito';
 
     protected $fillable = [
         'id_usuario',

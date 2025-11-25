@@ -151,7 +151,7 @@
 
 @auth
 <script>
-// Check if the drink is already favorited when page loads
+
 document.addEventListener('DOMContentLoaded', function() {
     checkFavoriteStatus({{ $bebida->cd_bebida }});
 });
@@ -187,8 +187,7 @@ function toggleFavorite(bebidaId) {
     .then(data => {
         if (data.success) {
             updateFavoriteButton(data.favorited);
-            
-            // Show a brief message
+
             const text = document.getElementById('favoriteText');
             const originalText = text.textContent;
             text.textContent = data.message;

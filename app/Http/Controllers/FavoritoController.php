@@ -12,7 +12,7 @@ class FavoritoController extends Controller
 {
     public function index()
     {
-        $favoritos = DB::table('favoritos as f')
+        $favoritos = DB::table('favorito as f')
             ->join('bebida as b', 'f.cd_bebida', '=', 'b.cd_bebida')
             ->leftJoin('avaliacao as a', 'b.cd_bebida', '=', 'a.cd_bebida')
             ->select('b.cd_bebida', 'b.nm_bebida', 'b.ds_imagem',

@@ -11,17 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('favoritos', function (Blueprint $table) {
-            $table->id();
+        Schema::create('favorito', function (Blueprint $table) {
+            $table->increments('cd_favorito');
             $table->unsignedBigInteger('id_usuario');
             $table->unsignedBigInteger('cd_bebida');
             $table->timestamps();
-
-            // Foreign keys
             $table->foreign('id_usuario')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('cd_bebida')->references('cd_bebida')->on('bebida')->onDelete('cascade');
-
-            // Unique constraint to prevent duplicate favorites
             $table->unique(['id_usuario', 'cd_bebida']);
         });
     }
@@ -31,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('favoritos');
+        Schema::dropIfExists('favorito');
     }
 };
