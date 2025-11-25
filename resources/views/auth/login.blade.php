@@ -278,9 +278,9 @@
                         </div>
 
                         <div class="d-grid mb-3">
-                            {{-- <a href="{{ route('google.redirect') }}" class="btn btn-google">
+                            <a href="{{ route('google.login') }}" class="btn btn-google">
                                 <i class="fab fa-google"></i> Entrar com Google
-                            </a> --}}
+                            </a>
                         </div>
 
                         <div class="text-center">

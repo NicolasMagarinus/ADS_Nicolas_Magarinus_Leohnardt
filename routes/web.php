@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/auth/google', [GoogleController::class, 'redirectToGoogle'])->name('google.login');
-Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
+Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback'])->name('google.callback');
 
 Route::get('/register',  [RegisterController::class, 'index'])->name('register');
 Route::post('/register', [RegisterController::class, 'register'])->name('register.submit');
