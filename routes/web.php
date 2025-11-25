@@ -52,8 +52,8 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [PerfilController::class, 'index'])->name('perfil.index');
+    Route::post('/profile/change-password', [PerfilController::class, 'changePassword'])->name('perfil.change-password');
     
-    // Favoritos routes
     Route::get('/favoritos', [FavoritoController::class, 'index'])->name('favoritos.index');
     Route::post('/favoritos/{cd_bebida}/toggle', [FavoritoController::class, 'toggle'])->name('favoritos.toggle');
     Route::get('/favoritos/{cd_bebida}/check', [FavoritoController::class, 'check'])->name('favoritos.check');

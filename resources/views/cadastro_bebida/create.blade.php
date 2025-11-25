@@ -5,7 +5,7 @@
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="card shadow-lg border-0 rounded-lg">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header text-white" style="background: linear-gradient(to right, #2c3e50, #34495e);">
                     <h3 class="text-center font-weight-light my-2">Cadastrar Nova Bebida</h3>
                 </div>
                 <div class="card-body p-5">
@@ -22,7 +22,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('bebida.store') }}">
+                    <form method="POST" action="{{ route('bebida.store') }}" enctype="multipart/form-data">
                         @csrf
 
                         <div class="row mb-3">
@@ -31,8 +31,12 @@
                                 <input type="text" name="nm_bebida" id="nm_bebida" class="form-control" required value="{{ old('nm_bebida') }}" placeholder="Ex: Mojito">
                             </div>
                             <div class="col-md-6">
-                                <label for="ds_imagem" class="form-label">URL da Imagem</label>
-                                <input type="url" name="ds_imagem" id="ds_imagem" class="form-control" placeholder="https://..." value="{{ old('ds_imagem') }}">
+                                <label for="ds_imagem" class="form-label">Imagem da Bebida</label>
+                                <input type="file" name="ds_imagem" id="ds_imagem" class="form-control" accept="image/png,image/jpeg,image/jpg">
+                                <small class="text-muted">Formatos aceitos: PNG, JPEG (máx. 5MB)</small>
+                                <div id="image-preview" class="mt-2" style="display: none;">
+                                    <img id="preview-img" src="" alt="Preview" class="img-thumbnail" style="max-height: 150px;">
+                                </div>
                             </div>
                         </div>
 
@@ -97,7 +101,7 @@
                 theme: 'bootstrap-5',
                 placeholder: 'Pesquisar ingrediente...',
                 allowClear: true,
-                tags: true, // Allow creating new ingredients
+                tags: true,
                 ajax: {
                     url: '{{ route("bebida.ingredientes.search") }}',
                     dataType: 'json',
@@ -148,6 +152,20 @@
 
         $(document).on('click', '.remove-ingrediente', function() {
             $(this).closest('.ingrediente-row').remove();
+        });
+
+        $('#ds_imagem').on('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#preview-img').attr('src', e.target.result);
+                    $('#image-preview').show();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                $('#image-preview').hide();
+            }
         });
     });
 </script>

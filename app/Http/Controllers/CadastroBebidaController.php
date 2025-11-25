@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Http\Controllers;
 
 use App\Models\Bebida;
@@ -7,6 +8,7 @@ use App\Models\BebidaIngrediente;
 use App\Models\CadastroBebida;
 use App\Models\CadastroBebidaIngrediente;
 use App\Models\Ingrediente;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,18 +25,42 @@ class CadastroBebidaController extends Controller
         $request->validate([
             'nm_bebida' => 'required|string|max:255',
             'ds_preparo' => 'required|string',
-            'ds_imagem' => 'nullable|url',
+            'ds_imagem' => 'nullable|image|mimes:jpeg,png,jpg|max:5120', // 5MB max
             'ingredientes' => 'required|array|min:1',
             'ingredientes.*.nm_ingrediente' => 'required|string|max:255',
             'ingredientes.*.ds_medida' => 'nullable|string|max:255',
+        ], [
+            'ds_imagem.image' => 'O arquivo deve ser uma imagem',
+            'ds_imagem.mimes' => 'A imagem deve ser nos formatos: JPEG, PNG ou JPG',
+            'ds_imagem.max' => 'A imagem não pode ser maior que 5MB',
         ]);
 
         DB::transaction(function () use ($request) {
+            $imageUrl = null;
+
+            // Upload image to Cloudinary if provided
+            if ($request->hasFile('ds_imagem')) {
+                try {
+                    $uploadedFile = Cloudinary::upload($request->file('ds_imagem')->getRealPath(), [
+                        'folder' => 'bebidas',
+                        'transformation' => [
+                            'width' => 1024,
+                            'height' => 1024,
+                            'crop' => 'limit',
+                            'quality' => 'auto'
+                        ]
+                    ]);
+                    $imageUrl = $uploadedFile->getSecurePath();
+                } catch (\Exception $e) {
+                    throw new \Exception('Erro ao fazer upload da imagem: ' . $e->getMessage());
+                }
+            }
+
             $cadastro = CadastroBebida::create([
                 'id_usuario' => Auth::id(),
                 'nm_bebida' => $request->nm_bebida,
                 'ds_preparo' => $request->ds_preparo,
-                'ds_imagem' => $request->ds_imagem,
+                'ds_imagem' => $imageUrl,
                 'id_status' => 0
             ]);
 
@@ -42,7 +68,7 @@ class CadastroBebidaController extends Controller
                 CadastroBebidaIngrediente::create([
                     'cd_bebida_cadastro' => $cadastro->cd_bebida_cadastro,
                     'nm_ingrediente' => $ingrediente['nm_ingrediente'],
-                    'ds_medida' => $ingrediente['ds_medida'] ?? null,
+                    'ds_medida' => $ingrediente['ds_medida'] ?? 'a gosto',
                 ]);
             }
         });

@@ -252,8 +252,15 @@
 
                         <div class="mb-3">
                             <label for="password" class="form-label">Senha</label>
-                            <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror"
-                                   placeholder="Sua senha" required autocomplete="current-password">
+                            <div class="position-relative">
+                                <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror"
+                                       placeholder="Sua senha" required autocomplete="current-password">
+                                <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y" 
+                                        onclick="togglePasswordVisibility('password', this)" 
+                                        style="text-decoration: none; z-index: 10;">
+                                    <i class="fas fa-eye text-muted"></i>
+                                </button>
+                            </div>
                             @error('password')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -297,5 +304,21 @@
         &copy; {{ date('Y') }} Drinkerito. Todos os direitos reservados.
     </footer>
 
+    <script>
+        function togglePasswordVisibility(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
 </body>
 </html>
