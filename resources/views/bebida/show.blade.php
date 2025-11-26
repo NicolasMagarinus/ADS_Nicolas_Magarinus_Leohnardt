@@ -175,7 +175,7 @@ function checkFavoriteStatus(bebidaId) {
 function toggleFavorite(bebidaId) {
     const btn = document.getElementById('favoriteBtn');
     btn.disabled = true;
-
+    
     fetch(`/favoritos/${bebidaId}/toggle`, {
         method: 'POST',
         headers: {
