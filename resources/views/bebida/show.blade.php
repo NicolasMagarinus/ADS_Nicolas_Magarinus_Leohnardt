@@ -54,7 +54,7 @@
                                 <i class="fas fa-heart me-1"></i> Favoritar
                             </a>
                         @endauth
-                        <button class="btn btn-outline-primary"><i class="fas fa-share-alt me-1"></i> Compartilhar</button>
+                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#shareModal"><i class="fas fa-share-alt me-1"></i> Compartilhar</button>
                     </div>
                 </div>
             </div>
@@ -145,6 +145,50 @@
                     Faça <a href="{{ route('login') }}">login</a> para avaliar esta bebida.
                 </div>
             @endauth
+        </div>
+    </div>
+    </div>
+
+    <div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="shareModalLabel">
+                        <i class="fas fa-share-alt me-2"></i>Compartilhar Receita
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Compartilhe esta receita com seus amigos!</p>
+
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="shareLink" value="{{ url()->current() }}" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyShareLink(event)">
+                            <i class="fas fa-copy me-1"></i>Copiar
+                        </button>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="https://wa.me/?text={{ urlencode("Acabei de encontrar uma receita de " . $bebida->nm_bebida . " e recomendo demais!\nSe você curte drinks saborosos e fáceis de fazer, precisa testar essa!\nVale cada gole! 🍸✨\n\n" . url()->current()) }}" 
+                           target="_blank" 
+                           class="btn btn-success">
+                            <i class="fab fa-whatsapp me-2"></i>Compartilhar no WhatsApp
+                        </a>
+
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(url()->current()) }}" 
+                           target="_blank" 
+                           class="btn btn-info">
+                            <i class="fab fa-facebook me-2"></i>Compartilhar no Facebook
+                        </a>
+
+                        <a href="https://twitter.com/intent/tweet?text={{ urlencode("Acabei de encontrar uma receita de " . $bebida->nm_bebida . " e recomendo demais!\nSe você curte drinks saborosos e fáceis de fazer, precisa testar essa!\nVale cada gole! 🍸✨\n\n" . url()->current()) }}" 
+                           target="_blank" 
+                           class="btn btn-dark">
+                            <i class="fab fa-x-twitter me-2"></i>Compartilhar no Twitter
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -248,4 +292,29 @@ function confirmDeleteComment(event) {
 }
 </script>
 @endauth
+
+<script>
+    function copyShareLink(event) {
+        const linkInput = document.getElementById('shareLink');
+        linkInput.select();
+        linkInput.setSelectionRange(0, 99999);
+    
+        navigator.clipboard.writeText(linkInput.value).then(() => {
+            const btn = event.target.closest('button');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check me-1"></i>Copiado!';
+            btn.classList.remove('btn-outline-secondary');
+            btn.classList.add('btn-success');
+        
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-secondary');
+            }, 2000);
+        }).catch(err => {
+            console.error('Erro ao copiar:', err);
+            alert('Erro ao copiar o link. Por favor, copie manualmente.');
+        });
+    }
+</script>
 @endsection

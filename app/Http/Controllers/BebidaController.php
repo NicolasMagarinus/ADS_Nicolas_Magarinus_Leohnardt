@@ -13,6 +13,10 @@ class BebidaController extends Controller
     {
         $bebida = Bebida::getBebida($cd_bebida);
 
+        if (!$bebida) {
+            abort(404);
+        }
+
         return view('bebida.show')
             ->with('bebida', $bebida);
     }

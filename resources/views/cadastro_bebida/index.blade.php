@@ -5,7 +5,7 @@
     <div class="row justify-content-center">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="text-primary"><i class="fas fa-tasks me-2"></i>Fila de Aprovação</h2>
+                <h2><i class="fas fa-tasks me-2"></i>Fila de Aprovação</h2>
                 <a href="{{ route('home') }}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Voltar para Tela Inicial
                 </a>

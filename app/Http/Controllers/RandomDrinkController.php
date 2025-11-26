@@ -11,6 +11,10 @@ class RandomDrinkController extends Controller
     {
         $random = Bebida::getBebida();
 
+        if (!$random) {
+            abort(404);
+        }
+
         return view('random')->with('bebida', $random);
     }
 }
