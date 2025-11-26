@@ -86,9 +86,9 @@
                 @if(Auth::id() === $avaliacao->id_usuario)
                     <div class="text-end">
 
-                        <button class="btn btn-sm btn-outline-primary mb-2">
+                        {{-- <button class="btn btn-sm btn-outline-primary mb-2">
                             Editar
-                        </button>
+                        </button> --}}
 
                         <form action="{{ route('avaliacao.destroy', [$bebida->cd_bebida, $avaliacao->cd_avaliacao]) }}"
                               method="POST"
