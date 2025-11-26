@@ -156,14 +156,9 @@
                         
                         <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(route('bebida.show', $bebida->cd_bebida)) }}" 
                            target="_blank" 
-                           class="btn btn-info">
+                           class="btn"
+                           style="background-color: #3c5a99; color: white;">
                             <i class="fab fa-facebook me-2"></i>Compartilhar no Facebook
-                        </a>
-                        
-                        <a href="https://twitter.com/intent/tweet?text={{ urlencode("Acabei de encontrar uma receita de " . $bebida->nm_bebida . " e recomendo demais!\nSe você curte drinks saborosos e fáceis de fazer, precisa testar essa!\nVale cada gole! 🍸✨\n\n" . route('bebida.show', $bebida->cd_bebida)) }}" 
-                           target="_blank" 
-                           class="btn btn-dark">
-                            <i class="fab fa-twitter me-2"></i>Compartilhar no Twitter
                         </a>
                     </div>
                 </div>
