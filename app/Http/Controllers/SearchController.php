@@ -20,26 +20,20 @@ class SearchController extends Controller
             ->groupBy('bebida.cd_bebida', 'bebida.nm_bebida', 'bebida.ds_preparo', 'bebida.id_tipo', 'bebida.ds_bebida', 'bebida.ds_imagem', 'bebida.created_at', 'bebida.updated_at');
         
         if ($searchTerm) {
-            // Normalizar termo de busca (remover acentos)
-            $normalizedTerm = $this->limpaString($searchTerm);
+            $strSearch = $this->limpaString($searchTerm);
             
-            // Verificar se é busca por tipo de bebida (alcoólica/não alcoólica)
-            if (preg_match('/^(n[aã]o\s+)?alco[oó]lica?$/i', $normalizedTerm)) {
-                // Busca por tipo: alcoólica (id_tipo = 1) ou não alcoólica (id_tipo = 2)
-                $isNonAlcoholic = preg_match('/^n[aã]o/i', $normalizedTerm);
+            if (preg_match('/^(n[aã]o\s+)?alco[oó]lica?$/i', $strSearch)) {
+                $isNonAlcoholic = preg_match('/^n[aã]o/i', $strSearch);
                 $query->where('bebida.id_tipo', $isNonAlcoholic ? 2 : 1);
             } else {
-                // Busca universal: nome da bebida OU ingrediente
-                $query->where(function($q) use ($normalizedTerm) {
-                    // Busca no nome da bebida (sem acento)
-                    $q->whereRaw('unaccent(LOWER(bebida.nm_bebida)) LIKE unaccent(LOWER(?))', ["%{$normalizedTerm}%"])
-                      // OU busca em ingredientes (sem acento)
-                      ->orWhereExists(function($subQ) use ($normalizedTerm) {
+                $query->where(function($q) use ($strSearch) {
+                    $q->whereRaw('unaccent(LOWER(bebida.nm_bebida)) LIKE unaccent(LOWER(?))', ["%{$strSearch}%"])
+                      ->orWhereExists(function($subQ) use ($strSearch) {
                           $subQ->select(DB::raw(1))
                                ->from('bebida_ingrediente')
                                ->join('ingrediente', 'bebida_ingrediente.cd_ingrediente', '=', 'ingrediente.cd_ingrediente')
                                ->whereColumn('bebida_ingrediente.cd_bebida', 'bebida.cd_bebida')
-                               ->whereRaw('unaccent(LOWER(ingrediente.nm_ingrediente)) LIKE unaccent(LOWER(?))', ["%{$normalizedTerm}%"]);
+                               ->whereRaw('unaccent(LOWER(ingrediente.nm_ingrediente)) LIKE unaccent(LOWER(?))', ["%{$strSearch}%"]);
                       });
                 });
             }
@@ -52,7 +46,7 @@ class SearchController extends Controller
     
     private function limpaString($string)
     {
-        $unwanted_array = [
+        $arr = [
             'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A',
             'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E', 'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I',
             'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U', 'Ú'=>'U', 'Û'=>'U',
@@ -61,6 +55,6 @@ class SearchController extends Controller
             'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o', 'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u',
             'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y'
         ];
-        return strtr($string, $unwanted_array);
+        return strtr($string, $arr);
     }
 }

@@ -25,7 +25,7 @@ class CadastroBebidaController extends Controller
         $request->validate([
             'nm_bebida' => 'required|string|max:255',
             'ds_preparo' => 'required|string',
-            'ds_imagem' => 'nullable|image|mimes:jpeg,png,jpg|max:5120', // 5MB max
+            'ds_imagem' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
             'ingredientes' => 'required|array|min:1',
             'ingredientes.*.nm_ingrediente' => 'required|string|max:255',
             'ingredientes.*.ds_medida' => 'nullable|string|max:255',
@@ -38,7 +38,6 @@ class CadastroBebidaController extends Controller
         DB::transaction(function () use ($request) {
             $imageUrl = null;
 
-            // Upload image to Cloudinary if provided
             if ($request->hasFile('ds_imagem')) {
                 try {
                     $uploadedFile = Cloudinary::upload($request->file('ds_imagem')->getRealPath(), [

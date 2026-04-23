@@ -71,7 +71,6 @@ class GerarIngredientesAI extends Command
                         $this->line("Ingrediente já existe: {$nome} (id: {$cd_ingrediente}) — adicionando/atualizando imagem");
                     }
 
-                    // Gera imagem e atualiza registro (tanto para novos quanto para existentes)
                     $this->gerarImagemIngrediente($cd_ingrediente, $nome);
 
                     DB::commit();

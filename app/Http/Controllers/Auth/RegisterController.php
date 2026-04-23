@@ -36,9 +36,6 @@ class RegisterController extends Controller
             ->with('success', 'Conta criada com sucesso! Faça login para continuar.');
     }
 
-    /**
-     * Validar os dados de registro
-     */
     protected function validator(array $data)
     {
         return Validator::make($data, [
@@ -58,9 +55,6 @@ class RegisterController extends Controller
         ]);
     }
 
-    /**
-     * Criar um novo usuário
-     */
     protected function create(array $data)
     {
         return User::create([

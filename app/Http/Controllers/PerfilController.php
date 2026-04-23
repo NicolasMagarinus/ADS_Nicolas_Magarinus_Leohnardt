@@ -36,7 +36,6 @@ class PerfilController extends Controller
 
         $user = Auth::user();
 
-        // Verify current password
         if (!Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'success' => false,
@@ -44,7 +43,6 @@ class PerfilController extends Controller
             ], 400);
         }
 
-        // Update password
         $user->password = Hash::make($request->new_password);
         $user->save();
 

@@ -14,9 +14,6 @@ class LoginController extends Controller
         return view("auth.login");
     }
 
-    /**
-     * Processar o login
-     */
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -49,9 +46,6 @@ class LoginController extends Controller
         ])->withInput();
     }
 
-    /**
-     * Fazer logout
-     */
     public function logout(Request $request)
     {
         Auth::logout();
