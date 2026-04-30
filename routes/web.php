@@ -10,6 +10,7 @@ use App\Http\Controllers\RandomDrinkController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\FavoritoController;
 use Illuminate\Support\Facades\Route;
 
@@ -57,6 +58,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/favoritos', [FavoritoController::class, 'index'])->name('favoritos.index');
     Route::post('/favoritos/{cd_bebida}/toggle', [FavoritoController::class, 'toggle'])->name('favoritos.toggle');
     Route::get('/favoritos/{cd_bebida}/check', [FavoritoController::class, 'check'])->name('favoritos.check');
+
+    Route::post('/chatbot/message', [ChatbotController::class, 'message'])->name('chatbot.message');
     // Route::post('/rate-drink', [DrinkController::class, 'rate'])->name('drink.rate');
     // Route::post('/comment', [CommentController::class, 'store'])->name('comment.store');
 });

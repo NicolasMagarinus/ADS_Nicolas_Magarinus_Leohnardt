@@ -1,3 +1,5 @@
+@php $isAuthenticated = auth()->check(); @endphp
+
 <button id="chatbot-toggle" class="chatbot-toggle" aria-label="Abrir assistente Drinkerito" title="Assistente Drinkerito">
     <span class="chatbot-toggle-icon chatbot-icon-open">
         <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -35,13 +37,21 @@
         <div class="chatbot-msg chatbot-msg-bot" id="chatbot-welcome">
             <div class="chatbot-msg-avatar">🍹</div>
             <div class="chatbot-msg-bubble">
-                Olá! Sou o <strong>Drinky</strong>, seu assistente de drinks! 🥂<br>
-                Posso te ajudar a descobrir receitas, ingredientes e dicas de bebidas. Como posso te ajudar?
-                <div class="chatbot-quick-replies" id="chatbot-quick-replies">
-                    <button class="chatbot-quick-btn" data-msg="Quero um drink aleatório">🎲 Drink aleatório</button>
-                    <button class="chatbot-quick-btn" data-msg="Drinks sem álcool">🥤 Sem álcool</button>
-                    <button class="chatbot-quick-btn" data-msg="Como favoritar uma bebida?">❤️ Como favoritar?</button>
-                </div>
+                @if($isAuthenticated)
+                    Olá, <strong>{{ auth()->user()->name }}</strong>! Sou o <strong>Drinky</strong>, seu assistente de drinks! 🥂<br>
+                    Posso te ajudar a descobrir receitas, ingredientes e dicas de bebidas. Como posso te ajudar?
+                    <div class="chatbot-quick-replies" id="chatbot-quick-replies">
+                        <button class="chatbot-quick-btn" data-msg="Quero um drink aleatório">🎲 Drink aleatório</button>
+                        <button class="chatbot-quick-btn" data-msg="Drinks sem álcool">🥤 Sem álcool</button>
+                        <button class="chatbot-quick-btn" data-msg="Como favoritar uma bebida?">❤️ Como favoritar?</button>
+                    </div>
+                @else
+                    Olá! Sou o <strong>Drinky</strong>, seu assistente de drinks! 🥂<br><br>
+                    Para conversar comigo, você precisa estar logado.<br><br>
+                    <a href="{{ route('login') }}" class="btn btn-sm btn-warning fw-bold">🔑 Fazer login</a>
+                    &nbsp;
+                    <a href="{{ route('register') }}" class="btn btn-sm btn-outline-light">Criar conta</a>
+                @endif
             </div>
         </div>
     </div>
@@ -57,10 +67,11 @@
         <textarea
             id="chatbot-input"
             class="chatbot-input"
-            placeholder="Digite sua mensagem..."
+            placeholder="{{ $isAuthenticated ? 'Digite sua mensagem...' : 'Faça login para usar o chat' }}"
             rows="1"
             aria-label="Digite sua mensagem"
             maxlength="500"
+            {{ $isAuthenticated ? '' : 'disabled' }}
         ></textarea>
         <button id="chatbot-send" class="chatbot-send-btn" aria-label="Enviar mensagem" disabled>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -83,7 +94,11 @@
     const iconOpen   = toggle.querySelector('.chatbot-icon-open');
     const iconClose  = toggle.querySelector('.chatbot-icon-close');
 
-    let isOpen = false;
+    const isAuthenticated = {{ $isAuthenticated ? 'true' : 'false' }};
+    const csrfToken       = '{{ csrf_token() }}';
+    const messageUrl      = '{{ route("chatbot.message") }}';
+    let isOpen      = false;
+    let limitReached = false;
 
     function openChat() {
         isOpen = true;
@@ -93,7 +108,7 @@
         iconClose.style.display = 'flex';
         toggle.classList.add('chatbot-toggle--open');
         notifDot.style.display = 'none';
-        input.focus();
+        if (isAuthenticated && !limitReached) input.focus();
         scrollToBottom();
     }
 
@@ -117,62 +132,93 @@
         messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
     }
 
-    input.addEventListener('input', () => {
-        sendBtn.disabled = input.value.trim().length === 0;
-        // auto-resize textarea
-        input.style.height = 'auto';
-        input.style.height = Math.min(input.scrollHeight, 100) + 'px';
-    });
+    if (isAuthenticated) {
+        input.addEventListener('input', () => {
+            if (limitReached) return;
+            sendBtn.disabled = input.value.trim().length === 0;
+            input.style.height = 'auto';
+            input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+        });
 
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            if (!sendBtn.disabled) sendMessage();
-        }
-    });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!sendBtn.disabled) sendMessage();
+            }
+        });
 
-    sendBtn.addEventListener('click', sendMessage);
+        sendBtn.addEventListener('click', sendMessage);
 
-    document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('chatbot-quick-btn')) {
-            const msg = e.target.getAttribute('data-msg');
-            appendUserMessage(msg);
-            e.target.closest('.chatbot-quick-replies')?.remove();
-            showTyping();
-            // TODO: substituir pela chamada backend
-            setTimeout(() => {
-                hideTyping();
-                appendBotMessage(getFallbackReply(msg));
-            }, 1200);
-        }
-    });
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('chatbot-quick-btn')) {
+                const msg = e.target.getAttribute('data-msg');
+                e.target.closest('.chatbot-quick-replies')?.remove();
+                appendUserMessage(msg);
+                callBackend(msg);
+            }
+        });
+    }
 
     function sendMessage() {
         const text = input.value.trim();
-        if (!text) return;
+        if (!text || limitReached) return;
 
         appendUserMessage(text);
         input.value = '';
         input.style.height = 'auto';
         sendBtn.disabled = true;
 
+        callBackend(text);
+    }
+
+    function callBackend(text) {
         showTyping();
 
-        // TODO: substituir pela chamada backend (fetch/axios)
-        // Exemplo:
-        // fetch('/api/chatbot', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-        //     body: JSON.stringify({ message: text })
-        // })
-        // .then(r => r.json())
-        // .then(data => { hideTyping(); appendBotMessage(data.reply); })
-        // .catch(() => { hideTyping(); appendBotMessage('Ops, algo deu errado. Tente novamente!'); });
-
-        setTimeout(() => {
+        fetch(messageUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type':  'application/json',
+                'X-CSRF-TOKEN':  csrfToken,
+                'Accept':        'application/json',
+            },
+            body: JSON.stringify({ message: text }),
+        })
+        .then(async (res) => {
+            const data = await res.json();
             hideTyping();
-            appendBotMessage(getFallbackReply(text));
-        }, 1200 + Math.random() * 600);
+
+            if (res.status === 429 || data.limit_reached) {
+                limitReached = true;
+                appendBotMessage(data.reply);
+                disableInput('Limite diário atingido 🚫');
+                return;
+            }
+
+            appendBotMessage(data.reply);
+
+            // Show remaining AI calls hint when using OpenAI
+            if (data.source === 'openai' && typeof data.remaining !== 'undefined') {
+                if (data.remaining <= 2 && data.remaining > 0) {
+                    appendBotMessage(
+                        `<small class="text-warning">⚠️ Você tem apenas <strong>${data.remaining}</strong> pergunta(s) à IA restante(s) hoje.</small>`
+                    );
+                } else if (data.remaining === 0) {
+                    limitReached = true;
+                    appendBotMessage('<small class="text-danger">🚫 Você usou todas as suas perguntas à IA por hoje. Volte amanhã!</small>');
+                    disableInput('Limite diário atingido 🚫');
+                }
+            }
+        })
+        .catch(() => {
+            hideTyping();
+            appendBotMessage('😔 Ops! Não consegui me conectar ao servidor. Tente novamente em instantes.');
+        });
+    }
+
+    function disableInput(placeholder) {
+        input.disabled    = true;
+        sendBtn.disabled  = true;
+        input.placeholder = placeholder;
     }
 
     function appendUserMessage(text) {
@@ -203,23 +249,6 @@
 
     function escapeHtml(str) {
         return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    function getFallbackReply(msg) {
-        const lower = msg.toLowerCase();
-        if (lower.includes('aleatório') || lower.includes('aleatorio') || lower.includes('sortear'))
-            return '🎲 Clique em <a href="/random" class="chatbot-link">Sortear Bebida</a> para descobrir um drink surpresa!';
-        if (lower.includes('sem álcool') || lower.includes('sem alcool') || lower.includes('não alcoólico'))
-            return '🥤 Temos várias opções sem álcool! Use o filtro de <a href="/bebidas" class="chatbot-link">busca</a> e selecione "Não alcoólico".';
-        if (lower.includes('favorit'))
-            return '❤️ Para favoritar, abra a página da bebida e clique no botão <strong>Favoritar</strong>. Você precisa estar logado!';
-        if (lower.includes('ingrediente'))
-            return '🧪 Você pode buscar drinks por ingrediente! Acesse <a href="/bebidas" class="chatbot-link">explorar bebidas</a> e use a barra de pesquisa.';
-        if (lower.includes('oi') || lower.includes('olá') || lower.includes('ola') || lower.includes('hello'))
-            return 'Olá! 😄 Estou aqui para te ajudar a encontrar o drink perfeito. O que você está procurando?';
-        if (lower.includes('obrigad') || lower.includes('valeu') || lower.includes('thanks'))
-            return 'Por nada! 🍸 Qualquer dúvida é só chamar. Saúde!';
-        return '🤖 Em breve terei respostas completas! Por enquanto, explore nosso catálogo de bebidas ou use o campo de <a href="/bebidas" class="chatbot-link">busca</a>. 🥂';
     }
 })();
 </script>
