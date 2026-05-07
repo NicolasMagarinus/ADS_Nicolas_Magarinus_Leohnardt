@@ -22,10 +22,10 @@ class HomeController extends Controller
         $arrAvaliacao = DB::select($sqlAvaliacao);
 
         $sqlIngrediente = <<<SQL
-            SELECT i.nm_ingrediente, count(bi.cd_ingrediente) AS qt_utilizado, i.ds_imagem
+            SELECT i.nm_ingrediente, count(bi.cd_ingrediente) AS qt_utilizado
               FROM ingrediente i
               JOIN bebida_ingrediente bi ON bi.cd_ingrediente = i.cd_ingrediente
-             GROUP BY i.nm_ingrediente, i.ds_imagem
+             GROUP BY i.nm_ingrediente
              ORDER BY qt_utilizado DESC
              LIMIT 4
 SQL;
@@ -42,8 +42,8 @@ SQL;
         $arrRecente = DB::select($sqlRecente);
 
         return view('home')
-            ->with('arrAvaliacao',   $arrAvaliacao)
+            ->with('arrAvaliacao', $arrAvaliacao)
             ->with('arrIngrediente', $arrIngrediente)
-            ->with('arrRecente',     $arrRecente);
+            ->with('arrRecente', $arrRecente);
     }
 }
