@@ -14,8 +14,8 @@ class HomeController extends Controller
             SELECT b.cd_bebida, b.nm_bebida, b.ds_imagem, ROUND(AVG(a.id_nota), 1) AS nota, COUNT(b.cd_bebida) AS qt_avaliacao
               FROM bebida b
               JOIN avaliacao a ON a.cd_bebida = b.cd_bebida
-             GROUP BY b.cd_bebida, b.nm_bebida
-             ORDER BY nota DESC
+             GROUP BY b.cd_bebida, b.nm_bebida, b.ds_imagem
+             ORDER BY nota DESC, qt_avaliacao DESC
              LIMIT 4
         SQL;
 

@@ -25,12 +25,12 @@ class BebidaController extends Controller
     {
         $nome = $request->nome;
 
-        if (!$nome) {
+        if (!$nome || mb_strlen($nome) < 2) {
             return response()->json([]);
         }
 
         $bebidas = Bebida::select('cd_bebida', 'nm_bebida', 'ds_imagem')
-            ->where('nm_bebida', 'ILIKE', "%{$nome}%")
+            ->whereRaw('unaccent(LOWER(nm_bebida)) LIKE unaccent(LOWER(?))', ["%{$nome}%"])
             ->orderBy('nm_bebida')
             ->limit(10)
             ->get();

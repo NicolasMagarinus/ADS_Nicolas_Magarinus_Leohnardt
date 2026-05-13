@@ -12,6 +12,7 @@ use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class CadastroBebidaController extends Controller
 {
@@ -107,8 +108,9 @@ class CadastroBebidaController extends Controller
             ]);
 
             foreach ($cadastro->ingredientes as $item) {
+                $nomePadronizado = Str::title(trim($item->nm_ingrediente));
                 $ingrediente = Ingrediente::firstOrCreate(
-                    ['nm_ingrediente' => $item->nm_ingrediente]
+                    ['nm_ingrediente' => $nomePadronizado]
                 );
 
                 BebidaIngrediente::create([

@@ -112,7 +112,7 @@
 
             @auth
                 @php
-                    $userRating = $bebida->avaliacoes->firstWhere('user_id', Auth::id());
+                    $userRating = $bebida->avaliacoes->firstWhere('id_usuario', Auth::id());
                 @endphp
 
                 <div class="card p-4 mt-4">
@@ -133,7 +133,7 @@
                         <div class="mb-3">
                             <label class="form-label">Comentário (opcional)</label>
                             <textarea name="ds_avaliacao" class="form-control" rows="3"
-                                      placeholder="O que achou dessa bebida?">{{ $userRating?->body ?? '' }}</textarea>
+                                      placeholder="O que achou dessa bebida?">{{ $userRating?->ds_avaliacao ?? '' }}</textarea>
                         </div>
 
                         <button type="submit" class="btn btn-primary">Enviar Avaliação</button>

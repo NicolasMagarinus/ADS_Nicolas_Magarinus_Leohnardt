@@ -17,7 +17,7 @@ class FavoritoController extends Controller
             ->leftJoin('avaliacao as a', 'b.cd_bebida', '=', 'a.cd_bebida')
             ->select('b.cd_bebida', 'b.nm_bebida', 'b.ds_imagem',
                      DB::raw('COALESCE(ROUND(AVG(a.id_nota), 1), 0) AS nota'),
-                     DB::raw('COUNT(a.id_nota) AS qt_avaliacao'))
+                     DB::raw('COUNT(DISTINCT a.cd_avaliacao) AS qt_avaliacao'))
             ->where('f.id_usuario', Auth::id())
             ->groupBy('b.cd_bebida', 'b.nm_bebida', 'b.ds_imagem', 'f.created_at')
             ->orderBy('f.created_at', 'desc')

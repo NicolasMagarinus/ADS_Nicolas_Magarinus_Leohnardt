@@ -39,7 +39,9 @@ class SearchController extends Controller
             }
         }
         
-        $bebidas = $query->orderBy('bebida.created_at', 'desc')->paginate(12)->withQueryString();
+        $bebidas = $query->orderBy('bebida.created_at', 'desc')
+                         ->orderBy('bebida.cd_bebida', 'desc')
+                         ->paginate(12)->withQueryString();
         
         return view('search', compact('bebidas', 'searchTerm'));
     }

@@ -43,9 +43,17 @@ class Bebida extends Model
         }
 
         $sql = <<<SQL
-            SELECT b.*, 
+            SELECT b.cd_bebida,
+                   b.nm_bebida,
+                   b.ds_preparo,
+                   b.id_tipo,
+                   b.ds_bebida,
+                   b.ds_imagem,
+                   b.id_externo,
+                   b.created_at,
+                   b.updated_at,
                    COALESCE(ROUND(AVG(a.id_nota), 1), 0) AS nota,
-                   COUNT(a.id_nota) AS qt_avaliacao,
+                   COUNT(DISTINCT a.cd_avaliacao) AS qt_avaliacao,
                    COALESCE((SELECT json_agg(json_build_object('nm_ingrediente', i.nm_ingrediente, 'ds_medida', bi.ds_medida) ORDER BY i.nm_ingrediente)
                                FROM ingrediente AS i
                                JOIN bebida_ingrediente AS bi ON i.cd_ingrediente = bi.cd_ingrediente
@@ -53,7 +61,7 @@ class Bebida extends Model
               FROM bebida AS b
               LEFT JOIN avaliacao AS a ON b.cd_bebida = a.cd_bebida
              {$whereClause}
-             GROUP BY b.cd_bebida, b.nm_bebida, b.ds_imagem, b.ds_preparo
+             GROUP BY b.cd_bebida, b.nm_bebida, b.ds_preparo, b.id_tipo, b.ds_bebida, b.ds_imagem, b.id_externo, b.created_at, b.updated_at
              {$orderBy}
              LIMIT 1
 SQL;
