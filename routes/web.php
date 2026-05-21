@@ -12,6 +12,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\FavoritoController;
+use App\Http\Controllers\MeuBarController;
 use App\Http\Controllers\RecomendadasController;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +62,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/favoritos/{cd_bebida}/check', [FavoritoController::class, 'check'])->name('favoritos.check');
 
     Route::get('/recomendadas', [RecomendadasController::class, 'index'])->name('recomendadas.index');
+
+    Route::prefix('meu-bar')->name('meubar.')->group(function () {
+        Route::get('/', [MeuBarController::class, 'index'])->name('index');
+        Route::get('/ingredientes/search', [MeuBarController::class, 'searchIngredients'])->name('ingredientes.search');
+        Route::post('/drinks', [MeuBarController::class, 'getPossibleDrinks'])->name('drinks');
+    });
 
     Route::post('/chatbot/message', [ChatbotController::class, 'message'])->name('chatbot.message');
     // Route::post('/rate-drink', [DrinkController::class, 'rate'])->name('drink.rate');

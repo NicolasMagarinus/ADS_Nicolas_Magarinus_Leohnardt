@@ -41,6 +41,7 @@
                             <li><a class="dropdown-item" href="{{ route('perfil.index') }}"><i class="bi bi-person me-2"></i> Meu Perfil</a></li>
                             <li><a class="dropdown-item" href="{{ route('favoritos.index') }}"><i class="bi bi-heart me-2"></i> Favoritos</a></li>
                             <li><a class="dropdown-item" href="{{ route('recomendadas.index') }}"><i class="fas fa-magic me-2"></i> Recomendadas</a></li>
+                            <li><a class="dropdown-item" href="{{ route('meubar.index') }}"><i class="fas fa-wine-bottle me-2"></i> Meu Bar</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}">

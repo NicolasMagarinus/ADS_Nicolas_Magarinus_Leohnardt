@@ -49,7 +49,6 @@ class Bebida extends Model
                    b.id_tipo,
                    b.ds_bebida,
                    b.ds_imagem,
-                   b.id_externo,
                    b.created_at,
                    b.updated_at,
                    COALESCE(ROUND(AVG(a.id_nota), 1), 0) AS nota,
@@ -61,7 +60,7 @@ class Bebida extends Model
               FROM bebida AS b
               LEFT JOIN avaliacao AS a ON b.cd_bebida = a.cd_bebida
              {$whereClause}
-             GROUP BY b.cd_bebida, b.nm_bebida, b.ds_preparo, b.id_tipo, b.ds_bebida, b.ds_imagem, b.id_externo, b.created_at, b.updated_at
+             GROUP BY b.cd_bebida, b.nm_bebida, b.ds_preparo, b.id_tipo, b.ds_bebida, b.ds_imagem, b.created_at, b.updated_at
              {$orderBy}
              LIMIT 1
 SQL;
