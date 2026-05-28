@@ -10,7 +10,22 @@ class MeuBarController extends Controller
 {
     public function index()
     {
-        return view('meubar.index');
+        // Recupera ingredientes da sessão para pré-popular o frontend
+        $sessionIngredients = session('meubar_ingredientes', []);
+        return view('meubar.index', compact('sessionIngredients'));
+    }
+
+    public function syncSession(Request $request)
+    {
+        $request->validate([
+            'ingredientes'                => 'present|array',
+            'ingredientes.*.cd_ingrediente' => 'integer|exists:ingrediente,cd_ingrediente',
+            'ingredientes.*.nm_ingrediente' => 'string|max:100',
+        ]);
+
+        session(['meubar_ingredientes' => $request->input('ingredientes', [])]);
+
+        return response()->json(['success' => true]);
     }
 
     public function searchIngredients(Request $request)

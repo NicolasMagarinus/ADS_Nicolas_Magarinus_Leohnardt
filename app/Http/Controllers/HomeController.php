@@ -11,11 +11,14 @@ class HomeController extends Controller
     {
         // Ajustar para pegar melhor pela colocação
         $sqlAvaliacao = <<<SQL
-            SELECT b.cd_bebida, b.nm_bebida, b.ds_imagem, ROUND(AVG(a.id_nota), 1) AS nota, COUNT(b.cd_bebida) AS qt_avaliacao
+            SELECT b.cd_bebida, b.nm_bebida, b.ds_imagem, b.id_tipo,
+                   ROUND(AVG(a.id_nota), 1) AS nota,
+                   COUNT(a.cd_avaliacao)    AS qt_avaliacao
               FROM bebida b
               JOIN avaliacao a ON a.cd_bebida = b.cd_bebida
-             GROUP BY b.cd_bebida, b.nm_bebida
-             ORDER BY nota DESC
+             GROUP BY b.cd_bebida, b.nm_bebida, b.ds_imagem, b.id_tipo
+            HAVING COUNT(a.cd_avaliacao) >= 2
+             ORDER BY (ROUND(AVG(a.id_nota), 1) * LOG(COUNT(a.cd_avaliacao) + 1)) DESC
              LIMIT 4
         SQL;
 

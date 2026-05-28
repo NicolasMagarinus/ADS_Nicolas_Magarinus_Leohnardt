@@ -5,7 +5,7 @@
     <section class="mb-5">
         <h2 class="mb-4">Meus Favoritos</h2>
         
-        @if($favoritos->count() > 0)
+        @if($favoritos->total() > 0)
             <div class="row">
                 @foreach($favoritos as $bebida)
                     <div class="col-md-3 mb-4">
@@ -27,6 +27,12 @@
                     </div>
                 @endforeach
             </div>
+
+            @if($favoritos->hasPages())
+                <div class="d-flex justify-content-center mt-4">
+                    {{ $favoritos->links() }}
+                </div>
+            @endif
         @else
             <div class="text-center py-5">
                 <i class="fas fa-heart" style="font-size: 4rem; color: #ddd;"></i>

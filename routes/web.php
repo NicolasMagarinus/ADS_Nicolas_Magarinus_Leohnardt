@@ -67,6 +67,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [MeuBarController::class, 'index'])->name('index');
         Route::get('/ingredientes/search', [MeuBarController::class, 'searchIngredients'])->name('ingredientes.search');
         Route::post('/drinks', [MeuBarController::class, 'getPossibleDrinks'])->name('drinks');
+        Route::post('/sync-session', [MeuBarController::class, 'syncSession'])->name('sync-session');
     });
 
     Route::post('/chatbot/message', [ChatbotController::class, 'message'])->name('chatbot.message');

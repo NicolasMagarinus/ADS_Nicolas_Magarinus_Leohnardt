@@ -29,13 +29,20 @@
         <div class="row">
             @foreach($arrIngrediente as $ingrediente)
                 <div class="col-6 col-md-3 mb-4">
-                    <div class="card drink-card h-100 text-center">
-                        <img src="{{ $ingrediente->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}" class="card-img-top" alt="{{ $ingrediente->nm_ingrediente }}" height="200" style="object-fit: cover;">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ $ingrediente->nm_ingrediente }}</h5>
-                            <p class="card-text">Utilizado em {{ $ingrediente->qt_utilizado }} receitas</p>
+                    <a href="{{ route('search', ['q' => $ingrediente->nm_ingrediente]) }}" class="text-decoration-none text-dark">
+                        <div class="card drink-card h-100 text-center" style="transition: transform .2s, box-shadow .2s;"
+                             onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 18px rgba(0,0,0,.12)';"
+                             onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                            <img src="{{ $ingrediente->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}" class="card-img-top" alt="{{ $ingrediente->nm_ingrediente }}" height="200" style="object-fit: cover;">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ $ingrediente->nm_ingrediente }}</h5>
+                                <p class="card-text text-muted small">Utilizado em {{ $ingrediente->qt_utilizado }} receitas</p>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border" style="font-size:.72rem;">
+                                    <i class="bi bi-search me-1"></i>Ver drinks
+                                </span>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
             @endforeach
         </div>

@@ -111,6 +111,13 @@ class ChatbotController extends Controller
             return '🧪 Você pode buscar drinks por ingrediente! Acesse <a href="/search" class="chatbot-link">Explorar Bebidas</a> e use a barra de pesquisa.';
         }
 
+        if (preg_match('/\b(meu bar|meubar|tenho em casa|ingredientes que tenho|o que posso fazer|posso preparar)\w*/', $lower)
+            || str_contains($lower, 'meu bar')
+            || str_contains($lower, 'ingredientes que tenho')
+            || str_contains($lower, 'o que posso fazer')) {
+            return '🍶 Com o <a href="/meu-bar" class="chatbot-link">Meu Bar</a> você adiciona os ingredientes que tem em casa e descobre quais drinks pode preparar agora — ou quais estão quase prontos!';
+        }
+
         if (preg_match('/\b(cadastr|adicionar|criar|submeter|enviar)\w*.*(drink|bebida|receita)/', $lower)
             || preg_match('/\b(drink|bebida|receita)\w*.*(cadastr|adicionar|criar)/', $lower)) {
             return '📝 Para cadastrar uma bebida, acesse <a href="/bebida/cadastrar" class="chatbot-link">Cadastrar Bebida</a> no menu superior!';

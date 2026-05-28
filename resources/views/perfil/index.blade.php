@@ -128,6 +128,12 @@
                                     <i class="fas fa-eye text-muted"></i>
                                 </button>
                             </div>
+                            <div class="mt-2">
+                                <div class="progress" style="height: 5px;">
+                                    <div id="passwordStrengthBar" class="progress-bar" role="progressbar" style="width: 0%; transition: width .3s, background-color .3s;"></div>
+                                </div>
+                                <small id="passwordStrengthLabel" class="text-muted d-block mt-1"></small>
+                            </div>
                             <small class="text-muted">Mínimo de 8 caracteres</small>
                         </div>
 
@@ -172,6 +178,31 @@
                 icon.classList.add('fa-eye');
             }
         }
+
+        // Password strength meter
+        document.getElementById('new_password').addEventListener('input', function () {
+            const val = this.value;
+            const bar = document.getElementById('passwordStrengthBar');
+            const label = document.getElementById('passwordStrengthLabel');
+            let score = 0;
+            if (val.length >= 8)  score++;
+            if (val.length >= 12) score++;
+            if (/[A-Z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+            const levels = [
+                { pct: 0,   cls: '',          txt: '' },
+                { pct: 20,  cls: 'bg-danger',  txt: 'Muito fraca' },
+                { pct: 40,  cls: 'bg-warning', txt: 'Fraca' },
+                { pct: 60,  cls: 'bg-info',    txt: 'Média' },
+                { pct: 80,  cls: 'bg-primary', txt: 'Forte' },
+                { pct: 100, cls: 'bg-success', txt: 'Muito forte 💪' },
+            ];
+            const lvl = val.length === 0 ? levels[0] : levels[Math.min(score, 5)];
+            bar.style.width = lvl.pct + '%';
+            bar.className = 'progress-bar ' + lvl.cls;
+            label.textContent = lvl.txt;
+        });
 
         document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
             e.preventDefault();

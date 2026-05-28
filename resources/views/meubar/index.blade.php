@@ -87,12 +87,29 @@
             const resultsSection = document.getElementById('resultsSection');
             const csrfToken = '{{ csrf_token() }}';
             const defaultImage = 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png';
+            const syncSessionUrl = '{{ route("meubar.sync-session") }}';
+            // Ingredientes salvos na sessão do servidor (prioridade)
+            const sessionIngredients = @json($sessionIngredients);
 
-            // Load saved ingredients from localStorage
-            let ingredients = JSON.parse(localStorage.getItem('meubar_ingredientes') || '[]');
+            // Mescla sessão do servidor com localStorage (sessão tem prioridade se não estiver vazia)
+            let ingredients = sessionIngredients.length > 0
+                ? sessionIngredients
+                : JSON.parse(localStorage.getItem('meubar_ingredientes') || '[]');
+            // Garante que o localStorage está sincronizado
+            localStorage.setItem('meubar_ingredientes', JSON.stringify(ingredients));
 
             function saveIngredients() {
                 localStorage.setItem('meubar_ingredientes', JSON.stringify(ingredients));
+                // Sincroniza com sessão do servidor em background
+                fetch(syncSessionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ ingredientes: ingredients })
+                }).catch(() => {}); // falha silenciosa
             }
 
             function renderChips() {

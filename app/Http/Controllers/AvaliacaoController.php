@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Avaliacao;
+use App\Models\Bebida;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -10,6 +11,8 @@ class AvaliacaoController extends Controller
 {
     public function store(Request $request, $cd_bebida)
     {
+        Bebida::findOrFail($cd_bebida);
+
         $request->validate([
             'id_nota'      => 'required|integer|between:1,5',
             'ds_avaliacao' => 'nullable|string|max:1000',

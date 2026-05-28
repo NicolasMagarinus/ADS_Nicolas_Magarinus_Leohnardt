@@ -21,7 +21,7 @@ class FavoritoController extends Controller
             ->where('f.id_usuario', Auth::id())
             ->groupBy('b.cd_bebida', 'b.nm_bebida', 'b.ds_imagem', 'f.created_at')
             ->orderBy('f.created_at', 'desc')
-            ->get();
+            ->paginate(12);
 
         return view('favoritos.index', compact('favoritos'));
     }
