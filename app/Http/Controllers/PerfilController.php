@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CadastroBebida;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -19,7 +20,15 @@ class PerfilController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('perfil.index', compact('user', 'arrBebida'));
+        $cntFavoritos = DB::table('favorito')
+            ->where('id_usuario', $user->id)
+            ->count();
+
+        $cntAvaliacoes = DB::table('avaliacao')
+            ->where('id_usuario', $user->id)
+            ->count();
+
+        return view('perfil.index', compact('user', 'arrBebida', 'cntFavoritos', 'cntAvaliacoes'));
     }
 
     public function changePassword(Request $request)

@@ -15,10 +15,30 @@
                 </div>
             </div>
 
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-bar-chart-fill me-2 text-primary"></i>Estatísticas
+                    </h5>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted"><i class="fas fa-heart text-danger me-2"></i>Favoritos</span>
+                        <span class="badge bg-danger rounded-pill">{{ $cntFavoritos }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted"><i class="fas fa-star text-warning me-2"></i>Avaliações</span>
+                        <span class="badge bg-warning text-dark rounded-pill">{{ $cntAvaliacoes }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted"><i class="fas fa-cocktail text-primary me-2"></i>Receitas</span>
+                        <span class="badge bg-primary rounded-pill">{{ $arrBebida->count() }}</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title mb-3">
-                        <i class="bi bi-gear-fill me-2"></i>Configurações
+                        <i class="bi bi-gear-fill me-2 text-secondary"></i>Configurações
                     </h5>
                     <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
                         <i class="bi bi-key-fill me-2"></i>Alterar Senha

@@ -1,68 +1,90 @@
 <header>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold ms-3" href="{{ route('home') }}" style="font-size: 1.5rem; letter-spacing: 0.5px;">
+            <a class="navbar-brand fw-bold ms-3" href="{{ route('home') }}"
+                style="font-size: 1.5rem; letter-spacing: 0.5px;">
                 <i class="fas fa-cocktail me-2"></i>Drinkerito
             </a>
-            
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
+
             <div class="collapse navbar-collapse" id="navbarContent">
-                <form class="d-flex flex-grow-1 mx-lg-auto position-relative" style="max-width: 500px;" onsubmit="return false;">
-                    <input class="form-control me-2" type="search" id="searchInput" placeholder="Pesquisar..." autocomplete="off">
-                    <div id="searchResults" class="list-group position-absolute w-100" style="top: 100%; z-index: 2000; display: none;"></div>
+                <form class="d-flex flex-grow-1 mx-lg-auto position-relative" style="max-width: 500px;"
+                    onsubmit="return false;">
+                    <div class="input-group">
+                        <input class="form-control" type="search" id="searchInput" placeholder="Pesquisar..."
+                            autocomplete="off">
+                        <span class="input-group-text bg-white border-start-0 text-muted"
+                            style="font-size: 0.8rem; cursor: pointer;"
+                            onclick="document.getElementById('searchInput').focus()">/</span>
+                    </div>
+                    <div id="searchResults" class="list-group position-absolute w-100"
+                        style="top: 100%; z-index: 2000; display: none;"></div>
                 </form>
-                
+
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('search') }}"><i class="bi bi-compass me-1"></i> Explorar</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('random') }}"><i class="bi bi-dice-5-fill me-1"></i> Aleatória</a>
+                        <a class="nav-link" href="{{ route('random') }}"><i class="bi bi-dice-5-fill me-1"></i>
+                            Aleatória</a>
                     </li>
                     @auth
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('bebida.create') }}"><i class="fas fa-plus-circle me-1"></i> Cadastrar</a>
+                            <a class="nav-link" href="{{ route('bebida.create') }}"><i class="fas fa-plus-circle me-1"></i>
+                                Cadastrar</a>
                         </li>
                         @if(Auth::user()->id_admin)
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('admin.bebidas.index') }}"><i class="bi bi-person-fill-lock me-1"></i> Administração</a>
+                                <a class="nav-link" href="{{ route('admin.bebidas.index') }}"><i
+                                        class="bi bi-person-fill-lock me-1"></i> Administração</a>
                             </li>
                         @endif
                     @endauth
                     @auth
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle me-1"></i> {{ Auth::user()->name }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ route('perfil.index') }}"><i class="bi bi-person me-2"></i> Meu Perfil</a></li>
-                            <li><a class="dropdown-item" href="{{ route('favoritos.index') }}"><i class="bi bi-heart me-2"></i> Favoritos</a></li>
-                            <li><a class="dropdown-item" href="{{ route('recomendadas.index') }}"><i class="fas fa-magic me-2"></i> Recomendadas</a></li>
-                            <li><a class="dropdown-item" href="{{ route('meubar.index') }}"><i class="fas fa-wine-bottle me-2"></i> Meu Bar</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit" class="dropdown-item">
-                                        <i class="fas fa-sign-out-alt me-2"></i> Sair
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                                data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle me-1"></i> {{ Auth::user()->name }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ route('perfil.index') }}"><i
+                                            class="bi bi-person me-2"></i> Meu Perfil</a></li>
+                                <li><a class="dropdown-item" href="{{ route('favoritos.index') }}"><i
+                                            class="bi bi-heart me-2"></i> Favoritos</a></li>
+                                <li><a class="dropdown-item" href="{{ route('recomendadas.index') }}"><i
+                                            class="fas fa-magic me-2"></i> Recomendadas</a></li>
+                                <li><a class="dropdown-item" href="{{ route('meubar.index') }}"><i
+                                            class="fas fa-wine-bottle me-2"></i> Meu Bar</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt me-2"></i> Sair
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
                     @else
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user me-1"></i> Usuário
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ route('login') }}"><i class="fas fa-sign-in-alt me-2"></i> Login</a></li>
-                            <li><a class="dropdown-item" href="{{ route('register') }}"><i class="fas fa-user-plus me-2"></i> Cadastro</a></li>
-                        </ul>
-                    </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                                data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i> Usuário
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ route('login') }}"><i
+                                            class="fas fa-sign-in-alt me-2"></i> Login</a></li>
+                                <li><a class="dropdown-item" href="{{ route('register') }}"><i
+                                            class="fas fa-user-plus me-2"></i> Cadastro</a></li>
+                            </ul>
+                        </li>
                     @endauth
                 </ul>
             </div>
@@ -94,7 +116,7 @@
             item.href = `/bebida/${b.cd_bebida}`;
 
             const img = document.createElement('img');
-            img.src = b.ds_imagem ? b.ds_imagem : 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png'; 
+            img.src = b.ds_imagem ? b.ds_imagem : 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png';
             img.classList.add('me-2');
             img.style.width = "40px";
             img.style.height = "40px";
@@ -109,5 +131,17 @@
 
             resultsBox.appendChild(item);
         });
+    });
+
+    document.addEventListener('keydown', function (e) {
+        const tagName = e.target.tagName.toLowerCase();
+        if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
+            return;
+        }
+
+        if (e.key === '/') {
+            e.preventDefault();
+            document.getElementById('searchInput').focus();
+        }
     });
 </script>

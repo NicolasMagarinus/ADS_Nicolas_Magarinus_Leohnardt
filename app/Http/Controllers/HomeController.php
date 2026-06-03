@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
     public function index()
     {
-        // Ajustar para pegar melhor pela colocação
         $sqlAvaliacao = <<<SQL
             SELECT b.cd_bebida, b.nm_bebida, b.ds_imagem, b.id_tipo,
                    ROUND(AVG(a.id_nota), 1) AS nota,
@@ -19,7 +19,7 @@ class HomeController extends Controller
              GROUP BY b.cd_bebida, b.nm_bebida, b.ds_imagem, b.id_tipo
             HAVING COUNT(a.cd_avaliacao) >= 2
              ORDER BY (ROUND(AVG(a.id_nota), 1) * LOG(COUNT(a.cd_avaliacao) + 1)) DESC
-             LIMIT 4
+             LIMIT 8
         SQL;
 
         $arrAvaliacao = DB::select($sqlAvaliacao);
@@ -44,9 +44,17 @@ SQL;
 
         $arrRecente = DB::select($sqlRecente);
 
+        $hasFavoritesForRecommend = false;
+        if (Auth::check()) {
+            $hasFavoritesForRecommend = DB::table('favorito')
+                ->where('id_usuario', Auth::id())
+                ->exists();
+        }
+
         return view('home')
-            ->with('arrAvaliacao',   $arrAvaliacao)
+            ->with('arrAvaliacao', $arrAvaliacao)
             ->with('arrIngrediente', $arrIngrediente)
-            ->with('arrRecente',     $arrRecente);
+            ->with('arrRecente', $arrRecente)
+            ->with('hasFavoritesForRecommend', $hasFavoritesForRecommend);
     }
 }

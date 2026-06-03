@@ -2,11 +2,30 @@
 
 @section('content')
 <div class="container">
+    @if(isset($hasFavoritesForRecommend) && $hasFavoritesForRecommend)
+        <div class="alert alert-primary mb-5 d-flex justify-content-between align-items-center rounded-3 shadow-sm border-0" style="background: linear-gradient(135deg, rgba(13,110,253,0.1), rgba(111,66,193,0.1));">
+            <div>
+                <h4 class="alert-heading fw-bold mb-1"><i class="fas fa-magic text-primary me-2"></i>Recomendações para você</h4>
+                <p class="mb-0 text-muted">Bebidas escolhidas com base nos seus favoritos.</p>
+            </div>
+            <a href="{{ route('recomendadas.index') }}" class="btn btn-primary shadow-sm" style="white-space: nowrap;">
+                Ver recomendações <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+    @endif
+
     <section class="mb-5">
-        <h2 class="mb-4">Mais Populares</h2>
-        <div class="row">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <h2 class="mb-0">Mais Populares</h2>
+            <div class="btn-group shadow-sm" role="group" id="filtroTipo">
+                <button type="button" class="btn btn-primary" data-filter="all">Todos</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="1">Alcoólicos</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="2">Sem Álcool</button>
+            </div>
+        </div>
+        <div class="row" id="popularesGrid">
             @foreach($arrAvaliacao as $bebida)
-                <div class="col-md-3 mb-4">
+                <div class="col-md-3 mb-4 popular-card" data-tipo="{{ $bebida->id_tipo }}" style="display: none;">
                     <a href="{{ route('bebida.show', $bebida->cd_bebida) }}" class="text-decoration-none text-dark">
                         <div class="card drink-card h-100">
                             <img src="{{ $bebida->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}" class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="200" style="object-fit: cover;">
@@ -69,4 +88,44 @@
         </div>
     </section>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('#filtroTipo button');
+    const cards = document.querySelectorAll('.popular-card');
+
+    if(filterButtons.length) {
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Update active state
+                filterButtons.forEach(b => {
+                    b.classList.remove('btn-primary');
+                    b.classList.add('btn-outline-primary');
+                });
+                this.classList.remove('btn-outline-primary');
+                this.classList.add('btn-primary');
+
+                const filter = this.dataset.filter;
+                let count = 0;
+
+                cards.forEach(card => {
+                    if (filter === 'all' || card.dataset.tipo === filter) {
+                        if (count < 4) {
+                            card.style.display = 'block';
+                            count++;
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Trigger inicial para Todos (renderiza max 4)
+        filterButtons[0].click();
+    }
+});
+</script>
 @endsection
