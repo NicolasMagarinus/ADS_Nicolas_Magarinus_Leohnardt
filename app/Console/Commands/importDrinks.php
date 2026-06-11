@@ -30,15 +30,15 @@ class importDrinks extends Command
         switch ($acao)
         {
             case "getDrinks":
-                IntegracaoCockailController::getDrinks();
+                IntegracaoCockailController::obterBebidas();
             break;
 
             case "getIngredients":
-                IntegracaoCockailController::getIngredients();
+                IntegracaoCockailController::obterIngredientes();
             break;
 
             case "getDrinkIngredient":
-                IntegracaoCockailController::getDrinkIngredient();
+                IntegracaoCockailController::obterBebidaIngrediente();
             break;
         }
     }

@@ -31,7 +31,7 @@ class PerfilController extends Controller
         return view('perfil.index', compact('user', 'arrBebida', 'cntFavoritos', 'cntAvaliacoes'));
     }
 
-    public function changePassword(Request $request)
+    public function alterarSenha(Request $request)
     {
         $request->validate([
             'current_password' => 'required',

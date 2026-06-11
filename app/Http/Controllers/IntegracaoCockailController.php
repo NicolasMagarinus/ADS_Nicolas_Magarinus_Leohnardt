@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Http;
 
 class IntegracaoCockailController extends Controller
 {
-    public static function getDrinks()
+    public static function obterBebidas()
     {
         $alphabet = range('a', 'z');
 
@@ -39,7 +39,7 @@ class IntegracaoCockailController extends Controller
         }
     }
 
-    public static function getIngredients()
+    public static function obterIngredientes()
     {
         $url = "https://www.thecocktaildb.com/api/json/v1/1/list.php?i=list";
         $response = Http::get($url);
@@ -61,7 +61,7 @@ class IntegracaoCockailController extends Controller
         }
     }
 
-    public static function getDrinkIngredient()
+    public static function obterBebidaIngrediente()
     {
         try {
             DB::beginTransaction();

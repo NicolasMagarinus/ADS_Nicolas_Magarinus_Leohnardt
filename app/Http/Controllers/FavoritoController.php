@@ -26,7 +26,7 @@ class FavoritoController extends Controller
         return view('favoritos.index', compact('favoritos'));
     }
 
-    public function toggle($cd_bebida)
+    public function alternar($cd_bebida)
     {
         $favorito = Favorito::where('id_usuario', Auth::id())
             ->where('cd_bebida', $cd_bebida)
@@ -52,7 +52,7 @@ class FavoritoController extends Controller
         }
     }
 
-    public function check($cd_bebida)
+    public function verificar($cd_bebida)
     {
         $favorited = Favorito::where('id_usuario', Auth::id())
             ->where('cd_bebida', $cd_bebida)

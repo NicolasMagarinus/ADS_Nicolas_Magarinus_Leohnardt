@@ -15,7 +15,7 @@ class MeuBarController extends Controller
         return view('meubar.index', compact('sessionIngredients'));
     }
 
-    public function syncSession(Request $request)
+    public function sincronizarSessao(Request $request)
     {
         $request->validate([
             'ingredientes'                => 'present|array',
@@ -28,7 +28,7 @@ class MeuBarController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function searchIngredients(Request $request)
+    public function buscarIngredientes(Request $request)
     {
         $query = $request->get('q');
 
@@ -39,7 +39,7 @@ class MeuBarController extends Controller
         return response()->json($ingredientes);
     }
 
-    public function getPossibleDrinks(Request $request)
+    public function obterBebidasPossiveis(Request $request)
     {
         $request->validate([
             'ingredientes' => 'required|array|min:1',

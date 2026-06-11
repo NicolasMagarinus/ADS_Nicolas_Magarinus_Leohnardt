@@ -12,7 +12,7 @@ class ChatbotController extends Controller
 {
     private const AI_DAILY_LIMIT = 5;
 
-    public function message(Request $request)
+    public function mensagem(Request $request)
     {
         $request->validate([
             'message' => 'required|string|max:500',
@@ -20,7 +20,7 @@ class ChatbotController extends Controller
 
         $text = trim($request->input('message'));
 
-        $faqReply = $this->matchFaq($text);
+        $faqReply = $this->verificarFaq($text);
         if ($faqReply !== null) {
             return response()->json([
                 'reply'  => $faqReply,
@@ -80,10 +80,10 @@ class ChatbotController extends Controller
         }
     }
 
-    private function matchFaq(string $text): ?string
+    private function verificarFaq(string $text): ?string
     {
         $lower = mb_strtolower($text);
-        $lower = $this->removeAccents($lower);
+        $lower = $this->removerAcentos($lower);
 
         if (preg_match('/\b(oi|ola|hello|bom dia|boa tarde|boa noite|hey)\b/', $lower)) {
             return 'Olá! 😄 Estou aqui para te ajudar a encontrar o drink perfeito. O que você está procurando?';
@@ -136,7 +136,7 @@ class ChatbotController extends Controller
         return null;
     }
 
-    private function removeAccents(string $str): string
+    private function removerAcentos(string $str): string
     {
         $from = ['á','à','ã','â','ä','é','è','ê','ë','í','ì','î','ï','ó','ò','õ','ô','ö','ú','ù','û','ü','ç','ñ'];
         $to   = ['a','a','a','a','a','e','e','e','e','i','i','i','i','o','o','o','o','o','u','u','u','u','c','n'];
