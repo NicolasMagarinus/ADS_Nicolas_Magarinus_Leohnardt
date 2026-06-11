@@ -32,13 +32,13 @@ Route::get('/random', [RandomDrinkController::class, 'index'])->name('random');
 Route::get('/search', [SearchController::class, 'index'])->name('search');
 
 Route::group(['prefix' => 'bebida'], function () {
-    Route::get('/buscar-bebidas', [BebidaController::class, 'buscar'])->name('bebida.search');
-    Route::get('/{cd_bebida?}', [BebidaController::class, 'mostrar'])->name('bebida.show')->whereNumber('cd_bebida');
+    Route::get('/buscar-bebidas', [BebidaController::class, 'search'])->name('bebida.search');
+    Route::get('/{cd_bebida?}', [BebidaController::class, 'show'])->name('bebida.show')->whereNumber('cd_bebida');
 
     //Avaliação
-    Route::post('/{cd_bebida}/avaliacao', [AvaliacaoController::class, 'salvar'])->name('avaliacao.store')->middleware('auth');
-    Route::put('/{cd_bebida}/avaliacao/{cd_avaliacao}', [AvaliacaoController::class, 'atualizar'])->name('avaliacao.update')->middleware('auth');
-    Route::delete('/{cd_bebida}/avaliacao/{cd_avaliacao}', [AvaliacaoController::class, 'excluir'])->name('avaliacao.destroy')->middleware('auth');
+    Route::post('/{cd_bebida}/avaliacao', [AvaliacaoController::class, 'store'])->name('avaliacao.store')->middleware('auth');
+    Route::put('/{cd_bebida}/avaliacao/{cd_avaliacao}',    [AvaliacaoController::class, 'update'])->name('avaliacao.update')->middleware('auth');
+    Route::delete('/{cd_bebida}/avaliacao/{cd_avaliacao}', [AvaliacaoController::class, 'destroy'])->name('avaliacao.destroy')->middleware('auth');
 });
 
 Route::middleware(['auth'])->group(function () {

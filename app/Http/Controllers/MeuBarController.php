@@ -10,7 +10,6 @@ class MeuBarController extends Controller
 {
     public function index()
     {
-        // Recupera ingredientes da sessão para pré-popular o frontend
         $sessionIngredients = session('meubar_ingredientes', []);
         return view('meubar.index', compact('sessionIngredients'));
     }
