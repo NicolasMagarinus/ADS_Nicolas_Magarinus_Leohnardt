@@ -56,9 +56,9 @@
                                 <li><a class="dropdown-item" href="{{ route('favoritos.index') }}"><i
                                             class="bi bi-heart me-2"></i> Favoritos</a></li>
                                 <li><a class="dropdown-item" href="{{ route('recomendadas.index') }}"><i
-                                            class="fas fa-magic me-2"></i> Recomendadas</a></li>
+                                            class="bi bi-magic me-2"></i> Recomendadas</a></li>
                                 <li><a class="dropdown-item" href="{{ route('meubar.index') }}"><i
-                                            class="fas fa-wine-bottle me-2"></i> Meu Bar</a></li>
+                                    class="bi bi-cup-straw me-2"></i> Meu Bar</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>

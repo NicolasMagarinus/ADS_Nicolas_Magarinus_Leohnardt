@@ -81,6 +81,97 @@
     </div>
 </div>
 
+<style>
+.chatbot-drink-card {
+    background: linear-gradient(135deg, rgba(255,165,0,0.12) 0%, rgba(255,100,50,0.08) 100%);
+    border: 1px solid rgba(255,165,0,0.35);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-top: 10px;
+    font-size: 0.85rem;
+}
+.chatbot-drink-card-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    color: #ffb347;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.chatbot-drink-ingredients {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 10px 0;
+}
+.chatbot-drink-ingredients li {
+    padding: 2px 0;
+    display: flex;
+    gap: 6px;
+}
+.chatbot-drink-ingredients li::before {
+    content: "•";
+    color: #ffb347;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+.chatbot-drink-preparo-toggle {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.78rem;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    margin-bottom: 6px;
+    display: block;
+}
+.chatbot-drink-preparo-text {
+    display: none;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.5;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+}
+.chatbot-drink-preparo-text.open {
+    display: block;
+}
+.chatbot-save-btn {
+    width: 100%;
+    padding: 8px 14px;
+    background: linear-gradient(135deg, #ff8c00, #ff5722);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.chatbot-save-btn:hover:not(:disabled) {
+    opacity: 0.88;
+    transform: translateY(-1px);
+}
+.chatbot-save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+.chatbot-save-btn.success {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+}
+.chatbot-save-btn.error {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+</style>
+
 <script>
 (function () {
     const toggle     = document.getElementById('chatbot-toggle');
@@ -97,6 +188,7 @@
     const isAuthenticated = {{ $isAuthenticated ? 'true' : 'false' }};
     const csrfToken       = '{{ csrf_token() }}';
     const messageUrl      = '{{ route("chatbot.message") }}';
+    const saveDrinkUrl    = '{{ route("chatbot.salvar-bebida") }}';
     let isOpen      = false;
     let limitReached = false;
 
@@ -196,6 +288,11 @@
 
             appendBotMessage(data.reply);
 
+            // Show drink suggestion card if present
+            if (data.drink_suggestion) {
+                appendDrinkCard(data.drink_suggestion);
+            }
+
             // Show remaining AI calls hint when using OpenAI
             if (data.source === 'openai' && typeof data.remaining !== 'undefined') {
                 if (data.remaining <= 2 && data.remaining > 0) {
@@ -212,6 +309,77 @@
         .catch(() => {
             hideTyping();
             appendBotMessage('😔 Ops! Não consegui me conectar ao servidor. Tente novamente em instantes.');
+        });
+    }
+
+    function appendDrinkCard(drink) {
+        const card = document.createElement('div');
+        card.className = 'chatbot-msg chatbot-msg-bot chatbot-msg--new';
+
+        const ingredientesHtml = drink.ingredientes.map(ing => {
+            const medida = ing.ds_medida ? `<span style="opacity:.7">${escapeHtml(ing.ds_medida)}</span>` : '';
+            return `<li><span>${escapeHtml(ing.nm_ingrediente)}</span>${medida ? ' — ' + medida : ''}</li>`;
+        }).join('');
+
+        const preparo = escapeHtml(drink.modo_preparo);
+        const btnId = 'save-btn-' + Date.now();
+
+        card.innerHTML = `
+            <div class="chatbot-msg-avatar">🍹</div>
+            <div class="chatbot-msg-bubble" style="width:100%">
+                <div class="chatbot-drink-card">
+                    <div class="chatbot-drink-card-title">
+                        🍸 ${escapeHtml(drink.nome)}
+                    </div>
+                    <ul class="chatbot-drink-ingredients">${ingredientesHtml}</ul>
+                    <button class="chatbot-drink-preparo-toggle" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? '▲ Esconder preparo' : '▼ Ver modo de preparo';">▼ Ver modo de preparo</button>
+                    <div class="chatbot-drink-preparo-text">${preparo}</div>
+                    <button class="chatbot-save-btn" id="${btnId}">
+                        ➕ Salvar esta bebida
+                    </button>
+                </div>
+            </div>`;
+
+        messages.appendChild(card);
+        requestAnimationFrame(scrollToBottom);
+        if (!isOpen) notifDot.style.display = 'block';
+
+        // Attach save handler
+        document.getElementById(btnId).addEventListener('click', function () {
+            saveDrink(drink, this);
+        });
+    }
+
+    function saveDrink(drink, btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite"></span> Salvando...';
+
+        fetch(saveDrinkUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept':       'application/json',
+            },
+            body: JSON.stringify({
+                nome:         drink.nome,
+                modo_preparo: drink.modo_preparo,
+                ingredientes: drink.ingredientes,
+            }),
+        })
+        .then(async (res) => {
+            const data = await res.json();
+            if (data.success) {
+                btn.classList.add('success');
+                btn.innerHTML = '✅ Bebida salva! Ver no <a href="/profile" style="color:#fff;font-weight:700">perfil</a>';
+            } else {
+                throw new Error('fail');
+            }
+        })
+        .catch(() => {
+            btn.classList.add('error');
+            btn.innerHTML = '❌ Erro ao salvar. Tente novamente.';
+            btn.disabled = false;
         });
     }
 
@@ -248,7 +416,16 @@
     }
 
     function escapeHtml(str) {
-        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Spinner keyframe (injected once)
+    if (!document.getElementById('chatbot-spin-style')) {
+        const s = document.createElement('style');
+        s.id = 'chatbot-spin-style';
+        s.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+        document.head.appendChild(s);
     }
 })();
 </script>

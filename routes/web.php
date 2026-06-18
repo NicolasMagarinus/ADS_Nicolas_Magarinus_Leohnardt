@@ -71,6 +71,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::post('/chatbot/message', [ChatbotController::class, 'mensagem'])->name('chatbot.message');
+    Route::post('/chatbot/salvar-bebida', [ChatbotController::class, 'salvarBebida'])->name('chatbot.salvar-bebida');
     // Route::post('/rate-drink', [DrinkController::class, 'rate'])->name('drink.rate');
     // Route::post('/comment', [CommentController::class, 'store'])->name('comment.store');
 });
