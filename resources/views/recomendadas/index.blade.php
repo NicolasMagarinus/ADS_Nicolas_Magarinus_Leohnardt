@@ -3,11 +3,10 @@
 @section('content')
 <div class="container mt-4">
 
-    {{-- Page header --}}
     <div class="row mb-4 align-items-center">
         <div class="col">
             <h2 class="fw-bold mb-1">
-                <i class="fas fa-magic me-2 text-primary"></i>Bebidas Recomendadas
+                <i class="bi bi-magic me-2"></i>Bebidas Recomendadas
             </h2>
             <p class="text-muted mb-0">Selecionadas com base nos ingredientes das suas bebidas favoritas.</p>
         </div>
@@ -19,7 +18,6 @@
     </div>
 
     @if(!$hasFavorites)
-        {{-- Empty state: no favorites yet --}}
         <div class="text-center py-5">
             <i class="fas fa-heart" style="font-size: 5rem; color: #e0c8ff;"></i>
             <h4 class="mt-4 fw-semibold">Você ainda não tem favoritos</h4>
@@ -32,7 +30,6 @@
         </div>
 
     @elseif($recomendadas->isEmpty())
-        {{-- Has favorites but no recommendations found --}}
         <div class="text-center py-5">
             <i class="bi bi-emoji-neutral" style="font-size: 5rem; color: #ccc;"></i>
             <h4 class="mt-4 fw-semibold">Não encontramos recomendações ainda</h4>
@@ -45,7 +42,6 @@
         </div>
 
     @else
-        {{-- Top ingredients used as basis --}}
         @if($topIngredientes->isNotEmpty())
             <div class="mb-4">
                 <p class="text-muted mb-2 small fw-semibold text-uppercase" style="letter-spacing:.05em;">
@@ -53,7 +49,7 @@
                 </p>
                 <div class="d-flex flex-wrap gap-2">
                     @foreach($topIngredientes as $ingrediente)
-                        <span class="badge rounded-pill" style="background: linear-gradient(135deg, #6f42c1, #0d6efd); font-size: .8rem; padding: .45em .85em;">
+                        <span class="badge rounded-pill" style="background: linear-gradient(135deg, #333 0%, #555 100%); font-size: .8rem; padding: .45em .85em;">
                             {{ $ingrediente->nm_ingrediente }}
                         </span>
                     @endforeach
@@ -61,7 +57,6 @@
             </div>
         @endif
 
-        {{-- Recommendations grid --}}
         <div class="row">
             @foreach($recomendadas as $bebida)
                 <div class="col-sm-6 col-md-4 col-lg-3 mb-4">

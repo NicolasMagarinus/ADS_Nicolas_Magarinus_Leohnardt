@@ -90,7 +90,7 @@ class CadastroBebidaController extends Controller
         return view('cadastro_bebida.index', compact('bebidas'));
     }
 
-    public function approve($id)
+    public function aprovar($id)
     {
         if (!Auth::user()->id_admin) {
             abort(403, 'Acesso não autorizado.');
@@ -126,7 +126,7 @@ class CadastroBebidaController extends Controller
         return redirect()->route('admin.bebidas.index')->with('success', 'Bebida aprovada com sucesso!');
     }
 
-    public function reject(Request $request, $id)
+    public function rejeitar(Request $request, $id)
     {
         if (!Auth::user()->id_admin) {
             abort(403, 'Acesso não autorizado.');
@@ -145,7 +145,7 @@ class CadastroBebidaController extends Controller
         return redirect()->route('admin.bebidas.index')->with('success', 'Bebida rejeitada.');
     }
 
-    public function searchIngredients(Request $request)
+    public function buscarIngredientes(Request $request)
     {
         $query = $request->get('q');
         $ingredientes = Ingrediente::where('nm_ingrediente', 'ilike', "%{$query}%")

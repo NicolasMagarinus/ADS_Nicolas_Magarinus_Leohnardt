@@ -10,9 +10,9 @@
     
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #34495e;
-            --accent-color: #7f8c8d;
+            --primary-color: #000000;
+            --secondary-color: #333333;
+            --accent-color: #555555;
             --light-bg: #f8f9fa;
         }
 
@@ -86,7 +86,7 @@
 
         .form-control:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(44, 62, 80, 0.25);
+            box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.15);
         }
 
         .btn-primary {
@@ -101,7 +101,7 @@
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(44, 62, 80, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
         }
 
         .divider {
@@ -159,7 +159,7 @@
 
         .invalid-feedback {
             display: block;
-            color: #dc3545;
+            color: #333333;
             margin-top: 5px;
         }
 
@@ -169,13 +169,13 @@
         }
 
         .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
+            background-color: #e9ecef;
+            color: #212529;
         }
 
         .alert-success {
-            background-color: #d4edda;
-            color: #155724;
+            background-color: #e9ecef;
+            color: #212529;
         }
 
         @media (max-width: 992px) {

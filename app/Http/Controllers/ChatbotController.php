@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bebida;
 use App\Models\CadastroBebida;
 use App\Models\CadastroBebidaIngrediente;
 use App\Models\ChatbotUsage;
@@ -84,7 +85,6 @@ class ChatbotController extends Controller
                     && is_array($decoded['ingredientes'])
                 ) {
                     $drinkSuggestion = $decoded;
-                    // Remove the JSON block from the displayed reply
                     $cleanReply = trim(preg_replace('/```json\s*\{.*?\}\s*```/s', '', $rawReply));
                 }
             }
@@ -99,11 +99,28 @@ class ChatbotController extends Controller
             ];
 
             if ($drinkSuggestion !== null) {
+                $nomeDrink = $drinkSuggestion['nome'];
+
+                $existeNoCatalogo = Bebida::whereRaw(
+                    'LOWER(nm_bebida) = LOWER(?)',
+                    [$nomeDrink]
+                )->exists();
+
+                $jaSubmetido = CadastroBebida::where('id_usuario', Auth::id())
+                    ->whereRaw('LOWER(nm_bebida) = LOWER(?)', [$nomeDrink])
+                    ->where('id_status', '!=', 2)
+                    ->exists();
+
                 $responseData['drink_suggestion'] = $drinkSuggestion;
+                $responseData['drink_exists'] = $existeNoCatalogo || $jaSubmetido;
+                $responseData['drink_exists_reason'] = $existeNoCatalogo
+                    ? 'catalog'
+                    : ($jaSubmetido ? 'pending' : null);
             }
 
             return response()->json($responseData);
         } catch (\Throwable $e) {
+            error_log('Chatbot AI error: ' . $e->getMessage());
             return response()->json([
                 'reply' => '😔 Ops! Ocorreu um erro ao consultar a IA. Tente novamente em instantes.',
                 'source' => 'error',
@@ -120,6 +137,29 @@ class ChatbotController extends Controller
             'ingredientes.*.nm_ingrediente' => 'required|string|max:255',
             'ingredientes.*.ds_medida' => 'nullable|string|max:255',
         ]);
+
+        $nome = $request->nome;
+
+        if (Bebida::whereRaw('LOWER(nm_bebida) = LOWER(?)', [$nome])->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Esta bebida já existe no catálogo do Drinkerito.',
+                'reason' => 'catalog',
+            ], 409);
+        }
+
+        if (
+            CadastroBebida::where('id_usuario', Auth::id())
+                ->whereRaw('LOWER(nm_bebida) = LOWER(?)', [$nome])
+                ->where('id_status', '!=', 2)
+                ->exists()
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Você já enviou esta bebida para aprovação.',
+                'reason' => 'pending',
+            ], 409);
+        }
 
         DB::transaction(function () use ($request) {
             $cadastro = CadastroBebida::create([
@@ -141,7 +181,7 @@ class ChatbotController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => '🍹 Bebida salva! Ela ficará disponível no seu perfil após aprovação.',
+            'message' => '🍹 Bebida enviada para aprovação! Acompanhe no seu perfil.',
         ]);
     }
 

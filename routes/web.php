@@ -37,14 +37,14 @@ Route::group(['prefix' => 'bebida'], function () {
 
     //Avaliação
     Route::post('/{cd_bebida}/avaliacao', [AvaliacaoController::class, 'store'])->name('avaliacao.store')->middleware('auth');
-    Route::put('/{cd_bebida}/avaliacao/{cd_avaliacao}',    [AvaliacaoController::class, 'update'])->name('avaliacao.update')->middleware('auth');
+    Route::put('/{cd_bebida}/avaliacao/{cd_avaliacao}', [AvaliacaoController::class, 'update'])->name('avaliacao.update')->middleware('auth');
     Route::delete('/{cd_bebida}/avaliacao/{cd_avaliacao}', [AvaliacaoController::class, 'destroy'])->name('avaliacao.destroy')->middleware('auth');
 });
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/bebida/cadastrar', [CadastroBebidaController::class, 'create'])->name('bebida.create');
     Route::post('/bebida/cadastrar', [CadastroBebidaController::class, 'store'])->name('bebida.store');
-    Route::get('/bebida/ingredientes/search', [CadastroBebidaController::class, 'searchIngredients'])->name('bebida.ingredientes.search');
+    Route::get('/bebida/ingredientes/search', [CadastroBebidaController::class, 'buscarIngredientes'])->name('bebida.ingredientes.search');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/bebidas', [CadastroBebidaController::class, 'index'])->name('bebidas.index');

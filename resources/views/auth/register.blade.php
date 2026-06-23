@@ -8,9 +8,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #34495e;
-            --accent-color: #7f8c8d;
+            --primary-color: #000000;
+            --secondary-color: #333333;
+            --accent-color: #555555;
             --light-bg: #f8f9fa;
         }
 
@@ -79,7 +79,7 @@
 
         .form-control:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(44, 62, 80, 0.25);
+            box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.15);
         }
 
         .btn-primary {
@@ -94,7 +94,7 @@
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(44, 62, 80, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
         }
 
         .divider {

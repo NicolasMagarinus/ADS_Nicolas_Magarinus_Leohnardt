@@ -18,18 +18,18 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
                     <h5 class="card-title mb-3">
-                        <i class="bi bi-bar-chart-fill me-2 text-primary"></i>Estatísticas
+                        <i class="bi bi-bar-chart-fill me-2"></i>Estatísticas
                     </h5>
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="text-muted"><i class="fas fa-heart text-danger me-2"></i>Favoritos</span>
+                        <span class="text-muted"><i class="bi bi-heart text-danger me-2"></i>Favoritos</span>
                         <span class="badge bg-danger rounded-pill">{{ $cntFavoritos }}</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="text-muted"><i class="fas fa-star text-warning me-2"></i>Avaliações</span>
+                        <span class="text-muted"><i class="bi bi-star text-warning me-2"></i>Avaliações</span>
                         <span class="badge bg-warning text-dark rounded-pill">{{ $cntAvaliacoes }}</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="text-muted"><i class="fas fa-cocktail text-primary me-2"></i>Receitas</span>
+                        <span class="text-muted"><i class="bi bi-cup-straw me-2"></i>Receitas</span>
                         <span class="badge bg-primary rounded-pill">{{ $arrBebida->count() }}</span>
                     </div>
                 </div>
@@ -59,7 +59,7 @@
                                 <img src="{{ $bebida->ds_imagem }}" class="img-fluid rounded-start h-100 object-fit-cover" alt="{{ $bebida->nm_bebida }}" style="min-height: 150px; max-height: 200px; width: 100%; object-fit: cover;">
                             @else
                                 <div class="d-flex align-items-center justify-content-center bg-light rounded-start h-100" style="min-height: 150px;">
-                                    <i class="fas fa-cocktail fa-3x text-muted"></i>
+                                    <img src="https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png" class="img-fluid" alt="Imagem não disponível">
                                 </div>
                             @endif
                         </div>
@@ -68,16 +68,16 @@
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h5 class="card-title mb-0">{{ $bebida->nm_bebida }}</h5>
                                     @if($bebida->id_status == 0)
-                                        <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i> Pendente</span>
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i> Pendente</span>
                                     @elseif($bebida->id_status == 1)
-                                        <span class="badge bg-success"><i class="fas fa-check me-1"></i> Aprovada</span>
+                                        <span class="badge bg-success"><i class="bi bi-check me-1"></i> Aprovada</span>
                                     @elseif($bebida->id_status == 2)
-                                        <span class="badge bg-danger"><i class="fas fa-times me-1"></i> Rejeitada</span>
+                                        <span class="badge bg-danger"><i class="bi bi-times me-1"></i> Rejeitada</span>
                                     @endif
                                 </div>
                                 
                                 <p class="text-muted small mb-2">
-                                    <i class="far fa-calendar me-1"></i>{{ $bebida->created_at->format('d/m/Y H:i') }}
+                                    <i class="bi bi-calendar me-1"></i>{{ $bebida->created_at->format('d/m/Y H:i') }}
                                 </p>
                                 
                                 <p class="card-text text-muted small mb-2">
@@ -86,11 +86,11 @@
                                 
                                 @if($bebida->id_status == 2 && $bebida->ds_motivo_rejeicao)
                                     <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="collapse" data-bs-target="#motivo{{ $bebida->cd_bebida_cadastro }}">
-                                        <i class="fas fa-exclamation-circle me-1"></i>Ver Motivo da Rejeição
+                                        <i class="bi bi-exclamation-circle me-1"></i>Ver Motivo da Rejeição
                                     </button>
                                     <div class="collapse mt-2" id="motivo{{ $bebida->cd_bebida_cadastro }}">
                                         <div class="alert alert-danger mb-0 small">
-                                            <strong><i class="fas fa-info-circle me-1"></i>Motivo da rejeição:</strong> {{ $bebida->ds_motivo_rejeicao }}
+                                            <strong><i class="bi bi-info-circle me-1"></i>Motivo da rejeição:</strong> {{ $bebida->ds_motivo_rejeicao }}
                                         </div>
                                     </div>
                                 @endif
@@ -101,11 +101,11 @@
             @empty
                 <div class="card shadow-sm">
                     <div class="card-body text-center py-5">
-                        <i class="fas fa-cocktail fa-4x text-muted mb-3"></i>
+                        <i class="bi bi-cup-straw fa-4x text-muted mb-3"></i>
                         <h5 class="text-muted">Nenhuma receita cadastrada</h5>
                         <p class="text-muted">Você ainda não submeteu nenhuma receita.</p>
                         <a href="{{ route('bebida.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Cadastrar Receita
+                            <i class="bi bi-plus me-2"></i>Cadastrar Receita
                         </a>
                     </div>
                 </div>
@@ -133,7 +133,7 @@
                                 <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y" 
                                         onclick="togglePasswordVisibility('current_password', this)" 
                                         style="text-decoration: none; z-index: 10;">
-                                    <i class="fas fa-eye text-muted"></i>
+                                    <i class="bi bi-eye text-muted"></i>
                                 </button>
                             </div>
                         </div>
@@ -145,7 +145,7 @@
                                 <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y" 
                                         onclick="togglePasswordVisibility('new_password', this)" 
                                         style="text-decoration: none; z-index: 10;">
-                                    <i class="fas fa-eye text-muted"></i>
+                                    <i class="bi bi-eye text-muted"></i>
                                 </button>
                             </div>
                             <div class="mt-2">
@@ -164,7 +164,7 @@
                                 <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y" 
                                         onclick="togglePasswordVisibility('new_password_confirmation', this)" 
                                         style="text-decoration: none; z-index: 10;">
-                                    <i class="fas fa-eye text-muted"></i>
+                                    <i class="bi bi-eye text-muted"></i>
                                 </button>
                             </div>
                         </div>
@@ -190,12 +190,12 @@
             
             if (input.type === 'password') {
                 input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
             } else {
                 input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
             }
         }
 
