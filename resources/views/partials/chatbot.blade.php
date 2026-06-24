@@ -85,7 +85,7 @@
 <script>
     (function () {
         const toggle = document.getElementById('chatbot-toggle');
-        const chatWindow = document.getElementById('chatbot-window');
+        const window_ = document.getElementById('chatbot-window');
         const closeBtn = document.getElementById('chatbot-close');
         const messages = document.getElementById('chatbot-messages');
         const input = document.getElementById('chatbot-input');
@@ -99,14 +99,13 @@
         const csrfToken = '{{ csrf_token() }}';
         const messageUrl = '{{ route("chatbot.message") }}';
         const saveDrinkUrl = '{{ route("chatbot.salvar-bebida") }}';
-
         let isOpen = false;
         let limitReached = false;
 
         function openChat() {
             isOpen = true;
-            chatWindow.classList.add('chatbot-window--open');
-            chatWindow.setAttribute('aria-hidden', 'false');
+            window_.classList.add('chatbot-window--open');
+            window_.setAttribute('aria-hidden', 'false');
             iconOpen.style.display = 'none';
             iconClose.style.display = 'flex';
             toggle.classList.add('chatbot-toggle--open');
@@ -117,8 +116,8 @@
 
         function closeChat() {
             isOpen = false;
-            chatWindow.classList.remove('chatbot-window--open');
-            chatWindow.setAttribute('aria-hidden', 'true');
+            window_.classList.remove('chatbot-window--open');
+            window_.setAttribute('aria-hidden', 'true');
             iconOpen.style.display = 'flex';
             iconClose.style.display = 'none';
             toggle.classList.remove('chatbot-toggle--open');
@@ -162,18 +161,6 @@
             });
         }
 
-        function postJSON(url, body) {
-            return fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify(body),
-            }).then(async (res) => ({ status: res.status, data: await res.json() }));
-        }
-
         function sendMessage() {
             const text = input.value.trim();
             if (!text || limitReached) return;
@@ -189,12 +176,23 @@
         function callBackend(text) {
             showTyping();
 
-            postJSON(messageUrl, { message: text })
-                .then(({ status, data }) => {
+            fetch(messageUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ message: text }),
+            })
+                .then(async (res) => {
+                    const data = await res.json();
                     hideTyping();
 
-                    if (status === 429 || data.limit_reached) {
-                        travarPorLimiteDiario(data.reply);
+                    if (res.status === 429 || data.limit_reached) {
+                        limitReached = true;
+                        appendBotMessage(data.reply);
+                        disableInput('Limite diário atingido 🚫');
                         return;
                     }
 
@@ -205,7 +203,15 @@
                     }
 
                     if (data.source === 'openai' && typeof data.remaining !== 'undefined') {
-                        avisarLimiteRestante(data.remaining);
+                        if (data.remaining <= 2 && data.remaining > 0) {
+                            appendBotMessage(
+                                `<small class="text-warning">⚠️ Você tem apenas <strong>${data.remaining}</strong> pergunta(s) à IA restante(s) hoje.</small>`
+                            );
+                        } else if (data.remaining === 0) {
+                            limitReached = true;
+                            appendBotMessage('<small class="text-danger">🚫 Você usou todas as suas perguntas à IA por hoje. Volte amanhã!</small>');
+                            disableInput('Limite diário atingido 🚫');
+                        }
                     }
                 })
                 .catch(() => {
@@ -214,23 +220,102 @@
                 });
         }
 
-        function avisarLimiteRestante(remaining) {
-            if (remaining <= 2 && remaining > 0) {
-                appendBotMessage(
-                    `<small class="text-warning">⚠️ Você tem apenas <strong>${remaining}</strong> pergunta(s) à IA restante(s) hoje.</small>`
-                );
-                return;
+        function appendDrinkCard(drink, drinkExists, existsReason) {
+            const card = document.createElement('div');
+            card.className = 'chatbot-msg chatbot-msg-bot chatbot-msg--new';
+
+            const ingredientesHtml = drink.ingredientes.map(ing => {
+                const medida = ing.ds_medida ? `<span style="opacity:.7">${escapeHtml(ing.ds_medida)}</span>` : '';
+                return `<li><span>${escapeHtml(ing.nm_ingrediente)}</span>${medida ? ' — ' + medida : ''}</li>`;
+            }).join('');
+
+            const preparo = escapeHtml(drink.modo_preparo);
+            const btnId = 'save-btn-' + Date.now();
+
+            let actionHtml;
+            if (drinkExists) {
+                const searchUrl = '/search?q=' + encodeURIComponent(drink.nome);
+                if (existsReason === 'catalog') {
+                    actionHtml = `<div class="chatbot-drink-exists-badge">
+                    ✅ Este drink já está no nosso catálogo!
+                    <a href="${searchUrl}" class="chatbot-drink-exists-link">Ver no Drinkerito →</a>
+                </div>`;
+                } else {
+                    actionHtml = `<div class="chatbot-drink-exists-badge chatbot-drink-exists-pending">
+                    ⏳ Você já enviou este drink para aprovação.
+                    <a href="/profile" class="chatbot-drink-exists-link">Ver no perfil →</a>
+                </div>`;
+                }
+            } else {
+                actionHtml = `<button class="chatbot-save-btn" id="${btnId}">➕ Salvar para aprovação</button>`;
             }
 
-            if (remaining === 0) {
-                travarPorLimiteDiario('<small class="text-danger">🚫 Você usou todas as suas perguntas à IA por hoje. Volte amanhã!</small>');
+            card.innerHTML = `
+            <div class="chatbot-msg-avatar">🍹</div>
+            <div class="chatbot-msg-bubble" style="width:100%">
+                <div class="chatbot-drink-card">
+                    <div class="chatbot-drink-card-title">
+                        🍸 ${escapeHtml(drink.nome)}
+                    </div>
+                    <ul class="chatbot-drink-ingredients">${ingredientesHtml}</ul>
+                    <button class="chatbot-drink-preparo-toggle" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? '▲ Esconder preparo' : '▼ Ver modo de preparo';">▼ Ver modo de preparo</button>
+                    <div class="chatbot-drink-preparo-text">${preparo}</div>
+                    ${actionHtml}
+                </div>
+            </div>`;
+
+            messages.appendChild(card);
+            requestAnimationFrame(scrollToBottom);
+            if (!isOpen) notifDot.style.display = 'block';
+
+            if (!drinkExists) {
+                document.getElementById(btnId).addEventListener('click', function () {
+                    saveDrink(drink, this);
+                });
             }
         }
 
-        function travarPorLimiteDiario(mensagem) {
-            limitReached = true;
-            appendBotMessage(mensagem);
-            disableInput('Limite diário atingido 🚫');
+        function saveDrink(drink, btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite"></span> Salvando...';
+
+            fetch(saveDrinkUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    nome: drink.nome,
+                    modo_preparo: drink.modo_preparo,
+                    ingredientes: drink.ingredientes,
+                }),
+            })
+                .then(async (res) => {
+                    const data = await res.json();
+                    if (res.status === 409) {
+                        btn.classList.add('success');
+                        btn.disabled = true;
+                        if (data.reason === 'catalog') {
+                            btn.innerHTML = '✅ Este drink já está no catálogo!';
+                        } else {
+                            btn.innerHTML = '⏳ Você já enviou este drink para aprovação.';
+                        }
+                        return;
+                    }
+                    if (data.success) {
+                        btn.classList.add('success');
+                        btn.innerHTML = '✅ Enviado! Ver no <a href="/profile" style="color:#fff;font-weight:700">perfil</a>';
+                    } else {
+                        throw new Error('fail');
+                    }
+                })
+                .catch(() => {
+                    btn.classList.add('error');
+                    btn.innerHTML = '❌ Erro ao salvar. Tente novamente.';
+                    btn.disabled = false;
+                });
         }
 
         function disableInput(placeholder) {
@@ -263,109 +348,6 @@
 
         function hideTyping() {
             typing.style.display = 'none';
-        }
-
-        function appendDrinkCard(drink, drinkExists, existsReason) {
-            const card = document.createElement('div');
-            card.className = 'chatbot-msg chatbot-msg-bot chatbot-msg--new';
-
-            const ingredientesHtml = buildIngredientesHtml(drink.ingredientes);
-            const preparoHtml = drinkExists ? '' : buildPreparoHtml(drink.modo_preparo);
-            const drinkLink = drink.url || '/search?q=' + encodeURIComponent(drink.nome);
-            const actionHtml = drinkExists
-                ? buildBebidaExistenteHtml(existsReason, drinkLink)
-                : buildSalvarBebidaButtonHtml();
-
-            card.innerHTML = `
-            <div class="chatbot-msg-avatar">🍹</div>
-            <div class="chatbot-msg-bubble" style="width:100%">
-                <div class="chatbot-drink-card">
-                    <div class="chatbot-drink-card-title">
-                        🍸 ${escapeHtml(drink.nome)}
-                    </div>
-                    <ul class="chatbot-drink-ingredients">${ingredientesHtml}</ul>
-                    ${preparoHtml}
-                    ${actionHtml}
-                </div>
-            </div>`;
-
-            messages.appendChild(card);
-            requestAnimationFrame(scrollToBottom);
-            if (!isOpen) notifDot.style.display = 'block';
-
-            if (!drinkExists) {
-                const saveBtn = card.querySelector('.chatbot-save-btn');
-                saveBtn.addEventListener('click', () => saveDrink(drink, saveBtn));
-            }
-        }
-
-        function buildIngredientesHtml(ingredientes) {
-            return ingredientes.map((ing) => {
-                const medida = ing.ds_medida
-                    ? `<span style="opacity:.7">${escapeHtml(ing.ds_medida)}</span>`
-                    : '';
-                return `<li><span>${escapeHtml(ing.nm_ingrediente)}</span>${medida ? ' — ' + medida : ''}</li>`;
-            }).join('');
-        }
-
-        function buildPreparoHtml(modoPreparo) {
-            return `<button class="chatbot-drink-preparo-toggle" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? '▲ Esconder preparo' : '▼ Ver modo de preparo';">▼ Ver modo de preparo</button>
-                    <div class="chatbot-drink-preparo-text">${escapeHtml(modoPreparo)}</div>`;
-        }
-
-        function buildBebidaExistenteHtml(existsReason, drinkLink) {
-            if (existsReason === 'catalog') {
-                return `<div class="chatbot-drink-exists-badge">
-                    ✅ Este drink já está no nosso catálogo!
-                    <a href="${drinkLink}" class="chatbot-drink-exists-link">Ver no Drinkerito →</a>
-                </div>`;
-            }
-
-            return `<div class="chatbot-drink-exists-badge chatbot-drink-exists-pending">
-                    ⏳ Você já enviou este drink para aprovação.
-                    <a href="/profile" class="chatbot-drink-exists-link">Ver no perfil →</a>
-                </div>`;
-        }
-
-        function buildSalvarBebidaButtonHtml() {
-            return '<button class="chatbot-save-btn">➕ Salvar para aprovação</button>';
-        }
-
-        function saveDrink(drink, btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite"></span> Salvando...';
-
-            postJSON(saveDrinkUrl, {
-                nome: drink.nome,
-                modo_preparo: drink.modo_preparo,
-                ingredientes: drink.ingredientes,
-            })
-                .then(({ status, data }) => {
-                    if (status === 409) {
-                        marcarComoJaExistente(btn, data.reason);
-                        return;
-                    }
-
-                    if (data.success) {
-                        btn.classList.add('success');
-                        btn.innerHTML = '✅ Enviado! Ver no <a href="/profile" style="color:#fff;font-weight:700">perfil</a>';
-                    } else {
-                        throw new Error('fail');
-                    }
-                })
-                .catch(() => {
-                    btn.classList.add('error');
-                    btn.innerHTML = '❌ Erro ao salvar. Tente novamente.';
-                    btn.disabled = false;
-                });
-        }
-
-        function marcarComoJaExistente(btn, reason) {
-            btn.classList.add('success');
-            btn.disabled = true;
-            btn.innerHTML = reason === 'catalog'
-                ? '✅ Este drink já está no catálogo!'
-                : '⏳ Você já enviou este drink para aprovação.';
         }
 
         function escapeHtml(str) {
