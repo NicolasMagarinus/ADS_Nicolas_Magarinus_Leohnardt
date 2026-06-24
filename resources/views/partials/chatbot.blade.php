@@ -389,16 +389,16 @@
                 return `<li><span>${escapeHtml(ing.nm_ingrediente)}</span>${medida ? ' — ' + medida : ''}</li>`;
             }).join('');
 
-            const preparo = escapeHtml(drink.modo_preparo);
             const btnId = 'save-btn-' + Date.now();
+            const drinkLink = drink.url || '/search?q=' + encodeURIComponent(drink.nome);
+            const preparo = drinkExists ? '' : escapeHtml(drink.modo_preparo);
 
             let actionHtml;
             if (drinkExists) {
-                const searchUrl = '/search?q=' + encodeURIComponent(drink.nome);
                 if (existsReason === 'catalog') {
                     actionHtml = `<div class="chatbot-drink-exists-badge">
                     ✅ Este drink já está no nosso catálogo!
-                    <a href="${searchUrl}" class="chatbot-drink-exists-link">Ver no Drinkerito →</a>
+                    <a href="${drinkLink}" class="chatbot-drink-exists-link">Ver no Drinkerito →</a>
                 </div>`;
                 } else {
                     actionHtml = `<div class="chatbot-drink-exists-badge chatbot-drink-exists-pending">
@@ -418,8 +418,8 @@
                         🍸 ${escapeHtml(drink.nome)}
                     </div>
                     <ul class="chatbot-drink-ingredients">${ingredientesHtml}</ul>
-                    <button class="chatbot-drink-preparo-toggle" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? '▲ Esconder preparo' : '▼ Ver modo de preparo';">▼ Ver modo de preparo</button>
-                    <div class="chatbot-drink-preparo-text">${preparo}</div>
+                    ${!drinkExists ? `<button class="chatbot-drink-preparo-toggle" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? '▲ Esconder preparo' : '▼ Ver modo de preparo';">▼ Ver modo de preparo</button>
+                    <div class="chatbot-drink-preparo-text">${preparo}</div>` : ''}
                     ${actionHtml}
                 </div>
             </div>`;
