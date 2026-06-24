@@ -84,12 +84,13 @@
 
 <style>
     .chatbot-drink-card {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(30, 41, 59, 0.55);
+        border: 1px solid rgba(59, 130, 246, 0.25);
         border-radius: 12px;
         padding: 12px 14px;
         margin-top: 10px;
         font-size: 0.85rem;
+        backdrop-filter: blur(8px);
     }
 
     .chatbot-drink-card-title {
@@ -109,14 +110,15 @@
     }
 
     .chatbot-drink-ingredients li {
-        padding: 2px 0;
+        padding: 3px 0;
         display: flex;
         gap: 6px;
+        color: rgba(255,255,255,0.9);
     }
 
     .chatbot-drink-ingredients li::before {
         content: "•";
-        color: rgba(255, 255, 255, 0.5);
+        color: #22c55e;
         font-weight: bold;
         flex-shrink: 0;
     }
@@ -124,23 +126,29 @@
     .chatbot-drink-preparo-toggle {
         background: none;
         border: none;
-        color: rgba(255, 255, 255, 0.5);
+        color: #60a5fa;
         font-size: 0.78rem;
         padding: 0;
         cursor: pointer;
-        text-decoration: underline;
+        text-decoration: none;
         margin-bottom: 6px;
         display: block;
+        font-weight: 600;
+    }
+
+    .chatbot-drink-preparo-toggle:hover {
+        color: #93c5fd;
     }
 
     .chatbot-drink-preparo-text {
         display: none;
         font-size: 0.8rem;
-        color: rgba(255, 255, 255, 0.7);
+        color: rgba(255,255,255,0.9);
         line-height: 1.5;
         margin-bottom: 10px;
-        padding: 8px;
-        background: rgba(255, 255, 255, 0.05);
+        padding: 10px;
+        background: rgba(59, 130, 246, 0.08);
+        border: 1px solid rgba(59, 130, 246, 0.2);
         border-radius: 8px;
     }
 
@@ -150,53 +158,63 @@
 
     .chatbot-save-btn {
         width: 100%;
-        padding: 8px 14px;
-        background: rgba(255, 255, 255, 0.12);
-        color: #fff;
-        border: 1px solid rgba(255, 255, 255, 0.25);
+        padding: 10px 14px;
+        background: linear-gradient(
+            135deg,
+            #22c55e,
+            #16a34a
+        );
+        color: white;
+        border: none;
         border-radius: 20px;
         font-size: 0.82rem;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s, transform 0.1s;
+        transition: all 0.2s ease;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 6px;
+        box-shadow: 0 4px 12px rgba(34,197,94,0.25);
     }
 
     .chatbot-save-btn:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.2);
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(34,197,94,0.35);
     }
 
     .chatbot-save-btn:disabled {
-        opacity: 0.5;
+        opacity: 0.55;
         cursor: not-allowed;
         transform: none;
+        box-shadow: none;
     }
 
     .chatbot-save-btn.success {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.3);
-        color: rgba(255, 255, 255, 0.85);
+        background: linear-gradient(
+            135deg,
+            #16a34a,
+            #15803d
+        );
+        color: white;
+        border: none;
     }
 
     .chatbot-save-btn.error {
-        background: rgba(255, 255, 255, 0.06);
-        border-color: rgba(255, 255, 255, 0.15);
-        color: rgba(255, 255, 255, 0.6);
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        color: #fca5a5;
     }
 
     .chatbot-drink-exists-badge {
         width: 100%;
         padding: 9px 14px;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(34, 197, 94, 0.12);
+        border: 1px solid rgba(34, 197, 94, 0.35);
         border-radius: 20px;
         font-size: 0.82rem;
         font-weight: 600;
-        color: rgba(255, 255, 255, 0.8);
+        color: #86efac;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -206,17 +224,21 @@
     }
 
     .chatbot-drink-exists-badge.chatbot-drink-exists-pending {
-        background: rgba(255, 255, 255, 0.04);
-        border-color: rgba(255, 255, 255, 0.15);
-        color: rgba(255, 255, 255, 0.6);
+        background: rgba(245, 158, 11, 0.12);
+        border-color: rgba(245, 158, 11, 0.35);
+        color: #fcd34d;
     }
 
     .chatbot-drink-exists-link {
-        color: #fff;
+        color: #60a5fa;
         font-weight: 700;
-        text-decoration: underline;
+        text-decoration: none;
         white-space: nowrap;
-        opacity: 0.9;
+    }
+
+    .chatbot-drink-exists-link:hover {
+        color: #93c5fd;
+        text-decoration: underline;
     }
 </style>
 
