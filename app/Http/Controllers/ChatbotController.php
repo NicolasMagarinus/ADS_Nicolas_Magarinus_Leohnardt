@@ -59,34 +59,82 @@ class ChatbotController extends Controller
                             . 'Responda sempre em português do Brasil, de forma amigável e concisa (máximo 3 parágrafos). '
                             . 'Foque exclusivamente em bebidas, receitas, ingredientes e dicas de drinks. '
                             . 'Se a pergunta não for sobre bebidas, gentilmente redirecione o usuário para o tema de drinks. '
-                            . 'IMPORTANTE: Quando o usuário pedir uma receita de drink ou coquetel, você DEVE responder com um texto amigável E '
-                            . 'adicionar ao final da resposta um bloco JSON no seguinte formato exato (sem markdown extra ao redor do JSON): '
-                            . '```json{"nome":"Nome do Drink","ingredientes":[{"nm_ingrediente":"Nome","ds_medida":"Quantidade"}],"modo_preparo":"Passos de preparo"}``` '
-                            . 'Não inclua o bloco JSON em respostas que não sejam receitas.',
+                            . 'IMPORTANTE: Quando o usuário pedir uma receita específica de drink ou coquetel, você DEVE chamar a função '
+                            . '"sugerir_receita" com os dados estruturados da receita (nome, ingredientes e modo de preparo). '
+                            . 'Além da chamada de função, escreva também uma resposta curta e amigável em texto apresentando o drink, '
+                            . 'SEM repetir a lista de ingredientes nem o modo de preparo no texto — esses dados já são enviados pela função. '
+                            . 'Não chame a função para perguntas que não sejam pedidos de receita específica de um drink.',
                     ],
                     ['role' => 'user', 'content' => $text],
                 ],
-                'max_tokens' => 600,
+                'tools' => [
+                    [
+                        'type' => 'function',
+                        'function' => [
+                            'name' => 'sugerir_receita',
+                            'description' => 'Envia os dados estruturados de uma receita de drink/coquetel sugerida ao usuário.',
+                            'parameters' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'nome' => [
+                                        'type' => 'string',
+                                        'description' => 'Nome do drink',
+                                    ],
+                                    'ingredientes' => [
+                                        'type' => 'array',
+                                        'items' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'nm_ingrediente' => ['type' => 'string'],
+                                                'ds_medida' => ['type' => 'string'],
+                                            ],
+                                            'required' => ['nm_ingrediente'],
+                                        ],
+                                    ],
+                                    'modo_preparo' => [
+                                        'type' => 'string',
+                                        'description' => 'Passo a passo do preparo',
+                                    ],
+                                ],
+                                'required' => ['nome', 'ingredientes', 'modo_preparo'],
+                            ],
+                        ],
+                    ],
+                ],
+                'tool_choice' => 'auto',
+                'max_tokens' => 700,
                 'temperature' => 0.7,
             ]);
 
-            $rawReply = $response->choices[0]->message->content ?? 'Desculpe, não consegui processar sua pergunta.';
-
+            $message = $response->choices[0]->message;
+            $cleanReply = $message->content ?? '';
             $drinkSuggestion = null;
-            $cleanReply = $rawReply;
 
-            if (preg_match('/```json\s*(\{.*?\})\s*```/s', $rawReply, $matches)) {
-                $jsonStr = $matches[1];
-                $decoded = json_decode($jsonStr, true);
+            if (!empty($message->toolCalls)) {
+                foreach ($message->toolCalls as $toolCall) {
+                    if ($toolCall->type === 'function' && $toolCall->function->name === 'sugerir_receita') {
+                        $decoded = json_decode($toolCall->function->arguments, true);
 
-                if (
-                    json_last_error() === JSON_ERROR_NONE
-                    && isset($decoded['nome'], $decoded['ingredientes'], $decoded['modo_preparo'])
-                    && is_array($decoded['ingredientes'])
-                ) {
-                    $drinkSuggestion = $decoded;
-                    $cleanReply = trim(preg_replace('/```json\s*\{.*?\}\s*```/s', '', $rawReply));
+                        if (
+                            json_last_error() === JSON_ERROR_NONE
+                            && isset($decoded['nome'], $decoded['ingredientes'], $decoded['modo_preparo'])
+                            && is_array($decoded['ingredientes'])
+                        ) {
+                            $drinkSuggestion = $decoded;
+                        }
+                        break;
+                    }
                 }
+            }
+
+            $cleanReply = preg_replace('/```json.*?```/s', '', $cleanReply);
+            $cleanReply = preg_replace('/^\s*\{.*\}\s*$/s', '', $cleanReply);
+            $cleanReply = trim($cleanReply);
+
+            if ($cleanReply === '') {
+                $cleanReply = $drinkSuggestion !== null
+                    ? 'Encontrei uma receita pra você! 🍹 Veja os detalhes abaixo.'
+                    : 'Desculpe, não consegui processar sua pergunta.';
             }
 
             $usage->increment('ai_calls_count');
