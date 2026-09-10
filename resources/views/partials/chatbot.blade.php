@@ -288,6 +288,7 @@
                 },
                 body: JSON.stringify({
                     nome: drink.nome,
+                    tipo: drink.tipo,
                     modo_preparo: drink.modo_preparo,
                     ingredientes: drink.ingredientes,
                 }),

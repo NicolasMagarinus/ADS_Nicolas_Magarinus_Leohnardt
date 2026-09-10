@@ -22,10 +22,10 @@ Route::get('/auth/google', [GoogleController::class, 'redirectToGoogle'])->name(
 Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback'])->name('google.callback');
 
 Route::get('/register', [RegisterController::class, 'index'])->name('register');
-Route::post('/register', [RegisterController::class, 'register'])->name('register.submit');
+Route::post('/register', [RegisterController::class, 'register'])->name('register.submit')->middleware('throttle:5,1');
 
 Route::get('/login', [LoginController::class, 'index'])->name('login');
-Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
+Route::post('/login', [LoginController::class, 'login'])->name('login.submit')->middleware('throttle:5,1');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/random', [RandomDrinkController::class, 'index'])->name('random');

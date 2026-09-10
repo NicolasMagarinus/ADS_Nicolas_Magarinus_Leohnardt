@@ -13,6 +13,8 @@ class CadastroBebida extends Model
     protected $fillable = [
         'id_usuario',
         'nm_bebida',
+        'id_tipo',
+        'ds_bebida',
         'ds_preparo',
         'ds_imagem',
         'id_status',

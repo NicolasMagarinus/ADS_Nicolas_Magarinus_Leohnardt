@@ -25,12 +25,16 @@ class CadastroBebidaController extends Controller
     {
         $request->validate([
             'nm_bebida' => 'required|string|max:255',
+            'id_tipo' => 'required|integer|in:1,2',
+            'ds_bebida' => 'nullable|string|max:1000',
             'ds_preparo' => 'required|string',
             'ds_imagem' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
             'ingredientes' => 'required|array|min:1',
             'ingredientes.*.nm_ingrediente' => 'required|string|max:255',
             'ingredientes.*.ds_medida' => 'nullable|string|max:255',
         ], [
+            'id_tipo.required' => 'Informe se a bebida é alcoólica ou não alcoólica',
+            'id_tipo.in' => 'Informe se a bebida é alcoólica ou não alcoólica',
             'ds_imagem.image' => 'O arquivo deve ser uma imagem',
             'ds_imagem.mimes' => 'A imagem deve ser nos formatos: JPEG, PNG ou JPG',
             'ds_imagem.max' => 'A imagem não pode ser maior que 5MB',
@@ -59,6 +63,8 @@ class CadastroBebidaController extends Controller
             $cadastro = CadastroBebida::create([
                 'id_usuario' => Auth::id(),
                 'nm_bebida' => $request->nm_bebida,
+                'id_tipo' => $request->id_tipo,
+                'ds_bebida' => $request->ds_bebida,
                 'ds_preparo' => $request->ds_preparo,
                 'ds_imagem' => $imageUrl,
                 'id_status' => 0
@@ -103,8 +109,8 @@ class CadastroBebidaController extends Controller
                 'nm_bebida' => $cadastro->nm_bebida,
                 'ds_preparo' => $cadastro->ds_preparo,
                 'ds_imagem' => $cadastro->ds_imagem,
-                'id_tipo' => 1,
-                'ds_bebida' => 'Bebida cadastrada por usuário'
+                'id_tipo' => $cadastro->id_tipo,
+                'ds_bebida' => $cadastro->ds_bebida ?: 'Bebida cadastrada por usuário'
             ]);
 
             foreach ($cadastro->ingredientes as $item) {

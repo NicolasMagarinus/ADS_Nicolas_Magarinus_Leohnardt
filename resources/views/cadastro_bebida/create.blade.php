@@ -40,6 +40,27 @@
                             </div>
                         </div>
 
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label d-block">Tipo</label>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="id_tipo" id="id_tipo_1" value="1" required
+                                        {{ old('id_tipo', '1') == '1' ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="id_tipo_1">Alcoólica</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="id_tipo" id="id_tipo_2" value="2"
+                                        {{ old('id_tipo') == '2' ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="id_tipo_2">Não alcoólica</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="ds_bebida" class="form-label">Descrição <span class="text-muted">(opcional)</span></label>
+                            <textarea name="ds_bebida" id="ds_bebida" class="form-control" rows="2" maxlength="1000" placeholder="Uma frase sobre a bebida: sabor, origem, quando servir...">{{ old('ds_bebida') }}</textarea>
+                        </div>
+
                         <div class="mb-3">
                             <label for="ds_preparo" class="form-label">Modo de Preparo</label>
                             <textarea name="ds_preparo" id="ds_preparo" class="form-control" rows="4" required placeholder="Descreva o passo a passo...">{{ old('ds_preparo') }}</textarea>

@@ -95,8 +95,13 @@ class ChatbotController extends Controller
                                         'type' => 'string',
                                         'description' => 'Passo a passo do preparo',
                                     ],
+                                    'tipo' => [
+                                        'type' => 'integer',
+                                        'enum' => [1, 2],
+                                        'description' => 'Tipo da bebida: 1 para alcoólica, 2 para não alcoólica',
+                                    ],
                                 ],
-                                'required' => ['nome', 'ingredientes', 'modo_preparo'],
+                                'required' => ['nome', 'ingredientes', 'modo_preparo', 'tipo'],
                             ],
                         ],
                     ],
@@ -180,6 +185,7 @@ class ChatbotController extends Controller
     {
         $request->validate([
             'nome' => 'required|string|max:255',
+            'tipo' => 'nullable|integer|in:1,2',
             'modo_preparo' => 'required|string',
             'ingredientes' => 'required|array|min:1',
             'ingredientes.*.nm_ingrediente' => 'required|string|max:255',
@@ -213,6 +219,7 @@ class ChatbotController extends Controller
             $cadastro = CadastroBebida::create([
                 'id_usuario' => Auth::id(),
                 'nm_bebida' => $request->nome,
+                'id_tipo' => $request->input('tipo', 1),
                 'ds_preparo' => $request->modo_preparo,
                 'ds_imagem' => null,
                 'id_status' => 0,

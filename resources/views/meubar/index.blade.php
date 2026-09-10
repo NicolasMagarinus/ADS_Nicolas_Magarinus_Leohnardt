@@ -128,7 +128,7 @@
                     ingredients.forEach((ing, index) => {
                         const chip = document.createElement('span');
                         chip.className = 'meubar-chip';
-                        chip.innerHTML = `${ing.nm_ingrediente} <button type="button" class="meubar-chip-remove" data-index="${index}">&times;</button>`;
+                        chip.innerHTML = `${escapeHtml(ing.nm_ingrediente)} <button type="button" class="meubar-chip-remove" data-index="${index}">&times;</button>`;
                         chipsContainer.appendChild(chip);
                     });
                 }
@@ -307,26 +307,33 @@
                 }
             }
 
+            function escapeHtml(str) {
+                if (!str) return '';
+                return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
+
             function createDrinkCard(drink, showMissing) {
-                const image = drink.ds_imagem || defaultImage;
+                const image = escapeHtml(drink.ds_imagem || defaultImage);
+                const nome = escapeHtml(drink.nm_bebida);
                 const nota = parseFloat(drink.nota) || 0;
-                const qtAval = drink.qt_avaliacao || 0;
+                const qtAval = parseInt(drink.qt_avaliacao, 10) || 0;
+                const cdBebida = parseInt(drink.cd_bebida, 10) || 0;
 
                 let missingHtml = '';
                 if (showMissing && drink.ingredientes_faltando && drink.ingredientes_faltando.length > 0) {
                     const badges = drink.ingredientes_faltando.map(i =>
-                        `<span class="meubar-badge-faltando">${i}</span>`
+                        `<span class="meubar-badge-faltando">${escapeHtml(i)}</span>`
                     ).join(' ');
                     missingHtml = `<div class="mt-2"><small class="text-muted">Falta:</small> ${badges}</div>`;
                 }
 
                 return `
                 <div class="col-md-3 col-sm-6 mb-4">
-                    <a href="/bebida/${drink.cd_bebida}" class="text-decoration-none text-dark">
+                    <a href="/bebida/${cdBebida}" class="text-decoration-none text-dark">
                         <div class="card drink-card h-100">
-                            <img src="${image}" class="card-img-top" alt="${drink.nm_bebida}" height="200" style="object-fit: cover;">
+                            <img src="${image}" class="card-img-top" alt="${nome}" height="200" style="object-fit: cover;">
                             <div class="card-body">
-                                <h5 class="card-title">${drink.nm_bebida}</h5>
+                                <h5 class="card-title">${nome}</h5>
                                 <p class="card-text">
                                     <i class="bi bi-star-fill text-warning"></i>
                                     ${nota} (${qtAval} avaliações)
