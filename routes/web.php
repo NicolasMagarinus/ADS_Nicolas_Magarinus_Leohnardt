@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\Auth\RecuperacaoSenhaController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\AvaliacaoController;
@@ -26,6 +27,23 @@ Route::post('/register', [RegisterController::class, 'register'])->name('registe
 
 Route::get('/login', [LoginController::class, 'index'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit')->middleware('throttle:5,1');
+
+// Recuperação de senha por código de 6 dígitos enviado por e-mail.
+// O throttle de verificação é mais folgado que o limite de 5 tentativas do
+// controller, de propósito: quem barra o chute é a contagem por código,
+// que é precisa; o throttle é só a rede grossa contra automação.
+Route::prefix('esqueci-senha')->group(function () {
+    Route::get('/', [RecuperacaoSenhaController::class, 'solicitar'])->name('password.request');
+    Route::post('/', [RecuperacaoSenhaController::class, 'enviarCodigo'])
+        ->name('password.email')->middleware('throttle:5,1');
+
+    Route::get('/codigo', [RecuperacaoSenhaController::class, 'formularioCodigo'])->name('password.code');
+    Route::post('/codigo', [RecuperacaoSenhaController::class, 'verificarCodigo'])
+        ->name('password.code.verify')->middleware('throttle:10,1');
+
+    Route::get('/redefinir', [RecuperacaoSenhaController::class, 'formularioNovaSenha'])->name('password.reset');
+    Route::post('/redefinir', [RecuperacaoSenhaController::class, 'redefinir'])->name('password.update');
+});
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/random', [RandomDrinkController::class, 'index'])->name('random');

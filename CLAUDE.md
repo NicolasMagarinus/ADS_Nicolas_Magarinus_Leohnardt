@@ -64,6 +64,15 @@ Read-heavy pages bypass Eloquent and use `DB::select` with heredoc SQL that aggr
 
 Two-tier: `verificarFaq()` matches accent-stripped regexes for navigation/FAQ answers and returns **without** calling OpenAI; only unmatched messages reach the API. AI calls are metered per user per day in `chatbot_usage` (`AI_DAILY_LIMIT = 5`, returns HTTP 429 when exhausted). The model may call the `sugerir_receita` tool; the structured recipe is returned to the browser, checked against the catalog and the user's pending submissions, and can be pushed into the staging pipeline via `chatbot.salvar-bebida`. All routes require auth. The entire chatbot UI and its JS live inline in the Blade partial, included globally from the layout.
 
+### Password recovery
+
+Three steps (`RecuperacaoSenhaController`): request a code, confirm the 6-digit code, choose the new
+password. The email under recovery travels in the session, never in the URL or a form field, so the
+code check cannot be skipped by editing a parameter, and one person's wrong guesses cannot burn
+another's attempts. The code is stored hashed in `password_reset_tokens.token`, expires in 15
+minutes, and dies after 5 wrong guesses (the `tentativas` column). A request for an unknown email
+returns exactly the same response as a known one.
+
 ### External services
 
 OpenAI (`openai-php/laravel`, `config/openai.php`, model from `OPENAI_MODEL`), Cloudinary (all drink/ingredient images — uploads return a secure URL stored in `ds_imagem`; no local disk storage), Laravel Socialite for Google login (`GoogleController`, stateless, auto-creates the user).
@@ -90,6 +99,12 @@ php artisan test --filter=MeuBarTest
 `drinkerito_test`. Pointing that connection at any database you care about will drop its tables.
 
 Coverage is deliberately narrow: the chatbot's daily AI quota, the approval pipeline (drink type and
-ingredient normalization), and the Meu Bar ingredient matching. Those three carry the logic that
-costs money, corrupts the catalog, or breaks silently. Tests fake OpenAI via `OpenAI::fake()` and
-never reach the real API.
+ingredient normalization), the Meu Bar ingredient matching, and password recovery. Those carry the
+logic that costs money, corrupts the catalog, or breaks silently. Tests fake OpenAI via
+`OpenAI::fake()` and never reach the real API.
+
+`Mail::fake()` intercepts before the message is built, so it never catches a broken email template or
+a missing sender. `RecuperacaoSenhaTest` therefore also renders the Mailable for real and asserts
+`mail.from.address` is set — a null `MAIL_FROM_ADDRESS` makes every send throw *"An email must have a
+From header"*. Note also that the `log` mailer writes at **debug** level, so `LOG_LEVEL=info` silently
+swallows the email you are trying to read in `storage/logs`.

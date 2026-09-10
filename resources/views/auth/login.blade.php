@@ -271,7 +271,7 @@
                                 <input type="checkbox" name="remember" id="remember" class="form-check-input" {{ old('remember') ? 'checked' : '' }}>
                                 <label class="form-check-label" for="remember">Lembrar-me</label>
                             </div>
-                            {{-- <a href="{{ route('password.request') }}" class="register-link">Esqueceu sua senha?</a> --}}
+                            <a href="{{ route('password.request') }}" class="register-link">Esqueceu sua senha?</a>
                         </div>
 
                         <div class="d-grid mb-3">
