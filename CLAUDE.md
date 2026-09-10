@@ -4,6 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
+`docs/proximos-passos.md` carries the open backlog (28 items with file:line pointers) and the steps to
+set the project up on a fresh machine — read it before picking up new work.
+
 Drinkerito — Laravel 12 web app (PHP 8.2) for discovering, rating, submitting and recommending drink recipes. UI, code identifiers and comments are in Portuguese (pt-BR). Deployed on Railway (`railway.toml`, nixpacks).
 
 ## Commands
