@@ -36,7 +36,7 @@ September 2026; the drinks it seeded remain in the database, but nothing re-fetc
 
 ## Database
 
-PostgreSQL only (`DB_CONNECTION=pgsql`). Much of the query logic is raw PostgreSQL and **will not run on SQLite**: `json_agg`/`json_build_object`, `COUNT(...) FILTER (WHERE ...)`, `= ANY(?)` / `<> ALL(?)` with hand-built array literals (`'{1,2,3}'`), and the `unaccent` extension (enabled by its own migration) used for accent-insensitive search. Note that `phpunit.xml` pins the test suite to in-memory SQLite, so any feature test touching these paths needs a real Postgres connection instead.
+PostgreSQL only (`DB_CONNECTION=pgsql`). Much of the query logic is raw PostgreSQL and **will not run on SQLite**: `json_agg`/`json_build_object`, `COUNT(...) FILTER (WHERE ...)`, `= ANY(?)` / `<> ALL(?)` with hand-built array literals (`'{1,2,3}'`), the `unaccent` extension (enabled by its own migration) used for accent-insensitive search, and the `f_unaccent()` IMMUTABLE wrapper that backs the unique index on ingredient names. `phpunit.xml` therefore points at a real Postgres database, not SQLite.
 
 ### Naming conventions (non-Laravel)
 
@@ -52,7 +52,9 @@ Tables are singular Portuguese names; columns use Hungarian-style prefixes: `cd_
 
 ### Drink submission pipeline
 
-`cadastro_bebida` + `cadastro_bebida_ingrediente` are a **staging area**, deliberately separate from the live catalog. Users (or the chatbot) write there with `id_status = 0`; ingredients are stored as free text (`nm_ingrediente`). On admin approval (`CadastroBebidaController::aprovar`) the row is copied into `bebida`, each ingredient name is `Str::title`-normalized and resolved via `Ingrediente::firstOrCreate`, and links land in `bebida_ingrediente`. Only then is the drink visible in search/random/detail. Never write directly to `bebida` from a user-facing path.
+`cadastro_bebida` + `cadastro_bebida_ingrediente` are a **staging area**, deliberately separate from the live catalog. Users (or the chatbot) write there with `id_status = 0`; ingredients are stored as free text (`nm_ingrediente`). On admin approval (`CadastroBebidaController::aprovar`) the row is copied into `bebida` — carrying `id_tipo` and `ds_bebida` across — each ingredient name is resolved through `Ingrediente::normalizar()`, and links land in `bebida_ingrediente`. Only then is the drink visible in search/random/detail. Never write directly to `bebida` from a user-facing path.
+
+`Ingrediente::normalizar()` is the single write path for ingredient names: it matches ignoring accent and case (the same rule as the `ingrediente_nome_unico` index), so `Agua`, `Água` and `ÁGUA` always resolve to one row. Both AI commands go through it too. Writing to `ingrediente` any other way will eventually hit the unique index.
 
 ### Query style
 
@@ -74,4 +76,20 @@ Views extend `layouts.app` and use `@yield('content')`; header/footer/chatbot co
 
 ## Tests
 
-Only the default Laravel scaffolding exists in `tests/` — there is no meaningful coverage yet.
+Local development and the test suite both run against a Postgres container, kept separate from the
+deployed Railway database:
+
+```bash
+docker start drinkerito-db          # postgres:17-alpine on port 5434
+php artisan test                    # uses drinkerito_test on the same container
+php artisan test --filter=MeuBarTest
+```
+
+`phpunit.xml` carries the test connection, so no `.env.testing` is needed. Feature tests use
+`RefreshDatabase`, which runs every migration — including the ingredient merge — against
+`drinkerito_test`. Pointing that connection at any database you care about will drop its tables.
+
+Coverage is deliberately narrow: the chatbot's daily AI quota, the approval pipeline (drink type and
+ingredient normalization), and the Meu Bar ingredient matching. Those three carry the logic that
+costs money, corrupts the catalog, or breaks silently. Tests fake OpenAI via `OpenAI::fake()` and
+never reach the real API.
