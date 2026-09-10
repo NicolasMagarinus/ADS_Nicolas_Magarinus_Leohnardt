@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Ingrediente;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use OpenAI\Laravel\Facades\OpenAI;
@@ -107,25 +108,21 @@ class GerarBebidasAI extends Command
 
                     if (!$nomeIng) continue;
 
-                    $cd_ingrediente = DB::table('ingrediente')
-                        ->where('nm_ingrediente', 'ilike', $nomeIng)
-                        ->value('cd_ingrediente');
+                    $cd_ingrediente = Ingrediente::normalizar($nomeIng)->cd_ingrediente;
 
-                    if (!$cd_ingrediente) {
-                        $cd_ingrediente = DB::table('ingrediente')->insertGetId([
-                            'nm_ingrediente' => $nomeIng,
+                    // A IA pode repetir o mesmo ingrediente com grafias diferentes,
+                    // que normalizam para a mesma linha.
+                    DB::table('bebida_ingrediente')->updateOrInsert(
+                        [
+                            'cd_bebida' => $cd_bebida,
+                            'cd_ingrediente' => $cd_ingrediente,
+                        ],
+                        [
+                            'ds_medida' => $medida,
                             'created_at' => now(),
                             'updated_at' => now(),
-                        ], 'cd_ingrediente');
-                    }
-
-                    DB::table('bebida_ingrediente')->insert([
-                        'cd_bebida' => $cd_bebida,
-                        'cd_ingrediente' => $cd_ingrediente,
-                        'ds_medida' => $medida,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
+                        ]
+                    );
                 }
             }
 

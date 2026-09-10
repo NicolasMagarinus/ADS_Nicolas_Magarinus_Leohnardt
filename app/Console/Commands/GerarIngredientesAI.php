@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Ingrediente;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use OpenAI\Laravel\Facades\OpenAI;
@@ -55,20 +56,13 @@ class GerarIngredientesAI extends Command
 
                 DB::beginTransaction();
                 try {
-                    $cd_ingrediente = DB::table('ingrediente')
-                        ->where('nm_ingrediente', 'ilike', $nome)
-                        ->value('cd_ingrediente');
+                    $ingrediente = Ingrediente::normalizar($nome);
+                    $cd_ingrediente = $ingrediente->cd_ingrediente;
 
-                    if (!$cd_ingrediente) {
-                        $cd_ingrediente = DB::table('ingrediente')->insertGetId([
-                            'nm_ingrediente' => $nome,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ], 'cd_ingrediente');
-
-                        $this->line("Ingrediente criado: {$nome} (id: {$cd_ingrediente})");
+                    if ($ingrediente->wasRecentlyCreated) {
+                        $this->line("Ingrediente criado: {$ingrediente->nm_ingrediente} (id: {$cd_ingrediente})");
                     } else {
-                        $this->line("Ingrediente já existe: {$nome} (id: {$cd_ingrediente}) — adicionando/atualizando imagem");
+                        $this->line("Ingrediente já existe: {$ingrediente->nm_ingrediente} (id: {$cd_ingrediente}) — adicionando/atualizando imagem");
                     }
 
                     $this->gerarImagemIngrediente($cd_ingrediente, $nome);

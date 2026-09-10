@@ -114,16 +114,17 @@ class CadastroBebidaController extends Controller
             ]);
 
             foreach ($cadastro->ingredientes as $item) {
-                $nomePadronizado = Str::title(trim($item->nm_ingrediente));
-                $ingrediente = Ingrediente::firstOrCreate(
-                    ['nm_ingrediente' => $nomePadronizado]
-                );
+                $ingrediente = Ingrediente::normalizar($item->nm_ingrediente);
 
-                BebidaIngrediente::create([
-                    'cd_bebida' => $bebida->cd_bebida,
-                    'cd_ingrediente' => $ingrediente->cd_ingrediente,
-                    'ds_medida' => $item->ds_medida,
-                ]);
+                // Dois nomes diferentes no cadastro podem normalizar para o
+                // mesmo ingrediente; o vínculo é único por (bebida, ingrediente).
+                BebidaIngrediente::updateOrCreate(
+                    [
+                        'cd_bebida' => $bebida->cd_bebida,
+                        'cd_ingrediente' => $ingrediente->cd_ingrediente,
+                    ],
+                    ['ds_medida' => $item->ds_medida]
+                );
             }
 
             $cadastro->update(['id_status' => 1]);
