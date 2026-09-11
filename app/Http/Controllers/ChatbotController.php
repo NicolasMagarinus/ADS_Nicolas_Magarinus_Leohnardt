@@ -11,6 +11,7 @@ use App\Models\ChatbotUsage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use OpenAI\Laravel\Facades\OpenAI;
@@ -176,7 +177,13 @@ class ChatbotController extends Controller
 
             return response()->json($responseData);
         } catch (\Throwable $e) {
-            error_log('Chatbot AI error: ' . $e->getMessage());
+            // Vai para o canal da aplicação, não para o log do PHP: fora de
+            // storage/logs isto some do `php artisan pail`.
+            Log::error('Erro na chamada à IA do chatbot: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'mensagem' => $text,
+                'exception' => $e,
+            ]);
             return response()->json([
                 'reply' => '😔 Ops! Ocorreu um erro ao consultar a IA. Tente novamente em instantes.',
                 'source' => 'error',

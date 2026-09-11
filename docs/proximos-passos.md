@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **21 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **20 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate
-php artisan test          # 57 testes devem passar
+php artisan test          # 58 testes devem passar
 php artisan serve
 ```
 
@@ -99,7 +99,10 @@ Do mais antigo para o mais novo:
 | `f4c367c` | **SEC-05** — `.env.example` com as chaves do projeto |
 | `7d6fd68` | **SEC-03** — painel de moderação protegido por middleware |
 | `3c58bfb` | **BUG-05/06/07** — relações dos models e favoritar id inexistente |
-| (este) | **QA-02** enums `TipoBebida` e `StatusCadastro`; **QA-05** busca sem o mapa manual de acentos |
+| `a36cab6` | **QA-02** enums `TipoBebida` e `StatusCadastro`; **QA-05** busca sem o mapa manual de acentos |
+| `bcb5a50` | Corrige `MAIL_ENCRYPTION`, chave morta no Laravel 12, no `.env.example` |
+| `05b909a` | Detalha o **SEC-04** com as duas armadilhas de configuração |
+| (este) | **QA-04** — erro do chatbot no canal da aplicação |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -109,11 +112,10 @@ rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bo
 
 ## Ordem sugerida
 
-1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção.
-2. **QA-04** — uma linha, e é o `catch` do chatbot que você mais vai querer ler.
-3. **FEAT-02 (Meu Bar persistente)** — a de maior valor por esforço entre as que sobraram.
-4. **QA-07 e FEAT-06** — baratas e rendem página indexável.
-5. O resto, conforme o tempo.
+1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
+2. **FEAT-02 (Meu Bar persistente)** — a de maior valor por esforço entre as que sobraram.
+3. **QA-07 e FEAT-06** — baratas e rendem página indexável.
+4. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
 
@@ -185,7 +187,7 @@ de teste.
 
 ---
 
-## Qualidade (3)
+## Qualidade (2)
 
 ### QA-03 · Todo o JavaScript mora dentro das views · médio
 
@@ -196,15 +198,6 @@ nunca chama `@vite`. Sem cache, sem versionamento e sem reaproveitar código ent
 
 **Fazer:** não precisa migrar tudo de uma vez. Comece movendo chatbot e Meu Bar para
 `resources/js/`, adicione `@vite` no layout e deixe os utilitários compartilhados num módulo só.
-
-### QA-04 · `error_log()` no lugar do logger · baixo
-
-`app/Http/Controllers/ChatbotController.php:176` escreve no log do PHP em vez do canal da aplicação —
-e é justamente o `catch` do chatbot, o erro que você mais vai querer investigar. Fora do
-`storage/logs`, some do `php artisan pail`.
-
-**Fazer:** `Log::error()` com contexto (id do usuário, mensagem enviada). O `GoogleController` já faz
-certo, use de referência.
 
 ### QA-07 · Todas as páginas têm o mesmo `<title>` · baixo
 
