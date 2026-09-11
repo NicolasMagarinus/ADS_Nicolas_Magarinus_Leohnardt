@@ -84,10 +84,6 @@ class CadastroBebidaController extends Controller
 
     public function index()
     {
-        if (!Auth::user()->id_admin) {
-            abort(403, 'Acesso não autorizado.');
-        }
-
         $bebidas = CadastroBebida::where('id_status', 0)
             ->with('ingredientes')
             ->orderBy('created_at', 'asc')
@@ -98,10 +94,6 @@ class CadastroBebidaController extends Controller
 
     public function aprovar($id)
     {
-        if (!Auth::user()->id_admin) {
-            abort(403, 'Acesso não autorizado.');
-        }
-
         $cadastro = CadastroBebida::with('ingredientes')->findOrFail($id);
 
         DB::transaction(function () use ($cadastro) {
@@ -135,10 +127,6 @@ class CadastroBebidaController extends Controller
 
     public function rejeitar(Request $request, $id)
     {
-        if (!Auth::user()->id_admin) {
-            abort(403, 'Acesso não autorizado.');
-        }
-
         $request->validate([
             'motivo_rejeicao' => 'required|string|max:1000',
         ]);

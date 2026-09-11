@@ -64,7 +64,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/bebida/cadastrar', [CadastroBebidaController::class, 'store'])->name('bebida.store');
     Route::get('/bebida/ingredientes/search', [CadastroBebidaController::class, 'buscarIngredientes'])->name('bebida.ingredientes.search');
 
-    Route::prefix('admin')->name('admin.')->group(function () {
+    // A conferência de admin vive no middleware, não dentro de cada método:
+    // rota nova neste grupo já nasce protegida.
+    Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/bebidas', [CadastroBebidaController::class, 'index'])->name('bebidas.index');
         Route::post('/bebidas/{id}/aprovar', [CadastroBebidaController::class, 'aprovar'])->name('bebidas.approve');
         Route::post('/bebidas/{id}/rejeitar', [CadastroBebidaController::class, 'rejeitar'])->name('bebidas.reject');

@@ -49,7 +49,9 @@ Tables are singular Portuguese names; columns use Hungarian-style prefixes: `cd_
 
 - `bebida.id_tipo`: `1` = alcoólica, `2` = não alcoólica
 - `cadastro_bebida.id_status`: `0` = pendente, `1` = aprovada, `2` = rejeitada (with `ds_motivo_rejeicao`)
-- `users.id_admin`: boolean; admin checks are inline `if (!Auth::user()->id_admin) abort(403)` in `CadastroBebidaController` — there is no middleware or policy.
+- `users.id_admin`: boolean, enforced by the `admin` middleware (`App\Http\Middleware\GarantirAdmin`,
+  aliased in `bootstrap/app.php`) on the `Route::prefix('admin')` group — not by checks inside the
+  controller methods.
 
 ## Architecture
 
