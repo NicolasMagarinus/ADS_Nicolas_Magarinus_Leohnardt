@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate --seed
-php artisan test          # 210 testes devem passar
+php artisan test          # 216 testes devem passar
 php artisan serve
 ```
 
@@ -132,7 +132,7 @@ Do mais antigo para o mais novo:
 | `d4cb68e` | **PERF-06** — aviso de moderação na fila, com teste de fila real |
 | (este) | Atualiza o backlog e o CLAUDE.md depois do bloco QA-08 / SEC-06 / PERF-06 |
 
-A suíte saiu de 32 para 210 testes. A última revisão completa da branch (`/code-review high`,
+A suíte saiu de 32 para 216 testes. A última revisão completa da branch (`/code-review high`,
 30 commits) apontou 9 defeitos, nenhum deles pego pela suíte na época: 5 foram corrigidos nos dois
 commits acima, 2 viraram itens (QA-08 e SEC-06) e 2 eram de terceiros já cobertos. Vale repetir a
 revisão depois de um bloco novo de trabalho — foi ela que achou a aprovação duplicando bebida no
@@ -185,7 +185,9 @@ só de estilo.
 2. **Rodar o Pint no projeto todo**, num commit só de estilo. As duas pendências conhecidas
    (`RecuperacaoSenhaController`, `CodigoRecuperacaoSenha`) seguem lá, mais `concat_space` e
    `trailing_comma_in_multiline` em `CadastroBebidaController` — todas anteriores ao trabalho atual.
-3. **FEAT-08 (coleções de drinks)** — a maior das que sobraram por retorno: lista nomeada e pública é conteúdo indexável gerado pelo usuário.
+3. **FEAT-08 (coleções de drinks)** — a maior das que sobraram por retorno: lista nomeada e pública
+   é conteúdo indexável gerado pelo usuário. **O desenho já está começado**: a descoberta está
+   decidida e a forma da URL é a próxima pergunta. Retome pela seção do item, não do zero.
 4. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
@@ -276,7 +278,7 @@ Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com 
 
 | Item | Onde | O quê |
 |---|---|---|
-| PERF-04 · baixo | `GerarBebidasAI.php:145-188` | Geração de imagem em série: cada drink espera o DALL·E e o upload. Vire Job na fila — o `composer dev` já sobe um `queue:listen` |
+| PERF-04 · baixo | `GerarBebidasAI.php:142-185` | Geração de imagem em série: cada drink espera o DALL·E e o upload. Vire Job na fila — o `composer dev` já sobe um `queue:listen` |
 
 ---
 
@@ -308,11 +310,38 @@ uma **segunda conta** no próximo login, deixando favoritos, receitas e avaliaç
 já existem); e só então a troca de e-mail no perfil, com unique, validação e a senha atual como
 confirmação.
 
-### FEAT-08 · Coleções de drinks · impacto alto, esforço médio
+### FEAT-08 · Coleções de drinks · impacto alto, esforço médio · **DESENHO EM ANDAMENTO**
 
 Favorito é binário. "Drinks de verão", "Para a festa de sábado" — listas nomeadas são o que
 transforma favoritos em algo que se compartilha. Tabelas `colecao` + `colecao_bebida`, com flag de
 pública/privada. Coleção pública com URL própria é conteúdo indexável gerado pelo usuário.
+
+O desenho foi começado e interrompido antes do código. **Nada foi implementado.** O que já está
+decidido e o que falta:
+
+**Decidido — descoberta e visibilidade.** Dois estados só, pública ou privada; não entra o
+"não listada". Existe um índice `/colecoes` com as públicas, mas **só entram as que têm no mínimo 3
+bebidas**. É a mesma regra que o `/ingredientes` já aplica ao excluir ingrediente órfão
+(`IngredienteController::index`): índice cheio de página magra é pior que índice menor. As coleções
+públicas com menos de 3 bebidas continuam acessíveis por link direto e pelo perfil do dono, mas
+saem com `robots=noindex` — o mesmo tratamento que `ingrediente/show.blade.php` já dá à página sem
+receita nenhuma.
+
+**Em aberto — a forma da URL.** A pergunta que estava sendo feita quando o desenho parou. O projeto
+hoje é estritamente numérico (`/ingrediente/{cd}`, `/bebida/{cd}`, todos com `whereNumber`), o que
+pesa pela consistência; um slug (`/colecao/12-drinks-de-verao`) pesa pelo SEO, que é justamente a
+justificativa do item, e obriga a decidir o que acontece com o link quando a pessoa renomeia a
+coleção. É decisão de mão única depois que houver link publicado.
+
+**Em aberto — o resto.** Onde fica a ação de adicionar (o palpite é um modal na página da bebida, ao
+lado do botão de favoritar, listando as coleções da pessoa mais "nova coleção"); se favoritos e
+coleções convivem ou se um absorve o outro (a leitura do enunciado é que convivem); se há limite de
+coleções por usuário; e o que a tela de perfil passa a mostrar.
+
+**Ponto de partida do código:** o análogo mais próximo é o par `IngredienteController` +
+`resources/views/ingrediente/`, que é Eloquent paginado com breadcrumb e as seções de meta — não o
+estilo de SQL cru das telas de leitura pesada. `FavoritoController::alternar` é o modelo do endpoint
+JSON de adicionar/remover.
 
 ### FEAT-09 · Escalar receita e converter medidas · impacto médio, esforço alto
 
@@ -329,8 +358,9 @@ pessoa. Seguir e feed vêm depois, se fizer sentido.
 ### FEAT-12 · Funcionar offline (PWA) · impacto médio, esforço médio
 
 O contexto de uso é alguém preparando um drink com o celular na bancada, muitas vezes com internet
-ruim. Manifest, ícones e um service worker cacheando as telas já visitadas. Depende de QA-03 (build
-via Vite) para ficar organizado.
+ruim. Manifest, ícones e um service worker cacheando as telas já visitadas. Depende do **QA-06**
+(bundling via Vite) para ficar organizado — não do QA-03, que era a extração do JavaScript para
+`public/js/` e já está feito em `f7600c7`.
 
 ---
 
