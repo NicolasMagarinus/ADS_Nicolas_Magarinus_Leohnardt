@@ -89,8 +89,8 @@
             <div class="col-md-6 col-lg-3 mb-4">
                 <a href="{{ route('bebida.show', $bebida->cd_bebida) }}" class="text-decoration-none text-dark">
                     <div class="card h-100 drink-card">
-                        <img src="{{ $bebida->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}" 
-                             class="card-img-top" alt="{{ $bebida->nm_bebida }}">
+                        <img src="@imagem($bebida->ds_imagem, 400)" 
+                             class="card-img-top" alt="{{ $bebida->nm_bebida }}" loading="lazy">
                         <div class="card-body">
                             <h5 class="card-title">{{ $bebida->nm_bebida }}</h5>
                             <p class="card-text">

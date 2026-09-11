@@ -28,10 +28,10 @@
                             <div class="list-group-item p-4">
                                 <div class="row align-items-center">
                                     <div class="col-md-2 text-center">
-                                        <img src="{{ $bebida->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}" 
+                                        <img src="@imagem($bebida->ds_imagem, 400)" 
                                              alt="{{ $bebida->nm_bebida }}" 
                                              class="img-fluid rounded" 
-                                             style="max-height: 100px; object-fit: cover;">
+                                             style="max-height: 100px; object-fit: cover;" loading="lazy">
                                     </div>
                                     <div class="col-md-6">
                                         <h5 class="mb-2">{{ $bebida->nm_bebida }}</h5>

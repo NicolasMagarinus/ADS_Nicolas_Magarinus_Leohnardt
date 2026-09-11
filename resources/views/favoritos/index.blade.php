@@ -14,7 +14,7 @@
                     <div class="col-md-3 mb-4">
                         <a href="{{ route('bebida.show', $bebida->cd_bebida) }}" class="text-decoration-none text-dark">
                             <div class="card drink-card h-100">
-                                <img src="{{ $bebida->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}" class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="200" style="object-fit: cover;">
+                                <img src="@imagem($bebida->ds_imagem, 400)" class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="200" style="object-fit: cover;" loading="lazy">
                                 <div class="card-body">
                                     <h5 class="card-title">{{ $bebida->nm_bebida }}</h5>
                                     <p class="card-text">

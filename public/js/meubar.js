@@ -25,7 +25,6 @@
             const btnLimpar = document.getElementById('btnLimpar');
             const loadingEl = document.getElementById('loadingDrinks');
             const resultsSection = document.getElementById('resultsSection');
-            const defaultImage = 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png';
 
             // Quem já usava o Meu Bar antes de ele virar persistente tem os
             // ingredientes só no localStorage deste navegador. Se o servidor
@@ -253,7 +252,7 @@
             }
 
             function createDrinkCard(drink, showMissing) {
-                const image = escapeHtml(drink.ds_imagem || defaultImage);
+                const image = escapeHtml(window.Drinkerito.imagem(drink.ds_imagem, 400));
                 const nome = escapeHtml(drink.nm_bebida);
                 const nota = parseFloat(drink.nota) || 0;
                 const qtAval = parseInt(drink.qt_avaliacao, 10) || 0;

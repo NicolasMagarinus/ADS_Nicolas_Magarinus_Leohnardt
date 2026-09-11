@@ -22,7 +22,7 @@
 
     <div class="d-flex align-items-center gap-3 mb-4">
         @if($ingrediente->ds_imagem)
-            <img src="{{ $ingrediente->ds_imagem }}" alt="{{ $ingrediente->nm_ingrediente }}"
+            <img src="@imagem($ingrediente->ds_imagem, 200)" alt="{{ $ingrediente->nm_ingrediente }}"
                  class="rounded" width="96" height="96" style="object-fit: cover;" loading="lazy">
         @endif
         <div>
@@ -45,7 +45,7 @@
                 <div class="col-6 col-md-3 mb-4">
                     <a href="{{ route('bebida.show', $bebida->cd_bebida) }}" class="text-decoration-none text-dark">
                         <div class="card drink-card h-100">
-                            <img src="{{ $bebida->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}"
+                            <img src="@imagem($bebida->ds_imagem, 400)"
                                  class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="200"
                                  style="object-fit: cover;" loading="lazy">
                             <div class="card-body">

@@ -11,8 +11,8 @@
                 <div class="card-body text-center">
                     <div class="mb-3">
                         @if($user->ds_avatar)
-                            <img src="{{ $user->ds_avatar }}" alt="Foto de {{ $user->name }}"
-                                 class="rounded-circle" width="120" height="120" style="object-fit: cover;">
+                            <img src="@imagem($user->ds_avatar, 240)" alt="Foto de {{ $user->name }}"
+                                 class="rounded-circle" width="120" height="120" style="object-fit: cover;" loading="lazy">
                         @else
                             <i class="bi bi-person-circle display-1 text-secondary"></i>
                         @endif
@@ -67,10 +67,10 @@
                     <div class="row g-0">
                         <div class="col-md-3">
                             @if($bebida->ds_imagem)
-                                <img src="{{ $bebida->ds_imagem }}" class="img-fluid rounded-start h-100 object-fit-cover" alt="{{ $bebida->nm_bebida }}" style="min-height: 150px; max-height: 200px; width: 100%; object-fit: cover;">
+                                <img src="@imagem($bebida->ds_imagem, 400)" class="img-fluid rounded-start h-100 object-fit-cover" alt="{{ $bebida->nm_bebida }}" style="min-height: 150px; max-height: 200px; width: 100%; object-fit: cover;" loading="lazy">
                             @else
                                 <div class="d-flex align-items-center justify-content-center bg-light rounded-start h-100" style="min-height: 150px;">
-                                    <img src="https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png" class="img-fluid" alt="Imagem não disponível">
+                                    <img src="@imagem(null, 400)" class="img-fluid" alt="Imagem não disponível" loading="lazy">
                                 </div>
                             @endif
                         </div>

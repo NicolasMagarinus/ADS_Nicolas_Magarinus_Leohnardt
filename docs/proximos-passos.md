@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **15 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **14 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate
-php artisan test          # 150 testes devem passar
+php artisan test          # 164 testes devem passar
 php artisan serve
 ```
 
@@ -112,7 +112,8 @@ Do mais antigo para o mais novo:
 | `36c8910` | **FEAT-04** — aviso por e-mail ao aprovar ou rejeitar |
 | `cd19f0c` | **FEAT-07** — chatbot com memória da conversa |
 | `54eea3d` | **PERF-02** cache da home; parte do **PERF-01**, paginação do painel de moderação |
-| (este) | **QA-03** — JavaScript fora das views, em `public/js/` |
+| `f7600c7` | **QA-03** — JavaScript fora das views, em `public/js/` |
+| (este) | **PERF-05** — imagens no tamanho em que aparecem |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -124,7 +125,7 @@ rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bo
 
 1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
 2. **DB-04 (seeder de bebidas)** — depois de um `migrate:fresh` o catálogo só volta chamando a OpenAI, o que custa dinheiro.
-3. **PERF-05** — `loading="lazy"` e transformação do Cloudinary nas imagens; é pouca linha e o ganho aparece no celular.
+3. **PERF-03** — `ORDER BY RANDOM()` ordena a tabela toda para devolver uma linha; é a rota /random.
 4. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
@@ -227,7 +228,7 @@ O **FEAT-12 (PWA)** depende deste item, não da extração que já foi feita.
 
 ---
 
-## Performance (5)
+## Performance (4)
 
 Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com crescimento.
 
@@ -237,7 +238,6 @@ Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com 
 | PERF-03 · baixo | `app/Models/Bebida.php:46` | `ORDER BY RANDOM()` ordena a tabela toda para devolver uma linha. Sorteie o `cd_bebida` primeiro, depois monte a query completa |
 | PERF-06 · baixo | `CadastroBebidaController::avisarAutor` | O aviso de moderação sai no mesmo request, depois do commit. Com `QUEUE_CONNECTION=sync` enfileirar não mudaria nada hoje; no dia em que a fila for de verdade, `ShouldQueue` na Notification tira o SMTP do caminho do admin |
 | PERF-04 · baixo | `GerarBebidasAI.php:145-188` | Geração de imagem em série: cada drink espera o DALL·E e o upload. Vire Job na fila — o `composer dev` já sobe um `queue:listen` |
-| PERF-05 · baixo | `search`, `favoritos`, `meubar` | Imagens do Cloudinary em tamanho cheio (até 1024px) para exibir em 200px. `loading="lazy"` e `w_400,f_auto,q_auto` na URL |
 
 ---
 

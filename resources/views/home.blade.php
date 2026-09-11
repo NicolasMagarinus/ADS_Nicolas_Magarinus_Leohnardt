@@ -29,8 +29,8 @@
                     <div class="col-md-3 mb-4 popular-card" data-tipo="{{ $bebida->id_tipo }}" style="display: none;">
                         <a href="{{ route('bebida.show', $bebida->cd_bebida) }}" class="text-decoration-none text-dark">
                             <div class="card drink-card h-100">
-                                <img src="{{ $bebida->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}"
-                                    class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="200" style="object-fit: cover;">
+                                <img src="@imagem($bebida->ds_imagem, 400)"
+                                    class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="200" style="object-fit: cover;" loading="lazy">
                                 <div class="card-body">
                                     <h5 class="card-title">{{ $bebida->nm_bebida }}</h5>
                                     <p class="card-text">
@@ -55,9 +55,9 @@
                             <div class="card drink-card h-100 text-center" style="transition: transform .2s, box-shadow .2s;"
                                 onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 18px rgba(0,0,0,.12)';"
                                 onmouseout="this.style.transform=''; this.style.boxShadow='';">
-                                <img src="{{ $ingrediente->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}"
+                                <img src="@imagem($ingrediente->ds_imagem, 400)"
                                     class="card-img-top" alt="{{ $ingrediente->nm_ingrediente }}" height="200"
-                                    style="object-fit: cover;">
+                                    style="object-fit: cover;" loading="lazy">
                                 <div class="card-body">
                                     <h5 class="card-title">{{ $ingrediente->nm_ingrediente }}</h5>
                                     <p class="card-text text-muted small">Utilizado em {{ $ingrediente->qt_utilizado }} receitas
@@ -81,8 +81,8 @@
                     <div class="col-md-3 mb-4">
                         <a href="{{ route('bebida.show', $bebida->cd_bebida) }}" class="text-decoration-none text-dark">
                             <div class="card drink-card h-100">
-                                <img src="{{ $bebida->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}"
-                                    class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="150" style="object-fit: cover;">
+                                <img src="@imagem($bebida->ds_imagem, 400)"
+                                    class="card-img-top" alt="{{ $bebida->nm_bebida }}" height="150" style="object-fit: cover;" loading="lazy">
                                 <div class="card-body">
                                     <h6 class="card-title">{{ $bebida->nm_bebida }}</h6>
                                 </div>

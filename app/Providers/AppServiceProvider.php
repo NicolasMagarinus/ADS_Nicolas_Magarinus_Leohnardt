@@ -28,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->registrarDiretivaJs();
+        $this->registrarDiretivaImagem();
     }
 
     /**
@@ -38,6 +39,20 @@ class AppServiceProvider extends ServiceProvider
      * velha depois de cada deploy; o carimbo muda com o arquivo e invalida o
      * cache sem exigir um passo de build.
      */
+    /**
+     * @imagem($bebida->ds_imagem, 400) → a URL do Cloudinary já no tamanho em
+     * que a imagem vai aparecer, ou o placeholder quando não houver imagem.
+     *
+     * Não use em og:image: WhatsApp e Facebook querem a imagem grande no card
+     * da prévia.
+     */
+    private function registrarDiretivaImagem(): void
+    {
+        Blade::directive('imagem', function ($expression) {
+            return "<?php echo e(\App\Support\Imagem::miniatura({$expression})); ?>";
+        });
+    }
+
     private function registrarDiretivaJs(): void
     {
         Blade::directive('js', function ($expression) {

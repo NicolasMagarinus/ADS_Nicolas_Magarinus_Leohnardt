@@ -19,7 +19,7 @@
                     <a href="{{ route('ingrediente.show', $ingrediente->cd_ingrediente) }}"
                        class="text-decoration-none text-dark">
                         <div class="card drink-card h-100 text-center">
-                            <img src="{{ $ingrediente->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}"
+                            <img src="@imagem($ingrediente->ds_imagem, 400)"
                                  class="card-img-top" alt="{{ $ingrediente->nm_ingrediente }}" height="180"
                                  style="object-fit: cover;" loading="lazy">
                             <div class="card-body">

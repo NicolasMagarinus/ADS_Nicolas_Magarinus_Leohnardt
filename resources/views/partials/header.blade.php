@@ -52,8 +52,8 @@
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                                 data-bs-toggle="dropdown">
                                 @if(Auth::user()->ds_avatar)
-                                    <img src="{{ Auth::user()->ds_avatar }}" alt="" class="rounded-circle me-1"
-                                         width="24" height="24" style="object-fit: cover;">
+                                    <img src="@imagem(Auth::user()->ds_avatar, 48)" alt="" class="rounded-circle me-1"
+                                         width="24" height="24" style="object-fit: cover;" loading="lazy">
                                 @else
                                     <i class="bi bi-person-circle me-1"></i>
                                 @endif
@@ -125,7 +125,8 @@
             item.href = `/bebida/${b.cd_bebida}`;
 
             const img = document.createElement('img');
-            img.src = b.ds_imagem ? b.ds_imagem : 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png';
+            img.src = window.Drinkerito.imagem(b.ds_imagem, 400);
+            img.loading = 'lazy';
             img.classList.add('me-2');
             img.style.width = "40px";
             img.style.height = "40px";

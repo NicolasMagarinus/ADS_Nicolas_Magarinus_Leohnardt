@@ -68,12 +68,12 @@
                              onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,.12)';"
                              onmouseout="this.style.transform=''; this.style.boxShadow='';">
                             <div style="overflow: hidden; border-radius: 14px 14px 0 0; height: 190px;">
-                                <img src="{{ $bebida->ds_imagem ?: 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png' }}"
+                                <img src="@imagem($bebida->ds_imagem, 400)"
                                      class="w-100 h-100"
                                      alt="{{ $bebida->nm_bebida }}"
                                      style="object-fit: cover; transition: transform .3s;"
                                      onmouseover="this.style.transform='scale(1.05)';"
-                                     onmouseout="this.style.transform='';">
+                                     onmouseout="this.style.transform='';" loading="lazy">
                             </div>
                             <div class="card-body pb-3">
                                 <h5 class="card-title fw-semibold mb-1" style="font-size: .95rem;">{{ $bebida->nm_bebida }}</h5>

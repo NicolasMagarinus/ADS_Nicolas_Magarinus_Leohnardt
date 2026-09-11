@@ -166,6 +166,15 @@ OpenAI (`openai-php/laravel`, `config/openai.php`, model from `OPENAI_MODEL`), C
 
 Vite, Tailwind and `resources/js|css` exist from the Laravel skeleton but **the layout does not use `@vite`**. `resources/views/layouts/app.blade.php` loads Bootstrap 5, Bootstrap Icons, Font Awesome and SweetAlert2 from CDNs plus `public/css/custom.css` (the single hand-written stylesheet, CSS variables at the top). Style changes belong in `public/css/custom.css`; adding a class from Tailwind will not work. Pagination is Bootstrap 5-styled via `AppServiceProvider`.
 
+Images are requested from Cloudinary at the size they are displayed, through `App\Support\Imagem`
+and its `@imagem($url, $largura)` Blade directive — the transformation (`w_N,f_auto,q_auto`) is
+inserted after `/upload/`. It returns the shared placeholder when the URL is empty, and leaves alone
+any URL that is not Cloudinary's or that already carries a transformation. `window.Drinkerito.imagem`
+mirrors it for the screens built in JavaScript. Two rules worth keeping: `og:image` must stay
+**untransformed**, because WhatsApp and Facebook want the large image in the link preview; and the
+image at the top of the drink and random pages is not `loading="lazy"`, since it is the content the
+visitor came for.
+
 Page JavaScript lives in `public/js/`, served with the `@js('file.js')` Blade directive registered in
 `AppServiceProvider` — it emits a `defer` script tag with a `?v=` stamp from `filemtime`, so there is
 cache busting without a build step. `drinkerito.js` holds the shared helpers (`window.Drinkerito`) and
