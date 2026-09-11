@@ -40,8 +40,14 @@ class CadastroBebidaController extends Controller
             'ingredientes.*.nm_ingrediente' => 'required|string|max:255',
             'ingredientes.*.ds_medida' => 'nullable|string|max:255',
         ], [
+            // Só 'required' ganha mensagem própria: o formulário usa radio, então a
+            // pessoa ou não escolhe nada ou manda um dos dois valores. Um id_tipo
+            // fora da lista só chega com o payload adulterado, e aí a mensagem
+            // genérica de lang/pt_BR/validation.php ('enum') já basta. Ela não
+            // pode ser sobrescrita aqui por 'id_tipo.enum': para regra-objeto o
+            // Laravel monta a chave com o nome da CLASSE da regra, não com o da
+            // regra (Validator::validateUsingCustomRule).
             'id_tipo.required' => 'Informe se a bebida é alcoólica ou não alcoólica',
-            'id_tipo.in' => 'Informe se a bebida é alcoólica ou não alcoólica',
             'ds_imagem.image' => 'O arquivo deve ser uma imagem',
             'ds_imagem.mimes' => 'A imagem deve ser nos formatos: JPEG, PNG ou JPG',
             'ds_imagem.max' => 'A imagem não pode ser maior que 5MB',

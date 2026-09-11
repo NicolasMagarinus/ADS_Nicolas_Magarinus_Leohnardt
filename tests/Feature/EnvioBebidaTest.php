@@ -70,4 +70,25 @@ class EnvioBebidaTest extends TestCase
             ->post(route('bebida.store'), $dados)
             ->assertSessionHasErrors('id_tipo');
     }
+
+    public function test_tipo_invalido_traz_a_mensagem_em_portugues(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->post(route('bebida.store'), $this->receita(['id_tipo' => 7]))
+            ->assertSessionHasErrors([
+                'id_tipo' => 'O valor escolhido para tipo é inválido.',
+            ]);
+    }
+
+    public function test_regra_sem_mensagem_propria_tambem_sai_em_portugues(): void
+    {
+        $dados = $this->receita();
+        unset($dados['ds_preparo']);
+
+        $this->actingAs(User::factory()->create())
+            ->post(route('bebida.store'), $dados)
+            ->assertSessionHasErrors([
+                'ds_preparo' => 'O campo modo de preparo é obrigatório.',
+            ]);
+    }
 }
