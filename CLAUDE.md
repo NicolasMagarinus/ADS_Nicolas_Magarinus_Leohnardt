@@ -156,6 +156,12 @@ because by then the drink is already in the catalog and a 500 would make the adm
 It reads `$cadastro->usuario` without a null check, which is safe only because `id_usuario` is NOT
 NULL and its FK cascades; `NotificacaoModeracaoTest` pins that invariant.
 
+`BebidaModerada` implements `ShouldQueue`, so the send is dispatched rather than performed inline.
+With `QUEUE_CONNECTION=sync` — the current setting everywhere, including the tests — nothing changes
+in practice. What does change is that the whole notification is now serialized, and the suite never
+exercises that path; `FilaModeracaoTest` does, against the `database` queue with a real
+`queue:work`, because a serialization break fails silently and the author simply never hears back.
+
 ### Password recovery
 
 Three steps (`RecuperacaoSenhaController`): request a code, confirm the 6-digit code, choose the new
@@ -164,6 +170,11 @@ code check cannot be skipped by editing a parameter, and one person's wrong gues
 another's attempts. The code is stored hashed in `password_reset_tokens.token`, expires in 15
 minutes, and dies after 5 wrong guesses (the `tentativas` column). A request for an unknown email
 returns exactly the same response as a known one.
+
+The third step re-reads `password_reset_tokens` before saving the new password. The session mark
+only records that the code *was* checked, not that it still holds: without the re-check, a tab left
+open past the 15 minutes would still change the password. Both steps share `expirou()` so the rule
+lives in one place.
 
 ### Profile editing
 
@@ -203,6 +214,16 @@ read it. Values only the server knows (CSRF token, route URLs, initial data) sta
 `<script>` per view that defines a config object the static file reads — that is what lets the bulk of
 the code be a cacheable static file. Vite is still unused; see QA-06 in the backlog for why.
 
+### Validation messages
+
+`lang/pt_BR/validation.php` carries the translations, and its `attributes` block maps the Hungarian
+column names to readable Portuguese — without it `:attribute` renders as "ds preparo". Add an entry
+there whenever a new column reaches a form. One trap: a `Rule::enum` message **cannot** be
+overridden with a `'campo.enum'` key. For object rules Laravel builds the custom-message key from
+the rule's **class name** (`Validator::validateUsingCustomRule`), so only
+`'campo.'.Illuminate\Validation\Rules\Enum::class` would match. Prefer the generic translated
+message over coupling a controller to that.
+
 Views extend `layouts.app` and use `@yield('content')`; header/footer/chatbot come from `resources/views/partials/`.
 
 `partials/meta.blade.php`, included from the layout's `<head>`, builds the `<title>`, the meta
@@ -231,8 +252,8 @@ php artisan test --filter=MeuBarTest
 
 Coverage is deliberately narrow: the chatbot's daily AI quota, the approval pipeline (drink type and
 ingredient normalization), the Meu Bar ingredient matching, password recovery, admin access to the
-moderation panel, accent-insensitive search, the favorite toggle, the submission form, and the enum
-casts. Those carry the logic that costs money, corrupts the catalog, or breaks silently. Tests fake OpenAI via
+moderation panel, accent-insensitive search, the favorite toggle, the submission form, the enum
+casts, and the moderation notice surviving a real queue round trip. Those carry the logic that costs money, corrupts the catalog, or breaks silently. Tests fake OpenAI via
 `OpenAI::fake()` and never reach the real API.
 
 `Mail::fake()` intercepts before the message is built, so it never catches a broken email template or

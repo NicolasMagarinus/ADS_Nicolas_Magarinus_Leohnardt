@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **12 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **9 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -127,6 +127,10 @@ Do mais antigo para o mais novo:
 | `b795658` | Revisão da branch, leva 1: decisão dupla e descrição nula nas metas |
 | `94ec92b` | Revisão da branch, leva 2: parâmetros em array, FAQ que não esfriava, corrida no normalizar |
 | (este) | Registra o que ficou pendente e as decisões tomadas |
+| `977d028` | **QA-08** — mensagens de validação em pt-BR |
+| `25df560` | **SEC-06** — a troca de senha reconfere a validade do código |
+| `d4cb68e` | **PERF-06** — aviso de moderação na fila, com teste de fila real |
+| (este) | Atualiza o backlog e o CLAUDE.md depois do bloco QA-08 / SEC-06 / PERF-06 |
 
 A suíte saiu de 32 para 210 testes. A última revisão completa da branch (`/code-review high`,
 30 commits) apontou 9 defeitos, nenhum deles pego pela suíte na época: 5 foram corrigidos nos dois
@@ -163,6 +167,13 @@ só de estilo.
   como FEAT-13 — não é parte da persistência, que já está feita.
 - **O e-mail não é editável no perfil.** Só nome e avatar. O motivo é o FEAT-15: o `GoogleController`
   identifica a conta pelo e-mail, então trocá-lo criaria uma segunda conta no próximo login.
+- **A mensagem de um `Rule::enum` não se sobrescreve por `'campo.enum'`.** Para regra-objeto o
+  Laravel monta a chave de mensagem customizada com o **nome da classe** da regra
+  (`Validator::validateUsingCustomRule` → `getFromLocalArray($atributo, $ruleClass)`), então a chave
+  que funcionaria é `'id_tipo.'.Illuminate\Validation\Rules\Enum::class`. Acoplar o controller a
+  um nome de classe do framework não vale uma mensagem que só aparece com payload adulterado — o
+  formulário usa radio. Ficou a mensagem genérica de `lang/pt_BR/validation.php`, e só
+  `id_tipo.required` tem texto próprio.
 - **O front não migra para o Vite agora.** A extração do JavaScript para `public/js/` foi feita sem
   build; a migração é o QA-06, com três bloqueios verificados.
 
@@ -171,7 +182,10 @@ só de estilo.
 ## Ordem sugerida
 
 1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
-2. **FEAT-08 (coleções de drinks)** — a maior das que sobraram por retorno: lista nomeada e pública é conteúdo indexável gerado pelo usuário.
+2. **Rodar o Pint no projeto todo**, num commit só de estilo. As duas pendências conhecidas
+   (`RecuperacaoSenhaController`, `CodigoRecuperacaoSenha`) seguem lá, mais `concat_space` e
+   `trailing_comma_in_multiline` em `CadastroBebidaController` — todas anteriores ao trabalho atual.
+3. **FEAT-08 (coleções de drinks)** — a maior das que sobraram por retorno: lista nomeada e pública é conteúdo indexável gerado pelo usuário.
 4. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
@@ -182,7 +196,7 @@ Agora que `bebida.id_tipo` e `cadastro_bebida.id_status` são enums (`App\Enums\
 
 ---
 
-## Segurança (2)
+## Segurança (1)
 
 ### SEC-04 · Configuração de produção no Railway · médio · **PENDENTE**
 
@@ -230,27 +244,7 @@ veja se o código de 6 dígitos chega. É o único caminho que exercita remetent
 
 ---
 
-## Qualidade (2)
-
-### QA-08 · Mensagem de validação em inglês no formulário de bebida · baixo
-
-`CadastroBebidaController.php` define a mensagem `'id_tipo.in'`, mas `Rule::enum` falha com a chave
-`validation.enum`, nunca `validation.in` — a mensagem é código morto. E `lang/pt_BR/` só tem
-`pagination.php`, então um `id_tipo` adulterado mostra o texto padrão em inglês, *"The selected id
-tipo is invalid."*, num formulário em português.
-
-**Fazer:** renomear a chave para `id_tipo.enum` e, já que o projeto é todo pt-BR, publicar
-`lang/pt_BR/validation.php` — qualquer outra regra sem mensagem própria tem o mesmo problema.
-
-### SEC-06 · A troca de senha não reconfere a validade do código · baixo
-
-`RecuperacaoSenhaController::redefinir()` confia só na marca `recuperacao.email_verificado` da
-sessão. A expiração de 15 minutos é aplicada no `codigoConfere()`, mas não no passo final: quem
-conferiu o código e deixou a aba aberta pode trocar a senha depois de expirado, porque a linha de
-`password_reset_tokens` só é consultada para ser apagada.
-
-**Fazer:** reconferir, antes de gravar a senha nova, que a linha ainda existe e está dentro de
-`MINUTOS_VALIDADE`. É o que faz a propriedade valer de ponta a ponta.
+## Qualidade (1)
 
 ### QA-06 · Migrar o front para o Vite · médio
 
@@ -276,13 +270,12 @@ O **FEAT-12 (PWA)** depende deste item, não da extração que já foi feita.
 
 ---
 
-## Performance (2)
+## Performance (1)
 
 Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com crescimento.
 
 | Item | Onde | O quê |
 |---|---|---|
-| PERF-06 · baixo | `CadastroBebidaController::avisarAutor` | O aviso de moderação sai no mesmo request, depois do commit. Com `QUEUE_CONNECTION=sync` enfileirar não mudaria nada hoje; no dia em que a fila for de verdade, `ShouldQueue` na Notification tira o SMTP do caminho do admin |
 | PERF-04 · baixo | `GerarBebidasAI.php:145-188` | Geração de imagem em série: cada drink espera o DALL·E e o upload. Vire Job na fila — o `composer dev` já sobe um `queue:listen` |
 
 ---
