@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\StatusCadastro;
+use App\Enums\TipoBebida;
 use Illuminate\Database\Eloquent\Model;
 
 class CadastroBebida extends Model
@@ -19,6 +21,11 @@ class CadastroBebida extends Model
         'ds_imagem',
         'id_status',
         'ds_motivo_rejeicao'
+    ];
+
+    protected $casts = [
+        'id_tipo' => TipoBebida::class,
+        'id_status' => StatusCadastro::class,
     ];
 
     public function usuario()

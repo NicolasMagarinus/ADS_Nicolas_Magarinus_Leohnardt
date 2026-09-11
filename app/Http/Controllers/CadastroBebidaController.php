@@ -3,6 +3,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusCadastro;
+use App\Enums\TipoBebida;
 use App\Models\Bebida;
 use App\Models\BebidaIngrediente;
 use App\Models\CadastroBebida;
@@ -13,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class CadastroBebidaController extends Controller
 {
@@ -25,7 +28,7 @@ class CadastroBebidaController extends Controller
     {
         $request->validate([
             'nm_bebida' => 'required|string|max:255',
-            'id_tipo' => 'required|integer|in:1,2',
+            'id_tipo' => ['required', Rule::enum(TipoBebida::class)],
             'ds_bebida' => 'nullable|string|max:1000',
             'ds_preparo' => 'required|string',
             'ds_imagem' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
@@ -67,7 +70,7 @@ class CadastroBebidaController extends Controller
                 'ds_bebida' => $request->ds_bebida,
                 'ds_preparo' => $request->ds_preparo,
                 'ds_imagem' => $imageUrl,
-                'id_status' => 0
+                'id_status' => StatusCadastro::Pendente,
             ]);
 
             foreach ($request->ingredientes as $ingrediente) {
@@ -84,7 +87,7 @@ class CadastroBebidaController extends Controller
 
     public function index()
     {
-        $bebidas = CadastroBebida::where('id_status', 0)
+        $bebidas = CadastroBebida::where('id_status', StatusCadastro::Pendente)
             ->with('ingredientes')
             ->orderBy('created_at', 'asc')
             ->get();
@@ -119,7 +122,7 @@ class CadastroBebidaController extends Controller
                 );
             }
 
-            $cadastro->update(['id_status' => 1]);
+            $cadastro->update(['id_status' => StatusCadastro::Aprovada]);
         });
 
         return redirect()->route('admin.bebidas.index')->with('success', 'Bebida aprovada com sucesso!');
@@ -133,7 +136,7 @@ class CadastroBebidaController extends Controller
 
         $cadastro = CadastroBebida::findOrFail($id);
         $cadastro->update([
-            'id_status' => 2,
+            'id_status' => StatusCadastro::Rejeitada,
             'ds_motivo_rejeicao' => $request->motivo_rejeicao,
         ]);
 

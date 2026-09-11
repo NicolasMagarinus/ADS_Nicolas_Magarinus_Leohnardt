@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TipoBebida;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -17,6 +18,10 @@ class Bebida extends Model
         'id_tipo',
         'ds_bebida',
         'ds_imagem'
+    ];
+
+    protected $casts = [
+        'id_tipo' => TipoBebida::class,
     ];
 
     public function avaliacao()

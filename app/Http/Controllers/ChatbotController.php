@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusCadastro;
+use App\Enums\TipoBebida;
 use App\Models\Bebida;
 use App\Models\CadastroBebida;
 use App\Models\CadastroBebidaIngrediente;
@@ -10,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 use OpenAI\Laravel\Facades\OpenAI;
 
 class ChatbotController extends Controller
@@ -161,7 +164,7 @@ class ChatbotController extends Controller
 
                 $jaSubmetido = CadastroBebida::where('id_usuario', Auth::id())
                     ->whereRaw('LOWER(nm_bebida) = LOWER(?)', [$nomeDrink])
-                    ->where('id_status', '!=', 2)
+                    ->where('id_status', '!=', StatusCadastro::Rejeitada)
                     ->exists();
 
                 $responseData['drink_suggestion'] = $drinkSuggestion;
@@ -185,7 +188,7 @@ class ChatbotController extends Controller
     {
         $request->validate([
             'nome' => 'required|string|max:255',
-            'tipo' => 'nullable|integer|in:1,2',
+            'tipo' => ['nullable', Rule::enum(TipoBebida::class)],
             'modo_preparo' => 'required|string',
             'ingredientes' => 'required|array|min:1',
             'ingredientes.*.nm_ingrediente' => 'required|string|max:255',
@@ -205,7 +208,7 @@ class ChatbotController extends Controller
         if (
             CadastroBebida::where('id_usuario', Auth::id())
                 ->whereRaw('LOWER(nm_bebida) = LOWER(?)', [$nome])
-                ->where('id_status', '!=', 2)
+                ->where('id_status', '!=', StatusCadastro::Rejeitada)
                 ->exists()
         ) {
             return response()->json([
@@ -219,10 +222,10 @@ class ChatbotController extends Controller
             $cadastro = CadastroBebida::create([
                 'id_usuario' => Auth::id(),
                 'nm_bebida' => $request->nome,
-                'id_tipo' => $request->input('tipo', 1),
+                'id_tipo' => TipoBebida::tryFrom((int) $request->input('tipo', 1)) ?? TipoBebida::Alcoolica,
                 'ds_preparo' => $request->modo_preparo,
                 'ds_imagem' => null,
-                'id_status' => 0,
+                'id_status' => StatusCadastro::Pendente,
             ]);
 
             foreach ($request->ingredientes as $ingrediente) {

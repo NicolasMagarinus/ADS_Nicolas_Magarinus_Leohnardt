@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\TipoBebida;
 use App\Models\Ingrediente;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -96,7 +97,7 @@ class GerarBebidasAI extends Command
             $cd_bebida = DB::table('bebida')->insertGetId([
                 'nm_bebida' => $bebida['nome'] ?? 'Sem nome',
                 'ds_preparo' => $bebida['preparo'] ?? '',
-                'id_tipo' => $bebida['tipo'] ?? 1,
+                'id_tipo' => (TipoBebida::tryFrom((int) ($bebida['tipo'] ?? 1)) ?? TipoBebida::Alcoolica)->value,
                 'created_at' => now(),
                 'updated_at' => now(),
             ], 'cd_bebida');

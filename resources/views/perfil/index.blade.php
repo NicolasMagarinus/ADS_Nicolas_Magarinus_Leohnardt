@@ -67,13 +67,7 @@
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h5 class="card-title mb-0">{{ $bebida->nm_bebida }}</h5>
-                                    @if($bebida->id_status == 0)
-                                        <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i> Pendente</span>
-                                    @elseif($bebida->id_status == 1)
-                                        <span class="badge bg-success"><i class="bi bi-check me-1"></i> Aprovada</span>
-                                    @elseif($bebida->id_status == 2)
-                                        <span class="badge bg-danger"><i class="bi bi-times me-1"></i> Rejeitada</span>
-                                    @endif
+                                    <span class="badge {{ $bebida->id_status->classeBadge() }}"><i class="bi {{ $bebida->id_status->icone() }} me-1"></i> {{ $bebida->id_status->label() }}</span>
                                 </div>
                                 
                                 <p class="text-muted small mb-2">
@@ -84,7 +78,7 @@
                                     {{ Str::limit($bebida->ds_preparo, 120) }}
                                 </p>
                                 
-                                @if($bebida->id_status == 2 && $bebida->ds_motivo_rejeicao)
+                                @if($bebida->id_status === App\Enums\StatusCadastro::Rejeitada && $bebida->ds_motivo_rejeicao)
                                     <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="collapse" data-bs-target="#motivo{{ $bebida->cd_bebida_cadastro }}">
                                         <i class="bi bi-exclamation-circle me-1"></i>Ver Motivo da Rejeição
                                     </button>

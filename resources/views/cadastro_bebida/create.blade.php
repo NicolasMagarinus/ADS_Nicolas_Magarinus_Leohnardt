@@ -43,16 +43,14 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label d-block">Tipo</label>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="id_tipo" id="id_tipo_1" value="1" required
-                                        {{ old('id_tipo', '1') == '1' ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="id_tipo_1">Alcoólica</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="id_tipo" id="id_tipo_2" value="2"
-                                        {{ old('id_tipo') == '2' ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="id_tipo_2">Não alcoólica</label>
-                                </div>
+                                @foreach(App\Enums\TipoBebida::cases() as $tipo)
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="id_tipo"
+                                            id="id_tipo_{{ $tipo->value }}" value="{{ $tipo->value }}" required
+                                            {{ (int) old('id_tipo', App\Enums\TipoBebida::Alcoolica->value) === $tipo->value ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="id_tipo_{{ $tipo->value }}">{{ $tipo->label() }}</label>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
 

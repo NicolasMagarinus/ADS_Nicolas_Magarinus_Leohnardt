@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. São **28 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **21 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -26,8 +26,8 @@ específicos do PostgreSQL.
 
 ### 2. Criar o `.env`
 
-Copie de uma máquina onde ele já exista, ou monte a partir daqui. Estas são as chaves que importam
-para rodar localmente:
+`cp .env.example .env` e preencha o que for usar. O arquivo já vem com os valores de
+desenvolvimento; só as chaves de serviço externo ficam em branco. Para referência:
 
 ```dotenv
 APP_NAME=Drinkerito
@@ -58,15 +58,13 @@ GOOGLE_CLIENT_SECRET=
 GOOGLE_REDIRECT_URI=
 ```
 
-Transformar isso num `.env.example` de verdade é o item **SEC-05** abaixo.
-
 ### 3. Instalar e migrar
 
 ```bash
 composer install
 php artisan key:generate
 php artisan migrate
-php artisan test          # 32 testes devem passar
+php artisan test          # 57 testes devem passar
 php artisan serve
 ```
 
@@ -87,7 +85,7 @@ PGPASSWORD='<senha do Railway>' pg_dump -h <host>.proxy.rlwy.net -p <porta> \
 
 ## O que já foi feito
 
-Seis commits, do mais antigo para o mais novo:
+Do mais antigo para o mais novo:
 
 | Commit | O quê |
 |---|---|
@@ -97,48 +95,35 @@ Seis commits, do mais antigo para o mais novo:
 | `7d0707c` | Funde ingredientes duplicados; FKs, índice e unique em `bebida_ingrediente` |
 | `76eacb0` | Suíte de testes contra Postgres |
 | `39c1a9a` | Recuperação de senha por código no e-mail |
+| `19f36c4` | Documenta o backlog e o setup em máquina nova |
+| `f4c367c` | **SEC-05** — `.env.example` com as chaves do projeto |
+| `7d6fd68` | **SEC-03** — painel de moderação protegido por middleware |
+| `3c58bfb` | **BUG-05/06/07** — relações dos models e favoritar id inexistente |
+| (este) | **QA-02** enums `TipoBebida` e `StatusCadastro`; **QA-05** busca sem o mapa manual de acentos |
+
+Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
+modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
+rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bootstrap Icons.
 
 ---
 
 ## Ordem sugerida
 
-1. **SEC-05, SEC-03 e SEC-04** — menos de uma hora somados, e fecham a seção de segurança.
-2. **Os bugs pequenos** (BUG-05 a BUG-07) — meia hora, e BUG-05 destrava usar Eloquent onde hoje há SQL cru.
-3. **QA-02 e QA-05** — limpeza barata, com teste já cobrindo a área.
-4. **FEAT-02 (Meu Bar persistente)** — a de maior valor por esforço entre as que sobraram.
+1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção.
+2. **QA-04** — uma linha, e é o `catch` do chatbot que você mais vai querer ler.
+3. **FEAT-02 (Meu Bar persistente)** — a de maior valor por esforço entre as que sobraram.
+4. **QA-07 e FEAT-06** — baratas e rendem página indexável.
 5. O resto, conforme o tempo.
 
-Escreva o teste antes da correção. A suíte está montada e as três áreas críticas já estão cobertas —
-`php artisan test --filter=<Nome>` roda em menos de um segundo.
+Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
+
+Agora que `bebida.id_tipo` e `cadastro_bebida.id_status` são enums (`App\Enums\TipoBebida` e
+`App\Enums\StatusCadastro`), **cuidado ao ler essas colunas via Eloquent numa view**: a comparação
+`$bebida->id_status == 0` não casa mais. Os `DB::select` crus continuam devolvendo inteiro.
 
 ---
 
-## Segurança (3)
-
-### SEC-05 · Não existe `.env.example` · baixo
-
-Quem clonar não descobre que precisa de OpenAI, Cloudinary, Google OAuth e agora também do container
-de banco. O `composer.json` inclusive tem um script que copia `.env.example` na instalação.
-
-**Fazer:** commitar um `.env.example` com todas as chaves e valores vazios, usando a seção de setup
-acima como base.
-
-### SEC-03 · Admin conferido à mão em cada método · médio
-
-`app/Http/Controllers/CadastroBebidaController.php` — três cópias de:
-
-```php
-if (!Auth::user()->id_admin) {
-    abort(403, 'Acesso não autorizado.');
-}
-```
-
-No dia em que alguém adicionar um quarto método ao grupo `admin.` e esquecer a linha, o painel fica
-aberto para qualquer usuário logado.
-
-**Fazer:** um middleware `admin` aplicado no `Route::prefix('admin')` de `routes/web.php`. A proteção
-passa a valer por rota, não por lembrança. Já existe teste (`AprovacaoBebidaTest::test_usuario_comum_nao_aprova`)
-que continua tendo de passar.
+## Segurança (1)
 
 ### SEC-04 · Configuração de produção no Railway · médio
 
@@ -150,39 +135,6 @@ Duas variáveis no painel do Railway:
   voltar para `smtp` com credenciais válidas.
 
 Confirme também que `APP_DEBUG=false` lá.
-
----
-
-## Bugs (3)
-
-### BUG-05 · `Avaliacao::user()` aponta para coluna inexistente · médio
-
-`app/Models/Avaliacao.php:28`
-
-```php
-return $this->belongsTo(User::class);          // procura user_id
-return $this->belongsTo(User::class, 'id_usuario');  // correto
-```
-
-Não explode hoje porque a tela de detalhe monta as avaliações com `DB::table`. Com a relação
-funcionando, aquele SQL cru em `Bebida::getBebida()` pode virar um `with('user')`.
-
-### BUG-06 · Relação morta em `BebidaIngrediente` · baixo
-
-`app/Models/BebidaIngrediente.php:19-22` — `bebidaCadastro()` declara a chave `cd_bebida_cadastro`,
-que não existe nessa tabela (ela vive em `cadastro_bebida_ingrediente`). Resíduo de quando as duas
-eram uma só.
-
-**Fazer:** remover, e declarar no lugar as relações que faltam de verdade: `bebida()` e `ingrediente()`.
-
-### BUG-07 · Favoritar id inexistente devolve 500 · baixo
-
-`app/Http/Controllers/FavoritoController.php:29` — `alternar()` não valida a bebida, e a rota não tem
-`whereNumber`. Um id qualquer vira violação de chave estrangeira, e o front, que espera JSON, recebe
-uma página de erro.
-
-**Fazer:** `Bebida::findOrFail($cd_bebida)` no topo e `->whereNumber('cd_bebida')` na rota, como
-`bebida.show` já faz.
 
 ---
 
@@ -204,16 +156,7 @@ de teste.
 
 ---
 
-## Qualidade (5)
-
-### QA-02 · Números mágicos de tipo e status · médio
-
-`id_tipo` 1/2 e `id_status` 0/1/2 aparecem crus em controllers, views e SQL, sem nada que documente o
-significado. O bug do tipo fixo na aprovação foi filho direto disso: `'id_tipo' => 1` não parece
-errado quando se lê a linha isolada.
-
-**Fazer:** dois enums do PHP 8.1 — `TipoBebida` e `StatusCadastro` — com um método `label()` que as
-views usam. O badge de status em `perfil/index.blade.php` vira uma linha em vez de três `@elseif`.
+## Qualidade (3)
 
 ### QA-03 · Todo o JavaScript mora dentro das views · médio
 
@@ -234,14 +177,6 @@ e é justamente o `catch` do chatbot, o erro que você mais vai querer investiga
 **Fazer:** `Log::error()` com contexto (id do usuário, mensagem enviada). O `GoogleController` já faz
 certo, use de referência.
 
-### QA-05 · Acentos removidos duas vezes na busca · baixo
-
-`app/Http/Controllers/SearchController.php:23` e `:55-68` — `limpaString()` é um mapa manual de 60
-acentos aplicado ao termo digitado, e logo depois o SQL chama `unaccent()` nos dois lados da
-comparação. O segundo já resolve o problema inteiro.
-
-**Fazer:** apagar `limpaString()` e passar o termo original. Menos 14 linhas.
-
 ### QA-07 · Todas as páginas têm o mesmo `<title>` · baixo
 
 `resources/views/layouts/app.blade.php:6` — o título está fixo, então a aba diz "Drinkerito - Sua rede
@@ -260,8 +195,8 @@ Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com 
 | Item | Onde | O quê |
 |---|---|---|
 | PERF-01 · médio | `PerfilController.php:19`, `CadastroBebidaController.php:82` | `->get()` sem paginação; o perfil ainda traz `ds_preparo` inteiro só para cortar em 120 caracteres. Use `->paginate(10)` — o tema Bootstrap 5 da paginação já está configurado |
-| PERF-02 · médio | `HomeController.php:13-45` | Três `GROUP BY` sobre o catálogo inteiro em toda visita à página mais acessada. `Cache::remember(..., 600, ...)` resolve; `CACHE_DRIVER=file` basta |
-| PERF-03 · baixo | `app/Models/Bebida.php:42` | `ORDER BY RANDOM()` ordena a tabela toda para devolver uma linha. Sorteie o `cd_bebida` primeiro, depois monte a query completa |
+| PERF-02 · médio | `HomeController.php:13-45` | Três `GROUP BY` sobre o catálogo inteiro em toda visita à página mais acessada. `Cache::remember(..., 600, ...)` resolve. Atenção: no Laravel 12 a chave é `CACHE_STORE`, não `CACHE_DRIVER` |
+| PERF-03 · baixo | `app/Models/Bebida.php:46` | `ORDER BY RANDOM()` ordena a tabela toda para devolver uma linha. Sorteie o `cd_bebida` primeiro, depois monte a query completa |
 | PERF-04 · baixo | `GerarBebidasAI.php:145-188` | Geração de imagem em série: cada drink espera o DALL·E e o upload. Vire Job na fila — o `composer dev` já sobe um `queue:listen` |
 | PERF-05 · baixo | `search`, `favoritos`, `meubar` | Imagens do Cloudinary em tamanho cheio (até 1024px) para exibir em 200px. `loading="lazy"` e `w_400,f_auto,q_auto` na URL |
 
