@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate
-php artisan test          # 116 testes devem passar
+php artisan test          # 124 testes devem passar
 php artisan serve
 ```
 
@@ -108,7 +108,8 @@ Do mais antigo para o mais novo:
 | `aecbbb7` | **FEAT-06** — página e índice por ingrediente |
 | `e01e09a` | **FEAT-03** — facetas de verdade na busca |
 | `aacfa6a` | **FEAT-14** — ingredientes da receita viram links |
-| (este) | **FEAT-05** — editar nome e avatar do próprio perfil |
+| `3d16810` | **FEAT-05** — editar nome e avatar do próprio perfil |
+| (este) | **FEAT-04** — aviso por e-mail ao aprovar ou rejeitar |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -119,8 +120,8 @@ rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bo
 ## Ordem sugerida
 
 1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
-2. **FEAT-04 (avisar quando a bebida for aprovada ou rejeitada)** — o envio de e-mail já está montado desde a recuperação de senha.
-3. **FEAT-07 (chatbot com memória)** — pequena, e cada pergunta desperdiçada pesa com o limite de 5 por dia.
+2. **FEAT-07 (chatbot com memória)** — pequena, e cada pergunta desperdiçada pesa com o limite de 5 por dia.
+3. **PERF-01 e PERF-02** — baratas, e o perfil e a home são as telas mais abertas.
 4. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
@@ -157,6 +158,10 @@ MAIL_SCHEME=smtp
 # 4. Conferir que estão assim.
 APP_DEBUG=false
 APP_ENV=production
+# MAIL_FROM_NAME vale "${APP_NAME}", então APP_NAME é o nome que aparece
+# como remetente. No .env local ele está como UpServer, sobra de outro
+# projeto, e o e-mail sai assinado "UpServer".
+APP_NAME=Drinkerito
 ```
 
 Duas armadilhas que custam tempo se não estiverem escritas:
@@ -207,7 +212,7 @@ nunca chama `@vite`. Sem cache, sem versionamento e sem reaproveitar código ent
 
 ---
 
-## Performance (5)
+## Performance (6)
 
 Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com crescimento.
 
@@ -216,12 +221,13 @@ Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com 
 | PERF-01 · médio | `PerfilController.php:19`, `CadastroBebidaController.php:82` | `->get()` sem paginação; o perfil ainda traz `ds_preparo` inteiro só para cortar em 120 caracteres. Use `->paginate(10)` — o tema Bootstrap 5 da paginação já está configurado |
 | PERF-02 · médio | `HomeController.php:13-45` | Três `GROUP BY` sobre o catálogo inteiro em toda visita à página mais acessada. `Cache::remember(..., 600, ...)` resolve. Atenção: no Laravel 12 a chave é `CACHE_STORE`, não `CACHE_DRIVER` |
 | PERF-03 · baixo | `app/Models/Bebida.php:46` | `ORDER BY RANDOM()` ordena a tabela toda para devolver uma linha. Sorteie o `cd_bebida` primeiro, depois monte a query completa |
+| PERF-06 · baixo | `CadastroBebidaController::avisarAutor` | O aviso de moderação sai no mesmo request, depois do commit. Com `QUEUE_CONNECTION=sync` enfileirar não mudaria nada hoje; no dia em que a fila for de verdade, `ShouldQueue` na Notification tira o SMTP do caminho do admin |
 | PERF-04 · baixo | `GerarBebidasAI.php:145-188` | Geração de imagem em série: cada drink espera o DALL·E e o upload. Vire Job na fila — o `composer dev` já sobe um `queue:listen` |
 | PERF-05 · baixo | `search`, `favoritos`, `meubar` | Imagens do Cloudinary em tamanho cheio (até 1024px) para exibir em 200px. `loading="lazy"` e `w_400,f_auto,q_auto` na URL |
 
 ---
 
-## Funcionalidades (9)
+## Funcionalidades (8)
 
 Ordenadas por retorno sobre esforço.
 
@@ -236,14 +242,6 @@ dá para preparar e só então cria conta.
 visitante e, no login e no cadastro (inclusive pelo Google), mesclar o que ele montou com o que já
 houver em `usuario_ingrediente`. O ponto delicado é a mesclagem: união, e não substituição, senão
 quem já tinha um bar montado o perde ao entrar de um aparelho novo.
-
-### FEAT-04 · Avisar quando a bebida for aprovada ou rejeitada · impacto médio, esforço baixo
-
-O usuário envia uma receita e nunca mais é avisado; precisa lembrar de voltar ao perfil. O motivo da
-rejeição já é gravado e exibido lá, só falta ele descobrir que existe.
-
-**Fazer:** uma Notification do Laravel por e-mail — o `User` já usa `Notifiable`, e o envio de e-mail
-agora está montado por causa da recuperação de senha.
 
 ### FEAT-15 · Trocar o e-mail, e a conta do Google por trás dele · impacto baixo, esforço médio
 

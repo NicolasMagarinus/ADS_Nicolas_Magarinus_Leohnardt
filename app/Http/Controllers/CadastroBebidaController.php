@@ -10,10 +10,12 @@ use App\Models\BebidaIngrediente;
 use App\Models\CadastroBebida;
 use App\Models\CadastroBebidaIngrediente;
 use App\Models\Ingrediente;
+use App\Notifications\BebidaModerada;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -98,8 +100,9 @@ class CadastroBebidaController extends Controller
     public function aprovar($id)
     {
         $cadastro = CadastroBebida::with('ingredientes')->findOrFail($id);
+        $cdBebida = null;
 
-        DB::transaction(function () use ($cadastro) {
+        DB::transaction(function () use ($cadastro, &$cdBebida) {
             $bebida = Bebida::create([
                 'nm_bebida' => $cadastro->nm_bebida,
                 'ds_preparo' => $cadastro->ds_preparo,
@@ -123,7 +126,10 @@ class CadastroBebidaController extends Controller
             }
 
             $cadastro->update(['id_status' => StatusCadastro::Aprovada]);
+            $cdBebida = $bebida->cd_bebida;
         });
+
+        $this->avisarAutor($cadastro, $cdBebida);
 
         return redirect()->route('admin.bebidas.index')->with('success', 'Bebida aprovada com sucesso!');
     }
@@ -140,7 +146,36 @@ class CadastroBebidaController extends Controller
             'ds_motivo_rejeicao' => $request->motivo_rejeicao,
         ]);
 
+        $this->avisarAutor($cadastro);
+
         return redirect()->route('admin.bebidas.index')->with('success', 'Bebida rejeitada.');
+    }
+
+    /**
+     * Avisa quem enviou a receita do desfecho da moderação.
+     *
+     * Chamado sempre DEPOIS do commit: dentro da transação, um SMTP lento a
+     * seguraria aberta e uma exceção do mailer desfaria uma aprovação que
+     * estava correta.
+     *
+     * E falha de envio não pode derrubar a moderação. Quando isto roda a
+     * bebida já entrou no catálogo; devolver 500 ao admin o faria tentar
+     * aprovar de novo algo que já está aprovado.
+     *
+     * O autor sempre existe: cadastro_bebida.id_usuario é NOT NULL e a FK
+     * apaga em cascata, então apagar o usuário leva os cadastros dele junto.
+     */
+    private function avisarAutor(CadastroBebida $cadastro, ?int $cdBebida = null): void
+    {
+        try {
+            $cadastro->usuario->notify(new BebidaModerada($cadastro, $cdBebida));
+        } catch (\Throwable $e) {
+            Log::error('Falha ao avisar o autor sobre a moderação: '.$e->getMessage(), [
+                'cd_bebida_cadastro' => $cadastro->cd_bebida_cadastro,
+                'id_usuario' => $cadastro->id_usuario,
+                'exception' => $e,
+            ]);
+        }
     }
 
     public function buscarIngredientes(Request $request)

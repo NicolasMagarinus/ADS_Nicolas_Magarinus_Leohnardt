@@ -115,6 +115,18 @@ and the mirror is not empty, the page saves it once), and it must be rewritten o
 stale mirror would resurrect a bar the user just cleared. The screen requires login, as it always
 has.
 
+### Moderation notices
+
+Approving or rejecting a submission notifies its author by e-mail
+(`App\Notifications\BebidaModerada`, rendered with `emails.bebida-moderada` so it matches the
+recovery e-mail's hand-written style rather than Laravel's default template). Two rules the code
+depends on, both in `CadastroBebidaController::avisarAutor`: it is called **after** the
+`DB::transaction` commits — inside it, a slow SMTP would hold the transaction open and a mailer
+exception would roll back a perfectly good approval — and a send failure is logged, never rethrown,
+because by then the drink is already in the catalog and a 500 would make the admin approve it twice.
+It reads `$cadastro->usuario` without a null check, which is safe only because `id_usuario` is NOT
+NULL and its FK cascades; `NotificacaoModeracaoTest` pins that invariant.
+
 ### Password recovery
 
 Three steps (`RecuperacaoSenhaController`): request a code, confirm the 6-digit code, choose the new
