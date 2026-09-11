@@ -4,10 +4,20 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
+    /**
+     * Chaves do cache da home, limpas quando uma bebida entra no catálogo.
+     *
+     * @see \App\Http\Controllers\CadastroBebidaController::aprovar()
+     */
+    public const CHAVES_CACHE = ['home.avaliadas', 'home.ingredientes', 'home.recentes'];
+
+    private const TTL_CACHE = 600;
+
     public function index()
     {
         $sqlAvaliacao = <<<SQL
@@ -22,7 +32,10 @@ class HomeController extends Controller
              LIMIT 8
         SQL;
 
-        $arrAvaliacao = DB::select($sqlAvaliacao);
+        // Três GROUP BY sobre o catálogo inteiro, na página mais acessada do
+        // site. O conteúdo só muda quando entra bebida nova ou alguém avalia.
+        $arrAvaliacao = Cache::remember('home.avaliadas', self::TTL_CACHE,
+            fn () => DB::select($sqlAvaliacao));
 
         $sqlIngrediente = <<<SQL
             SELECT i.cd_ingrediente, i.nm_ingrediente, count(bi.cd_ingrediente) AS qt_utilizado, i.ds_imagem
@@ -33,7 +46,8 @@ class HomeController extends Controller
              LIMIT 4
 SQL;
 
-        $arrIngrediente = DB::select($sqlIngrediente);
+        $arrIngrediente = Cache::remember('home.ingredientes', self::TTL_CACHE,
+            fn () => DB::select($sqlIngrediente));
 
         $sqlRecente = <<<SQL
             SELECT b.cd_bebida, b.nm_bebida, b.ds_imagem
@@ -42,8 +56,11 @@ SQL;
              LIMIT 8
 SQL;
 
-        $arrRecente = DB::select($sqlRecente);
+        $arrRecente = Cache::remember('home.recentes', self::TTL_CACHE,
+            fn () => DB::select($sqlRecente));
 
+        // Fora do cache de propósito: varia por pessoa, e guardado junto
+        // serviria o estado de um usuário para outro.
         $hasFavoritesForRecommend = false;
         if (Auth::check()) {
             $hasFavoritesForRecommend = DB::table('favorito')

@@ -114,6 +114,12 @@
                             <p class="text-muted">Nenhuma bebida pendente de aprovação.</p>
                         </div>
                     @endforelse
+
+                    @if($bebidas->hasPages())
+                        <div class="d-flex justify-content-center mt-4">
+                            {{ $bebidas->links() }}
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

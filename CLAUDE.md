@@ -87,6 +87,14 @@ row's ingredients, which are free text with no id yet, so it does not use this p
 The home page's "most used ingredients" cards link here. That query had to gain `i.cd_ingrediente` in
 both the `SELECT` and the `GROUP BY` (`HomeController.php:27-35`) — it used to group by name alone.
 
+### Home caching
+
+`HomeController` wraps its three catalog-wide `GROUP BY` queries in `Cache::remember` for 10 minutes,
+under the keys in `HomeController::CHAVES_CACHE`. `CadastroBebidaController::aprovar` forgets those
+keys, because TTL alone would hide a freshly approved drink for ten minutes — exactly when the
+moderator goes to check that it worked. The per-user favorites check stays outside the cache: cached
+together, one person's home would show another's state.
+
 ### Query style
 
 Read-heavy pages bypass Eloquent and use `DB::select` with heredoc SQL that aggregates rating (`AVG(id_nota)`), rating count and ingredient JSON in one round trip: `Bebida::getBebida()` (detail + random), `HomeController` (rankings), `MeuBarController::obterBebidasPossiveis` (drinks makeable from owned ingredients, ≤2 missing), `RecomendadasController` (top-5 ingredients from favorites → similar drinks). Eloquent is used for writes and for the paginated `SearchController`, which also carries the search

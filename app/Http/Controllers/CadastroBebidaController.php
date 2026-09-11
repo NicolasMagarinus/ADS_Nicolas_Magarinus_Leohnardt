@@ -14,6 +14,7 @@ use App\Notifications\BebidaModerada;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -89,10 +90,15 @@ class CadastroBebidaController extends Controller
 
     public function index()
     {
+        // Nada sai da fila até um admin decidir, então esta é a tela que mais
+        // cresce sem limite.
+        //
+        // O usuario entra no with() junto dos ingredientes: a view mostra quem
+        // enviou cada receita, e sem isso era uma consulta por linha.
         $bebidas = CadastroBebida::where('id_status', StatusCadastro::Pendente)
-            ->with('ingredientes')
+            ->with(['ingredientes', 'usuario'])
             ->orderBy('created_at', 'asc')
-            ->get();
+            ->paginate(10);
 
         return view('cadastro_bebida.index', compact('bebidas'));
     }
@@ -128,6 +134,13 @@ class CadastroBebidaController extends Controller
             $cadastro->update(['id_status' => StatusCadastro::Aprovada]);
             $cdBebida = $bebida->cd_bebida;
         });
+
+        // A home guarda os rankings por dez minutos. Sem limpar aqui, a bebida
+        // recém-aprovada sumiria da tela por todo esse tempo — justo quando o
+        // moderador vai conferir se a aprovação funcionou.
+        foreach (HomeController::CHAVES_CACHE as $chave) {
+            Cache::forget($chave);
+        }
 
         $this->avisarAutor($cadastro, $cdBebida);
 

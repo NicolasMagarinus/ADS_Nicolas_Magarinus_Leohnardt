@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **16 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **15 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate
-php artisan test          # 133 testes devem passar
+php artisan test          # 141 testes devem passar
 php artisan serve
 ```
 
@@ -110,7 +110,8 @@ Do mais antigo para o mais novo:
 | `aacfa6a` | **FEAT-14** — ingredientes da receita viram links |
 | `3d16810` | **FEAT-05** — editar nome e avatar do próprio perfil |
 | `36c8910` | **FEAT-04** — aviso por e-mail ao aprovar ou rejeitar |
-| (este) | **FEAT-07** — chatbot com memória da conversa |
+| `cd19f0c` | **FEAT-07** — chatbot com memória da conversa |
+| (este) | **PERF-02** cache da home; parte do **PERF-01**, paginação do painel de moderação |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -121,8 +122,8 @@ rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bo
 ## Ordem sugerida
 
 1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
-2. **PERF-01 e PERF-02** — baratas, e o perfil e a home são as telas mais abertas.
-3. **QA-03 (tirar o JavaScript das views)** — destrava o FEAT-12 (PWA) e é o que mais melhora a manutenção daqui em diante.
+2. **QA-03 (tirar o JavaScript das views)** — destrava o FEAT-12 (PWA) e é o que mais melhora a manutenção daqui em diante.
+3. **DB-04 (seeder de bebidas)** — depois de um `migrate:fresh` o catálogo só volta chamando a OpenAI, o que custa dinheiro.
 4. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
@@ -213,14 +214,13 @@ nunca chama `@vite`. Sem cache, sem versionamento e sem reaproveitar código ent
 
 ---
 
-## Performance (6)
+## Performance (5)
 
 Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com crescimento.
 
 | Item | Onde | O quê |
 |---|---|---|
-| PERF-01 · médio | `PerfilController.php:19`, `CadastroBebidaController.php:82` | `->get()` sem paginação; o perfil ainda traz `ds_preparo` inteiro só para cortar em 120 caracteres. Use `->paginate(10)` — o tema Bootstrap 5 da paginação já está configurado |
-| PERF-02 · médio | `HomeController.php:13-45` | Três `GROUP BY` sobre o catálogo inteiro em toda visita à página mais acessada. `Cache::remember(..., 600, ...)` resolve. Atenção: no Laravel 12 a chave é `CACHE_STORE`, não `CACHE_DRIVER` |
+| PERF-01 · baixo | `PerfilController.php:19` | A lista de receitas enviadas no perfil usa `->get()` e traz `ds_preparo` inteiro só para cortar em 120 caracteres. O painel de moderação já foi paginado; aqui ficou de fora por decisão de produto — a tela mostra o histórico completo da pessoa. Se um dia paginar: a estatística "Receitas" usa `$arrBebida->count()`, que viraria o tamanho da página, e precisa de `->total()` |
 | PERF-03 · baixo | `app/Models/Bebida.php:46` | `ORDER BY RANDOM()` ordena a tabela toda para devolver uma linha. Sorteie o `cd_bebida` primeiro, depois monte a query completa |
 | PERF-06 · baixo | `CadastroBebidaController::avisarAutor` | O aviso de moderação sai no mesmo request, depois do commit. Com `QUEUE_CONNECTION=sync` enfileirar não mudaria nada hoje; no dia em que a fila for de verdade, `ShouldQueue` na Notification tira o SMTP do caminho do admin |
 | PERF-04 · baixo | `GerarBebidasAI.php:145-188` | Geração de imagem em série: cada drink espera o DALL·E e o upload. Vire Job na fila — o `composer dev` já sobe um `queue:listen` |
