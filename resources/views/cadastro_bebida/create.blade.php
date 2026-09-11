@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('titulo', 'Enviar receita')
+@section('descricao', 'Envie sua receita de drink para entrar no catálogo do Drinkerito.')
+@section('robots', 'noindex')
+
 @section('content')
 <div class="container py-5">
     <div class="row justify-content-center">

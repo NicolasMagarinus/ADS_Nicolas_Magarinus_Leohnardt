@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('titulo', 'Meu Bar')
+@section('descricao', 'Diga quais ingredientes você tem em casa e descubra os drinks que dá para preparar agora.')
+@section('robots', 'noindex')
+
 @section('content')
     <div class="container py-4">
         <div class="mb-4">

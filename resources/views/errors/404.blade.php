@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('titulo', 'Página não encontrada')
+@section('robots', 'noindex')
+
 @section('content')
 <div class="container">
     <div class="row justify-content-center min-vh-75 align-items-center">

@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('titulo', 'Meu perfil')
+@section('robots', 'noindex')
+
 @section('content')
 <div class="container py-5">
     <div class="row">

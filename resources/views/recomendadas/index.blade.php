@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('titulo', 'Recomendadas para você')
+@section('robots', 'noindex')
+
 @section('content')
 <div class="container mt-4">
 

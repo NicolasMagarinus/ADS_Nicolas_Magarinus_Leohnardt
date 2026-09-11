@@ -1,5 +1,12 @@
 @extends('layouts.app')
 
+@section('titulo', $bebida->nm_bebida)
+@section('descricao', Str::limit($bebida->ds_bebida, 157))
+@section('og_tipo', 'article')
+@if($bebida->ds_imagem)
+    @section('og_imagem', $bebida->ds_imagem)
+@endif
+
 @section('content')
 <div class="container">
     <div class="row justify-content-center mb-5">

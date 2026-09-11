@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('titulo', $searchTerm ? 'Busca por “'.$searchTerm.'”' : 'Busca')
+@section('descricao', 'Encontre drinks pelo nome ou por um ingrediente que você tem em casa.')
+
 @section('content')
 <div class="container mt-4">
     <div class="row mb-4">

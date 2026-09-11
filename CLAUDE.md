@@ -107,7 +107,16 @@ OpenAI (`openai-php/laravel`, `config/openai.php`, model from `OPENAI_MODEL`), C
 
 Vite, Tailwind and `resources/js|css` exist from the Laravel skeleton but **the layout does not use `@vite`**. `resources/views/layouts/app.blade.php` loads Bootstrap 5, Bootstrap Icons, Font Awesome and SweetAlert2 from CDNs plus `public/css/custom.css` (the single hand-written stylesheet, CSS variables at the top). Style changes belong in `public/css/custom.css`; adding a class from Tailwind will not work. Pagination is Bootstrap 5-styled via `AppServiceProvider`.
 
-Views extend `layouts.app` and use `@yield('content')`; header/footer/chatbot come from `resources/views/partials/`. Page-specific JS is written inline in each Blade file, with `fetch` + `X-CSRF-TOKEN` for the JSON endpoints.
+Views extend `layouts.app` and use `@yield('content')`; header/footer/chatbot come from `resources/views/partials/`.
+
+`partials/meta.blade.php`, included from the layout's `<head>`, builds the `<title>`, the meta
+description and the Open Graph tags. A page declares only the short name — `@section('titulo', 'Caipirinha')`
+— and the partial appends `— Drinkerito`; a page that declares nothing gets the site-wide defaults.
+The optional sections are `descricao`, `og_imagem` (emitted only when present, and it drives whether
+`twitter:card` is `summary_large_image` or `summary`), `og_tipo` and `robots` (`noindex` on the
+screens behind login). **Declare these with the inline form**, `@section('name', $value)`: Blade runs
+`e()` on inline section values, so the partial prints them with `{!! !!}` to avoid escaping twice —
+a drink named `Gin & Tonic "Especial"` would otherwise reach the browser tab as `&amp;amp;`. Page-specific JS is written inline in each Blade file, with `fetch` + `X-CSRF-TOKEN` for the JSON endpoints.
 
 ## Tests
 

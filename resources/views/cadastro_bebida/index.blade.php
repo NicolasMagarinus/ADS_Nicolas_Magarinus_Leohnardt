@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('titulo', 'Moderação de receitas')
+@section('robots', 'noindex')
+
 @section('content')
 <div class="container py-5">
     <div class="row justify-content-center">

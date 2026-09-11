@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **19 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **18 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate
-php artisan test          # 65 testes devem passar
+php artisan test          # 78 testes devem passar
 php artisan serve
 ```
 
@@ -103,7 +103,8 @@ Do mais antigo para o mais novo:
 | `bcb5a50` | Corrige `MAIL_ENCRYPTION`, chave morta no Laravel 12, no `.env.example` |
 | `05b909a` | Detalha o **SEC-04** com as duas armadilhas de configuração |
 | `b9bef3f` | **QA-04** — erro do chatbot no canal da aplicação |
-| (este) | **FEAT-02** — Meu Bar persistente em `usuario_ingrediente` |
+| `121c0a8` | **FEAT-02** — Meu Bar persistente em `usuario_ingrediente` |
+| (este) | **QA-07** — título, meta description e Open Graph por página |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -114,7 +115,7 @@ rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bo
 ## Ordem sugerida
 
 1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
-2. **QA-07 e FEAT-06** — baratas e rendem página indexável.
+2. **FEAT-06 (página por ingrediente)** — barata, e agora cada página nova já nasce com título e Open Graph.
 3. **FEAT-03 (filtros de verdade na busca)** — mata o regex que hoje adivinha o filtro pelo texto digitado.
 4. O resto, conforme o tempo.
 
@@ -188,7 +189,7 @@ de teste.
 
 ---
 
-## Qualidade (2)
+## Qualidade (1)
 
 ### QA-03 · Todo o JavaScript mora dentro das views · médio
 
@@ -199,15 +200,6 @@ nunca chama `@vite`. Sem cache, sem versionamento e sem reaproveitar código ent
 
 **Fazer:** não precisa migrar tudo de uma vez. Comece movendo chatbot e Meu Bar para
 `resources/js/`, adicione `@vite` no layout e deixe os utilitários compartilhados num módulo só.
-
-### QA-07 · Todas as páginas têm o mesmo `<title>` · baixo
-
-`resources/views/layouts/app.blade.php:6` — o título está fixo, então a aba diz "Drinkerito - Sua rede
-social de receitas de bebidas" mesmo na página de uma Caipirinha. Sem `meta description` e sem Open
-Graph: o botão de compartilhar existe, mas o link colado no WhatsApp não mostra nem o nome do drink.
-
-**Fazer:** `@yield('title', 'Drinkerito')` no layout e uma `@section('title')` por página. Nas telas
-de bebida, `og:title`, `og:description` e `og:image` — a imagem já está no Cloudinary.
 
 ---
 
