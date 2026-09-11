@@ -29,6 +29,9 @@
                         <a class="nav-link" href="{{ route('search') }}"><i class="bi bi-compass me-1"></i> Explorar</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{{ route('ingrediente.index') }}"><i class="bi bi-basket me-1"></i> Ingredientes</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{{ route('random') }}"><i class="bi bi-dice-5-fill me-1"></i>
                             Aleatória</a>
                     </li>

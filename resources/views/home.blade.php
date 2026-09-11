@@ -50,7 +50,7 @@
             <div class="row">
                 @foreach($arrIngrediente as $ingrediente)
                     <div class="col-6 col-md-3 mb-4">
-                        <a href="{{ route('search', ['q' => $ingrediente->nm_ingrediente]) }}"
+                        <a href="{{ route('ingrediente.show', $ingrediente->cd_ingrediente) }}"
                             class="text-decoration-none text-dark">
                             <div class="card drink-card h-100 text-center" style="transition: transform .2s, box-shadow .2s;"
                                 onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 18px rgba(0,0,0,.12)';"

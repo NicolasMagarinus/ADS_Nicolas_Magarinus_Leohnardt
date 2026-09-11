@@ -9,6 +9,7 @@ use App\Http\Controllers\BebidaController;
 use App\Http\Controllers\CadastroBebidaController;
 use App\Http\Controllers\RandomDrinkController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\IngredienteController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\ChatbotController;
@@ -47,6 +48,10 @@ Route::prefix('esqueci-senha')->group(function () {
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/random', [RandomDrinkController::class, 'index'])->name('random');
+
+Route::get('/ingredientes', [IngredienteController::class, 'index'])->name('ingrediente.index');
+Route::get('/ingrediente/{cd_ingrediente}', [IngredienteController::class, 'show'])
+    ->name('ingrediente.show')->whereNumber('cd_ingrediente');
 Route::get('/search', [SearchController::class, 'index'])->name('search');
 
 Route::group(['prefix' => 'bebida'], function () {

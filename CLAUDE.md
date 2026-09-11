@@ -70,6 +70,17 @@ compare against a case. The raw `DB::select` queries are unaffected and still re
 
 `Ingrediente::normalizar()` is the single write path for ingredient names: it matches ignoring accent and case (the same rule as the `ingrediente_nome_unico` index), so `Agua`, `Água` and `ÁGUA` always resolve to one row. Both AI commands go through it too. Writing to `ingrediente` any other way will eventually hit the unique index.
 
+### Ingredient pages
+
+`/ingredientes` (`IngredienteController::index`) lists every ingredient that appears in at least one
+recipe — orphans are excluded on purpose, since `app:gerar-ingredientes-ai` can create ingredients no
+drink ever uses. `/ingrediente/{cd}` shows the drinks that use one. Both are public and paginated
+with Eloquent, following `SearchController` rather than the raw-SQL style. An ingredient with no
+recipes still answers 200 for a typed URL, but ships `robots=noindex`.
+
+The home page's "most used ingredients" cards link here. That query had to gain `i.cd_ingrediente` in
+both the `SELECT` and the `GROUP BY` (`HomeController.php:27-35`) — it used to group by name alone.
+
 ### Query style
 
 Read-heavy pages bypass Eloquent and use `DB::select` with heredoc SQL that aggregates rating (`AVG(id_nota)`), rating count and ingredient JSON in one round trip: `Bebida::getBebida()` (detail + random), `HomeController` (rankings), `MeuBarController::obterBebidasPossiveis` (drinks makeable from owned ingredients, ≤2 missing), `RecomendadasController` (top-5 ingredients from favorites → similar drinks). Eloquent is used for writes and for the paginated `SearchController`. Follow the existing style in the file you're editing rather than converting between them.
