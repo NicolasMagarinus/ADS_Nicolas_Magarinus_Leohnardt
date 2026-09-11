@@ -125,16 +125,45 @@ Agora que `bebida.id_tipo` e `cadastro_bebida.id_status` são enums (`App\Enums\
 
 ## Segurança (1)
 
-### SEC-04 · Configuração de produção no Railway · médio
+### SEC-04 · Configuração de produção no Railway · médio · **PENDENTE**
 
-Duas variáveis no painel do Railway:
+Nenhuma linha de código: é tudo em **Variables** do serviço no Railway. O build não roda
+`config:cache`, então as variáveis passam a valer no deploy seguinte, sem passo extra.
 
-- `SESSION_SECURE_COOKIE=true` — o site é HTTPS e o cookie de sessão está sendo emitido sem a flag.
-- `MAIL_FROM_ADDRESS` com um endereço real — hoje está vazio, e **sem isso a recuperação de senha
-  estoura 500 em produção** com `An email must have a "From" header`. O `MAIL_MAILER` também precisa
-  voltar para `smtp` com credenciais válidas.
+```dotenv
+# 1. Cookie de sessão — o site é HTTPS e o cookie sai sem a flag Secure.
+SESSION_SECURE_COOKIE=true
 
-Confirme também que `APP_DEBUG=false` lá.
+# 2. Remetente — hoje QUEBRADO em produção.
+MAIL_FROM_ADDRESS=nao-responda@seudominio.com
+MAIL_FROM_NAME=Drinkerito
+
+# 3. SMTP de verdade (se ainda estiver em 'log', o e-mail não sai do container).
+MAIL_MAILER=smtp
+MAIL_HOST=<host do provedor>
+MAIL_PORT=587
+MAIL_USERNAME=<usuário>
+MAIL_PASSWORD=<senha ou app password>
+MAIL_SCHEME=smtp
+
+# 4. Conferir que estão assim.
+APP_DEBUG=false
+APP_ENV=production
+```
+
+Duas armadilhas que custam tempo se não estiverem escritas:
+
+- **A variável vazia não cai no valor padrão.** `MAIL_FROM_ADDRESS` existe no painel mas está em
+  branco, e `env()` devolve string vazia, não `null` — o default `hello@example.com` do
+  `config/mail.php` nunca entra. O e-mail sai sem cabeçalho `From` e a recuperação de senha estoura
+  500 com `An email must have a "From" header`. Apagar a variável não resolve: precisa de endereço
+  real.
+- **`MAIL_ENCRYPTION` não existe mais no Laravel 12.** O `config/mail.php` lê `MAIL_SCHEME`. Na porta
+  587 o STARTTLS é automático com `MAIL_SCHEME=smtp`; se o provedor exigir 465, use `MAIL_PORT=465` e
+  `MAIL_SCHEME=smtps`.
+
+**Como confirmar que funcionou:** peça a recuperação de senha em produção com um e-mail cadastrado e
+veja se o código de 6 dígitos chega. É o único caminho que exercita remetente, SMTP e template juntos.
 
 ---
 
