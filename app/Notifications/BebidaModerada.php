@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Enums\StatusCadastro;
 use App\Models\CadastroBebida;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -14,8 +15,15 @@ use Illuminate\Notifications\Notification;
  * Sem isso a pessoa enviava a receita e nunca mais era avisada: precisava
  * lembrar de voltar ao perfil por conta própria para descobrir o desfecho —
  * e o motivo da rejeição, que já era gravado, ficava invisível na prática.
+ *
+ * ShouldQueue tira o SMTP do caminho de quem clicou em aprovar. Com
+ * QUEUE_CONNECTION=sync não muda nada — o envio continua no mesmo request —,
+ * mas no dia em que a fila for de verdade o admin deixa de esperar o
+ * provedor. A notificação é serializada inteira, com o CadastroBebida já
+ * atualizado, porque CadastroBebidaController::avisarAutor só é chamado
+ * depois do commit.
  */
-class BebidaModerada extends Notification
+class BebidaModerada extends Notification implements ShouldQueue
 {
     use Queueable;
 

@@ -9,7 +9,9 @@ use App\Models\CadastroBebidaIngrediente;
 use App\Models\User;
 use App\Notifications\BebidaModerada;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\SendQueuedNotifications;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 /**
@@ -181,5 +183,19 @@ class NotificacaoModeracaoTest extends TestCase
         $this->assertStringContainsString('Limonada Suíça', $corpo);
         $this->assertStringContainsString('O modo de preparo está incompleto.', $corpo);
         $this->assertStringContainsString(route('perfil.index'), $corpo);
+    }
+
+    public function test_o_aviso_vai_para_a_fila_e_nao_atrasa_o_admin(): void
+    {
+        Queue::fake();
+
+        $cadastro = $this->cadastroDe(User::factory()->create());
+
+        $this->actingAs($this->admin())
+            ->post(route('admin.bebidas.approve', $cadastro->cd_bebida_cadastro));
+
+        // Enfileirado, não entregue no meio do request: no dia em que a fila
+        // for de verdade, o SMTP sai do caminho de quem clicou em aprovar.
+        Queue::assertPushed(SendQueuedNotifications::class);
     }
 }
