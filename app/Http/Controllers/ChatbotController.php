@@ -20,6 +20,19 @@ class ChatbotController extends Controller
 {
     private const AI_DAILY_LIMIT = 5;
 
+    /**
+     * Quantas mensagens de contexto seguem junto de cada pergunta: 3 turnos de
+     * ida e volta. A janela desliza, cortando as mais antigas.
+     *
+     * O teto é pequeno de propósito. O histórico entra no prompt de toda
+     * chamada, então mais contexto custa mais token por pergunta — a troca
+     * vale porque o limite é de 5 perguntas por dia, e uma pergunta
+     * desperdiçada por falta de contexto custa mais caro que o contexto.
+     */
+    private const HISTORICO_MAX = 6;
+
+    private const SESSAO_HISTORICO = 'chatbot_historico';
+
     public function mensagem(Request $request)
     {
         $request->validate([
@@ -28,8 +41,18 @@ class ChatbotController extends Controller
 
         $text = trim($request->input('message'));
 
-        $faqReply = $this->verificarFaq($text);
-        if ($faqReply !== null) {
+        // O atalho de FAQ só vale para pergunta solta. Com conversa aberta ele
+        // atrapalha: "e uma versão sem álcool disso?" casa com o padrão
+        // 'sem alcool' e receberia a resposta pronta de navegação, que é
+        // justamente a continuação que o histórico existe para atender. O
+        // mesmo vale para "e com outro ingrediente?" e "tem algo parecido
+        // para recomendar?".
+        //
+        // A troca é consciente: enquanto a conversa estiver aberta, perguntas
+        // que o FAQ resolveria de graça passam a consumir a cota diária.
+        $conversaAberta = session(self::SESSAO_HISTORICO, []) !== [];
+
+        if (! $conversaAberta && ($faqReply = $this->verificarFaq($text)) !== null) {
             return response()->json([
                 'reply' => $faqReply,
                 'source' => 'faq',
@@ -69,6 +92,7 @@ class ChatbotController extends Controller
                             . 'SEM repetir a lista de ingredientes nem o modo de preparo no texto — esses dados já são enviados pela função. '
                             . 'Não chame a função para perguntas que não sejam pedidos de receita específica de um drink.',
                     ],
+                    ...session(self::SESSAO_HISTORICO, []),
                     ['role' => 'user', 'content' => $text],
                 ],
                 'tools' => [
@@ -149,6 +173,8 @@ class ChatbotController extends Controller
             $usage->increment('ai_calls_count');
             $remaining = self::AI_DAILY_LIMIT - $usage->ai_calls_count;
 
+            $this->lembrarDaTroca($text, $cleanReply);
+
             $responseData = [
                 'reply' => nl2br(e($cleanReply)),
                 'source' => 'openai',
@@ -189,6 +215,31 @@ class ChatbotController extends Controller
                 'source' => 'error',
             ], 500);
         }
+    }
+
+    /**
+     * Guarda o par pergunta/resposta na sessão, para a próxima pergunta ter
+     * de que falar quando alguém escrever "e uma versão sem álcool disso?".
+     *
+     * Só é chamado depois de uma resposta que existiu de verdade: pergunta
+     * barrada pelo limite diário, resposta pronta de FAQ e chamada que
+     * estourou não entram. Com 5 perguntas por dia, contexto sujo
+     * desperdiçaria as poucas que sobram.
+     *
+     * A resposta guardada é o texto limpo, o mesmo que a pessoa leu — quando
+     * houve sugestão de receita, o nome do drink está nele, que é justamente
+     * o que dá sentido à pergunta seguinte.
+     */
+    private function lembrarDaTroca(string $pergunta, string $resposta): void
+    {
+        $historico = session(self::SESSAO_HISTORICO, []);
+
+        $historico[] = ['role' => 'user', 'content' => $pergunta];
+        $historico[] = ['role' => 'assistant', 'content' => $resposta];
+
+        session([
+            self::SESSAO_HISTORICO => array_slice($historico, -self::HISTORICO_MAX),
+        ]);
     }
 
     public function salvarBebida(Request $request)

@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **17 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **16 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate
-php artisan test          # 124 testes devem passar
+php artisan test          # 133 testes devem passar
 php artisan serve
 ```
 
@@ -109,7 +109,8 @@ Do mais antigo para o mais novo:
 | `e01e09a` | **FEAT-03** — facetas de verdade na busca |
 | `aacfa6a` | **FEAT-14** — ingredientes da receita viram links |
 | `3d16810` | **FEAT-05** — editar nome e avatar do próprio perfil |
-| (este) | **FEAT-04** — aviso por e-mail ao aprovar ou rejeitar |
+| `36c8910` | **FEAT-04** — aviso por e-mail ao aprovar ou rejeitar |
+| (este) | **FEAT-07** — chatbot com memória da conversa |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -120,8 +121,8 @@ rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bo
 ## Ordem sugerida
 
 1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
-2. **FEAT-07 (chatbot com memória)** — pequena, e cada pergunta desperdiçada pesa com o limite de 5 por dia.
-3. **PERF-01 e PERF-02** — baratas, e o perfil e a home são as telas mais abertas.
+2. **PERF-01 e PERF-02** — baratas, e o perfil e a home são as telas mais abertas.
+3. **QA-03 (tirar o JavaScript das views)** — destrava o FEAT-12 (PWA) e é o que mais melhora a manutenção daqui em diante.
 4. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
@@ -227,7 +228,7 @@ Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com 
 
 ---
 
-## Funcionalidades (8)
+## Funcionalidades (7)
 
 Ordenadas por retorno sobre esforço.
 
@@ -254,15 +255,6 @@ uma **segunda conta** no próximo login, deixando favoritos, receitas e avaliaç
 `GoogleController` passa a casar por ela, caindo para o e-mail só quando estiver vazia (as contas que
 já existem); e só então a troca de e-mail no perfil, com unique, validação e a senha atual como
 confirmação.
-
-### FEAT-07 · Chatbot com memória da conversa · impacto médio, esforço baixo
-
-`ChatbotController.php:52-70` — cada mensagem vai para a OpenAI sozinha. "E uma versão sem álcool?"
-logo depois de uma receita não faz sentido para o modelo. Com limite de 5 perguntas por dia, cada uma
-desperdiçada pesa.
-
-**Fazer:** guardar as últimas 6 mensagens na sessão e enviar junto. Dá para usar os favoritos do
-usuário no system prompt também.
 
 ### FEAT-08 · Coleções de drinks · impacto alto, esforço médio
 
