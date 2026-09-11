@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **12 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **11 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate --seed
-php artisan test          # 175 testes devem passar
+php artisan test          # 179 testes devem passar
 php artisan serve
 ```
 
@@ -120,7 +120,8 @@ Do mais antigo para o mais novo:
 | `f7600c7` | **QA-03** — JavaScript fora das views, em `public/js/` |
 | `18ec805` | **PERF-05** — imagens no tamanho em que aparecem |
 | `a13dcbc` | **PERF-03** — sorteio da bebida aleatória |
-| (este) | **DB-04** — rollback nas migrations e seeder do catálogo |
+| `590e604` | **DB-04** — rollback nas migrations e seeder do catálogo |
+| (este) | **PERF-01** — perfil deixa de trazer o preparo inteiro |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -216,13 +217,12 @@ O **FEAT-12 (PWA)** depende deste item, não da extração que já foi feita.
 
 ---
 
-## Performance (3)
+## Performance (2)
 
 Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com crescimento.
 
 | Item | Onde | O quê |
 |---|---|---|
-| PERF-01 · baixo | `PerfilController.php:19` | A lista de receitas enviadas no perfil usa `->get()` e traz `ds_preparo` inteiro só para cortar em 120 caracteres. O painel de moderação já foi paginado; aqui ficou de fora por decisão de produto — a tela mostra o histórico completo da pessoa. Se um dia paginar: a estatística "Receitas" usa `$arrBebida->count()`, que viraria o tamanho da página, e precisa de `->total()` |
 | PERF-06 · baixo | `CadastroBebidaController::avisarAutor` | O aviso de moderação sai no mesmo request, depois do commit. Com `QUEUE_CONNECTION=sync` enfileirar não mudaria nada hoje; no dia em que a fila for de verdade, `ShouldQueue` na Notification tira o SMTP do caminho do admin |
 | PERF-04 · baixo | `GerarBebidasAI.php:145-188` | Geração de imagem em série: cada drink espera o DALL·E e o upload. Vire Job na fila — o `composer dev` já sobe um `queue:listen` |
 

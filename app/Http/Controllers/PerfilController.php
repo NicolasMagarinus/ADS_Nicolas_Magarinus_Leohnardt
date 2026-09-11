@@ -18,7 +18,20 @@ class PerfilController extends Controller
     {
         $user = Auth::user();
 
+        // Só as colunas que a tela usa, e o preparo já cortado no banco: a
+        // view mostra 120 caracteres, e modo de preparo é texto livre que pode
+        // ser longo. O corte em 200 dá folga para o Str::limit da view
+        // continuar decidindo as reticências como decidia antes.
         $arrBebida = CadastroBebida::where('id_usuario', $user->id)
+            ->select([
+                'cd_bebida_cadastro',
+                'nm_bebida',
+                'ds_imagem',
+                'id_status',
+                'ds_motivo_rejeicao',
+                'created_at',
+                DB::raw('LEFT(ds_preparo, 200) AS ds_preparo'),
+            ])
             ->orderBy('created_at', 'desc')
             ->get();
 
