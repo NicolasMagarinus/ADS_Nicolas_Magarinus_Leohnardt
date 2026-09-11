@@ -129,9 +129,7 @@ class RecuperacaoSenhaController extends Controller
             return false;
         }
 
-        $expirado = now()->diffInMinutes($registro->created_at, absolute: true) >= self::MINUTOS_VALIDADE;
-
-        if ($expirado) {
+        if ($this->expirou($registro)) {
             DB::table('password_reset_tokens')->where('email', $email)->delete();
 
             return false;
@@ -148,6 +146,11 @@ class RecuperacaoSenhaController extends Controller
         }
 
         return false;
+    }
+
+    private function expirou(object $registro): bool
+    {
+        return now()->diffInMinutes($registro->created_at, absolute: true) >= self::MINUTOS_VALIDADE;
     }
 
     // ---------- etapa 3: escolher a senha nova ----------
@@ -182,6 +185,20 @@ class RecuperacaoSenhaController extends Controller
 
         if (!$usuario) {
             return redirect()->route('password.request');
+        }
+
+        // A marca na sessão diz que o código foi conferido, não que ele ainda
+        // vale: quem conferiu e deixou a aba aberta chegaria aqui depois dos
+        // MINUTOS_VALIDADE. A validade tem de valer de ponta a ponta, então o
+        // pedido é reconferido no banco antes de gravar a senha.
+        $registro = DB::table('password_reset_tokens')->where('email', $email)->first();
+
+        if (!$registro || $this->expirou($registro)) {
+            DB::table('password_reset_tokens')->where('email', $email)->delete();
+            $request->session()->forget(self::EMAIL_VERIFICADO);
+
+            return redirect()->route('password.request')
+                ->withErrors(['email' => 'O pedido expirou. Peça um novo código.']);
         }
 
         $usuario->password = Hash::make($request->password);

@@ -154,6 +154,44 @@ class RecuperacaoSenhaTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_codigo_expirado_nao_troca_a_senha_na_aba_aberta(): void
+    {
+        Mail::fake();
+        $user = $this->usuario();
+        $codigo = $this->pedirCodigo($user->email);
+        $this->post(route('password.code.verify'), ['codigo' => $codigo])
+            ->assertRedirect(route('password.reset'));
+
+        // Conferiu o código e deixou a aba aberta além da validade.
+        $this->travel(16)->minutes();
+
+        $this->post(route('password.update'), [
+            'password' => 'senha-nova-456',
+            'password_confirmation' => 'senha-nova-456',
+        ])->assertRedirect(route('password.request'));
+
+        $this->assertFalse(Hash::check('senha-nova-456', $user->fresh()->password));
+    }
+
+    public function test_sem_a_linha_do_codigo_nao_troca_a_senha(): void
+    {
+        Mail::fake();
+        $user = $this->usuario();
+        $codigo = $this->pedirCodigo($user->email);
+        $this->post(route('password.code.verify'), ['codigo' => $codigo]);
+
+        // O pedido foi encerrado por outro caminho — outra aba concluiu a
+        // troca, ou uma limpeza apagou a linha.
+        DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+
+        $this->post(route('password.update'), [
+            'password' => 'senha-nova-456',
+            'password_confirmation' => 'senha-nova-456',
+        ])->assertRedirect(route('password.request'));
+
+        $this->assertFalse(Hash::check('senha-nova-456', $user->fresh()->password));
+    }
+
     public function test_codigo_ja_usado_nao_vale_num_pedido_novo(): void
     {
         Mail::fake();
