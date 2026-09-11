@@ -78,6 +78,18 @@ Read-heavy pages bypass Eloquent and use `DB::select` with heredoc SQL that aggr
 
 Two-tier: `verificarFaq()` matches accent-stripped regexes for navigation/FAQ answers and returns **without** calling OpenAI; only unmatched messages reach the API. AI calls are metered per user per day in `chatbot_usage` (`AI_DAILY_LIMIT = 5`, returns HTTP 429 when exhausted). The model may call the `sugerir_receita` tool; the structured recipe is returned to the browser, checked against the catalog and the user's pending submissions, and can be pushed into the staging pipeline via `chatbot.salvar-bebida`. All routes require auth. The entire chatbot UI and its JS live inline in the Blade partial, included globally from the layout.
 
+### Meu Bar
+
+A user's own ingredients live in `usuario_ingrediente` (`id_usuario` + `cd_ingrediente`, unique on
+the pair), which is the source of truth — not the session, which no longer holds them at all.
+`MeuBarController::salvar` (route `meubar.salvar`) receives the full list of ingredient ids and
+reconciles it inside a transaction, so the `created_at` of rows that stay is preserved and the chips
+keep their order. The page still mirrors the list into `localStorage` on every write; that mirror
+exists so users who had a bar before the table existed keep it (when the server sends an empty list
+and the mirror is not empty, the page saves it once), and it must be rewritten on every save — a
+stale mirror would resurrect a bar the user just cleared. The screen requires login, as it always
+has.
+
 ### Password recovery
 
 Three steps (`RecuperacaoSenhaController`): request a code, confirm the 6-digit code, choose the new

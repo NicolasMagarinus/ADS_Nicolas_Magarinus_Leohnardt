@@ -87,28 +87,37 @@
             const resultsSection = document.getElementById('resultsSection');
             const csrfToken = '{{ csrf_token() }}';
             const defaultImage = 'https://res.cloudinary.com/dhffzvqtf/image/upload/v1763919598/sem-imagem_br4i0i.png';
-            const syncSessionUrl = '{{ route("meubar.sync-session") }}';
-            // Ingredientes salvos na sessão do servidor (prioridade)
-            const sessionIngredients = @json($sessionIngredients);
+            const salvarUrl = '{{ route("meubar.salvar") }}';
+            // Fonte da verdade: o bar gravado no banco para este usuário.
+            const ingredientesSalvos = @json($ingredientesSalvos);
 
-            // Mescla sessão do servidor com localStorage (sessão tem prioridade se não estiver vazia)
-            let ingredients = sessionIngredients.length > 0
-                ? sessionIngredients
+            // Quem já usava o Meu Bar antes de ele virar persistente tem os
+            // ingredientes só no localStorage deste navegador. Se o servidor
+            // não tem nada, adotamos o que houver aqui, uma vez.
+            let ingredients = ingredientesSalvos.length > 0
+                ? ingredientesSalvos
                 : JSON.parse(localStorage.getItem('meubar_ingredientes') || '[]');
-            // Garante que o localStorage está sincronizado
+
             localStorage.setItem('meubar_ingredientes', JSON.stringify(ingredients));
 
+            if (ingredientesSalvos.length === 0 && ingredients.length > 0) {
+                saveIngredients();
+            }
+
             function saveIngredients() {
+                // O localStorage segue espelhando o bar, inclusive quando ele
+                // é esvaziado: um espelho desatualizado ressuscitaria a lista
+                // antiga na recarga seguinte.
                 localStorage.setItem('meubar_ingredientes', JSON.stringify(ingredients));
-                // Sincroniza com sessão do servidor em background
-                fetch(syncSessionUrl, {
+
+                fetch(salvarUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ ingredientes: ingredients })
+                    body: JSON.stringify({ ingredientes: ingredients.map(i => i.cd_ingrediente) })
                 }).catch(() => {}); // falha silenciosa
             }
 

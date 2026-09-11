@@ -3,26 +3,57 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ingrediente;
+use App\Models\UsuarioIngrediente;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class MeuBarController extends Controller
 {
     public function index()
     {
-        $sessionIngredients = session('meubar_ingredientes', []);
-        return view('meubar.index', compact('sessionIngredients'));
+        $ingredientesSalvos = Ingrediente::query()
+            ->join('usuario_ingrediente as ui', 'ui.cd_ingrediente', '=', 'ingrediente.cd_ingrediente')
+            ->where('ui.id_usuario', Auth::id())
+            ->orderBy('ui.created_at')
+            ->get(['ingrediente.cd_ingrediente', 'ingrediente.nm_ingrediente']);
+
+        return view('meubar.index', compact('ingredientesSalvos'));
     }
 
-    public function sincronizarSessao(Request $request)
+    /**
+     * Grava o bar inteiro do usuário.
+     *
+     * Recebe a lista completa e reconcilia: apaga o que saiu, insere o que
+     * entrou e deixa o resto em paz, para o created_at de quem já estava não
+     * ser reescrito a cada gravação.
+     */
+    public function salvar(Request $request)
     {
         $request->validate([
-            'ingredientes'                => 'present|array',
-            'ingredientes.*.cd_ingrediente' => 'integer|exists:ingrediente,cd_ingrediente',
-            'ingredientes.*.nm_ingrediente' => 'string|max:100',
+            'ingredientes' => 'present|array',
+            'ingredientes.*' => 'integer|exists:ingrediente,cd_ingrediente',
         ]);
 
-        session(['meubar_ingredientes' => $request->input('ingredientes', [])]);
+        $desejados = array_values(array_unique($request->input('ingredientes', [])));
+        $usuarioId = Auth::id();
+
+        DB::transaction(function () use ($desejados, $usuarioId) {
+            UsuarioIngrediente::where('id_usuario', $usuarioId)
+                ->whereNotIn('cd_ingrediente', $desejados ?: [0])
+                ->delete();
+
+            $atuais = UsuarioIngrediente::where('id_usuario', $usuarioId)
+                ->pluck('cd_ingrediente')
+                ->all();
+
+            foreach (array_diff($desejados, $atuais) as $cdIngrediente) {
+                UsuarioIngrediente::create([
+                    'id_usuario' => $usuarioId,
+                    'cd_ingrediente' => $cdIngrediente,
+                ]);
+            }
+        });
 
         return response()->json(['success' => true]);
     }

@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **20 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **19 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate
-php artisan test          # 58 testes devem passar
+php artisan test          # 65 testes devem passar
 php artisan serve
 ```
 
@@ -102,7 +102,8 @@ Do mais antigo para o mais novo:
 | `a36cab6` | **QA-02** enums `TipoBebida` e `StatusCadastro`; **QA-05** busca sem o mapa manual de acentos |
 | `bcb5a50` | Corrige `MAIL_ENCRYPTION`, chave morta no Laravel 12, no `.env.example` |
 | `05b909a` | Detalha o **SEC-04** com as duas armadilhas de configuração |
-| (este) | **QA-04** — erro do chatbot no canal da aplicação |
+| `b9bef3f` | **QA-04** — erro do chatbot no canal da aplicação |
+| (este) | **FEAT-02** — Meu Bar persistente em `usuario_ingrediente` |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -113,8 +114,8 @@ rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bo
 ## Ordem sugerida
 
 1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
-2. **FEAT-02 (Meu Bar persistente)** — a de maior valor por esforço entre as que sobraram.
-3. **QA-07 e FEAT-06** — baratas e rendem página indexável.
+2. **QA-07 e FEAT-06** — baratas e rendem página indexável.
+3. **FEAT-03 (filtros de verdade na busca)** — mata o regex que hoje adivinha o filtro pelo texto digitado.
 4. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
@@ -224,19 +225,21 @@ Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com 
 
 ---
 
-## Funcionalidades (11)
+## Funcionalidades (10)
 
 Ordenadas por retorno sobre esforço.
 
-### FEAT-02 · Meu Bar que não se perde · impacto alto, esforço baixo
+### FEAT-13 · Meu Bar para quem não está logado · impacto médio, esforço médio
 
-`MeuBarController.php:12` e `:18-27` — os ingredientes do usuário vivem só na sessão
-(`meubar_ingredientes`). Trocou de celular, deslogou ou a sessão expirou: perdeu tudo. É a
-funcionalidade mais original do site, e a única que não guarda nada.
+As quatro rotas de `/meu-bar` exigem `auth`, então a tela nunca foi acessível deslogado — o
+enunciado antigo do FEAT-02, que falava em "migrar a sessão no login", partia de um visitante que
+não existe. Abrir a tela é uma funcionalidade à parte, de conversão: a pessoa monta o bar, vê o que
+dá para preparar e só então cria conta.
 
-**Fazer:** tabela `usuario_ingrediente` (`id_usuario`, `cd_ingrediente`, unique composta). Mantenha a
-sessão para o visitante não logado e migre o conteúdo dela no login — o endpoint `sync-session` já
-faz metade do caminho.
+**Fazer:** tirar o `auth` das rotas do Meu Bar, manter `localStorage` como armazenamento do
+visitante e, no login e no cadastro (inclusive pelo Google), mesclar o que ele montou com o que já
+houver em `usuario_ingrediente`. O ponto delicado é a mesclagem: união, e não substituição, senão
+quem já tinha um bar montado o perde ao entrar de um aparelho novo.
 
 ### FEAT-03 · Filtros de verdade na busca · impacto alto, esforço médio
 

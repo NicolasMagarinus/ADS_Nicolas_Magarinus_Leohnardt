@@ -89,7 +89,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [MeuBarController::class, 'index'])->name('index');
         Route::get('/ingredientes/search', [MeuBarController::class, 'buscarIngredientes'])->name('ingredientes.search');
         Route::post('/drinks', [MeuBarController::class, 'obterBebidasPossiveis'])->name('drinks');
-        Route::post('/sync-session', [MeuBarController::class, 'sincronizarSessao'])->name('sync-session');
+        Route::post('/ingredientes', [MeuBarController::class, 'salvar'])->name('salvar');
     });
 
     Route::post('/chatbot/message', [ChatbotController::class, 'mensagem'])->name('chatbot.message');
