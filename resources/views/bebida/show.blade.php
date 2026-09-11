@@ -1,7 +1,12 @@
 @extends('layouts.app')
 
 @section('titulo', $bebida->nm_bebida)
-@section('descricao', Str::limit($bebida->ds_bebida, 157))
+{{-- ds_bebida é nula em toda bebida gerada por app:gerar-bebidas-ai, e
+     Str::limit(null) devolve null — que o Blade lê como seção de BLOCO e
+     abre um ob_start() sem fechar. Daí o (string) e o texto alternativo. --}}
+@section('descricao', $bebida->ds_bebida
+    ? Str::limit((string) $bebida->ds_bebida, 157)
+    : 'Receita de '.$bebida->nm_bebida.': ingredientes, medidas e modo de preparo.')
 @section('og_tipo', 'article')
 @if($bebida->ds_imagem)
     @section('og_imagem', $bebida->ds_imagem)

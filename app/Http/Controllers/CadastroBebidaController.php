@@ -12,6 +12,7 @@ use App\Models\CadastroBebidaIngrediente;
 use App\Models\Ingrediente;
 use App\Notifications\BebidaModerada;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -136,6 +137,11 @@ class CadastroBebidaController extends Controller
     public function aprovar($id)
     {
         $cadastro = CadastroBebida::with('ingredientes')->findOrFail($id);
+
+        if ($jaDecidida = $this->recusarSeJaDecidida($cadastro)) {
+            return $jaDecidida;
+        }
+
         $cdBebida = null;
 
         DB::transaction(function () use ($cadastro, &$cdBebida) {
@@ -188,6 +194,11 @@ class CadastroBebidaController extends Controller
         ]);
 
         $cadastro = CadastroBebida::findOrFail($id);
+
+        if ($jaDecidida = $this->recusarSeJaDecidida($cadastro)) {
+            return $jaDecidida;
+        }
+
         $cadastro->update([
             'id_status' => StatusCadastro::Rejeitada,
             'ds_motivo_rejeicao' => $request->motivo_rejeicao,
@@ -198,6 +209,28 @@ class CadastroBebidaController extends Controller
         $this->avisarAutor($cadastro);
 
         return redirect()->route('admin.bebidas.index')->with('success', 'Bebida rejeitada.');
+    }
+
+    /**
+     * Barra a segunda decisão sobre a mesma receita.
+     *
+     * Sem isto, um duplo clique no botão — ou voltar no navegador e reenviar o
+     * formulário — criava uma segunda bebida no catálogo, mandava um segundo
+     * e-mail ao autor e sobrescrevia quem tinha decidido. Aprovar não é
+     * idempotente: cada passagem insere uma linha nova em bebida.
+     *
+     * Devolve null quando a receita ainda está pendente e a ação pode seguir.
+     */
+    private function recusarSeJaDecidida(CadastroBebida $cadastro): ?RedirectResponse
+    {
+        if ($cadastro->id_status === StatusCadastro::Pendente) {
+            return null;
+        }
+
+        return redirect()->route('admin.bebidas.index')->with(
+            'warning',
+            "A receita {$cadastro->nm_bebida} já havia sido ".mb_strtolower($cadastro->id_status->label()).'.'
+        );
     }
 
     /**
