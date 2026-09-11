@@ -125,11 +125,46 @@ Do mais antigo para o mais novo:
 | `cae8c02` | **FEAT-10** — abas Pendentes / Aprovadas / Rejeitadas no painel |
 | `c81658b` | **FEAT-16** — registro de quem moderou e quando |
 | `b795658` | Revisão da branch, leva 1: decisão dupla e descrição nula nas metas |
-| (este) | Revisão da branch, leva 2: parâmetros em array, FAQ que não esfriava, corrida no normalizar |
+| `94ec92b` | Revisão da branch, leva 2: parâmetros em array, FAQ que não esfriava, corrida no normalizar |
+| (este) | Registra o que ficou pendente e as decisões tomadas |
+
+A suíte saiu de 32 para 210 testes. A última revisão completa da branch (`/code-review high`,
+30 commits) apontou 9 defeitos, nenhum deles pego pela suíte na época: 5 foram corrigidos nos dois
+commits acima, 2 viraram itens (QA-08 e SEC-06) e 2 eram de terceiros já cobertos. Vale repetir a
+revisão depois de um bloco novo de trabalho — foi ela que achou a aprovação duplicando bebida no
+catálogo, que passava despercebida desde antes desta série de commits.
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
 rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bootstrap Icons.
+
+---
+
+## Pendente com o time, não com o código
+
+**SEC-04 — as variáveis do Railway.** É o único item que não se resolve no repositório, e é o que hoje
+derruba a recuperação de senha em produção. Detalhado na seção de Segurança abaixo.
+
+**Duas pendências de estilo** em arquivos do commit `39c1a9a`, que já está no remoto:
+`RecuperacaoSenhaController` (`not_operator_with_successor_space`) e `CodigoRecuperacaoSenha`
+(`single_line_empty_body`). `vendor/bin/pint` resolve; ficaram de fora para não misturar formatação
+com correção. O resto do projeto também não está formatado — rodar o Pint no todo merece um commit
+só de estilo.
+
+---
+
+## Decisões tomadas, para não voltarem à mesa
+
+- **O perfil não pagina.** A tela mostra o histórico completo de receitas enviadas da pessoa, por
+  decisão de produto. O que sobrou do PERF-01 (parar de trazer o `ds_preparo` inteiro) foi feito; a
+  paginação não entra. Se um dia entrar, lembre que a estatística "Receitas" usa
+  `$arrBebida->count()`, que viraria o tamanho da página e precisa de `->total()`.
+- **O Meu Bar continua exigindo login.** Abrir para visitante é funcionalidade à parte, registrada
+  como FEAT-13 — não é parte da persistência, que já está feita.
+- **O e-mail não é editável no perfil.** Só nome e avatar. O motivo é o FEAT-15: o `GoogleController`
+  identifica a conta pelo e-mail, então trocá-lo criaria uma segunda conta no próximo login.
+- **O front não migra para o Vite agora.** A extração do JavaScript para `public/js/` foi feita sem
+  build; a migração é o QA-06, com três bloqueios verificados.
 
 ---
 
