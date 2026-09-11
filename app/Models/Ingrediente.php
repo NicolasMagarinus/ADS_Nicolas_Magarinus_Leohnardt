@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Ingrediente extends Model
@@ -31,7 +32,15 @@ class Ingrediente extends Model
         }
 
         try {
-            return static::create(['nm_ingrediente' => Str::ucfirst(Str::lower($nome))]);
+            // A inserção vai num savepoint (transação aninhada) porque no
+            // PostgreSQL a violação de unique aborta o bloco inteiro: sem ele,
+            // o porNome() do catch estouraria 25P02 — "current transaction is
+            // aborted" — e a recuperação abaixo nunca chegaria a rodar.
+            // Importa porque todos os chamadores já estão dentro de uma
+            // transação: aprovação, seeder e os dois comandos de IA.
+            return DB::transaction(
+                fn () => static::create(['nm_ingrediente' => Str::ucfirst(Str::lower($nome))])
+            );
         } catch (QueryException $e) {
             // Corrida com outra escrita: a unique barrou, então a linha existe.
             return static::porNome($nome) ?? throw $e;

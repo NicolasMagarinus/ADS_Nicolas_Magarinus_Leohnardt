@@ -18,21 +18,22 @@ class SearchController extends Controller
 
     public function index(Request $request)
     {
-        // O middleware ConvertEmptyStringsToNull transforma "?q=" em null, e
-        // o formulário manda todos os parâmetros mesmo vazios — o default do
-        // get() não cobre isso, porque a chave existe.
-        $searchTerm = (string) $request->get('q');
+        // textoDaQuery cobre "?q=" (que o middleware transforma em null) e
+        // "?q[]=abc" (que chega como array). Ver a Controller base.
+        $searchTerm = $this->textoDaQuery($request, 'q');
 
         if ($redirecionamento = $this->traduzirFraseAntiga($searchTerm)) {
             return $redirecionamento;
         }
 
-        $tipo = TipoBebida::tryFrom((int) $request->get('tipo'));
-        $nota = in_array((int) $request->get('nota'), self::NOTAS, true) ? (int) $request->get('nota') : null;
-        $maxIngredientes = in_array((int) $request->get('max_ingredientes'), self::MAX_INGREDIENTES, true)
-            ? (int) $request->get('max_ingredientes')
-            : null;
-        $ingredienteId = $this->ingredienteValido($request->get('ingrediente'));
+        $tipo = TipoBebida::tryFrom((int) $this->textoDaQuery($request, 'tipo'));
+        $nota = (int) $this->textoDaQuery($request, 'nota');
+        $nota = in_array($nota, self::NOTAS, true) ? $nota : null;
+
+        $maxIngredientes = (int) $this->textoDaQuery($request, 'max_ingredientes');
+        $maxIngredientes = in_array($maxIngredientes, self::MAX_INGREDIENTES, true) ? $maxIngredientes : null;
+
+        $ingredienteId = $this->ingredienteValido($this->textoDaQuery($request, 'ingrediente'));
 
         $query = Bebida::query()
             ->select('bebida.*',

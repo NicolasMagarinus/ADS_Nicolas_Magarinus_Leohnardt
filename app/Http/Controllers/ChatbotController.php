@@ -33,6 +33,20 @@ class ChatbotController extends Controller
 
     private const SESSAO_HISTORICO = 'chatbot_historico';
 
+    private const SESSAO_ULTIMA_TROCA = 'chatbot_ultima_troca';
+
+    /**
+     * Depois de quantos minutos de silêncio a conversa é considerada
+     * encerrada.
+     *
+     * Existe porque "conversa aberta" precisa ter fim. Sem isso o histórico
+     * ficava na sessão até ela expirar (SESSION_LIFETIME, 120 minutos,
+     * renovado a cada request), e o atalho de FAQ ficava desligado o tempo
+     * todo: quem perguntasse uma receita e depois "como favoritar?" gastava
+     * uma das 5 chamadas diárias numa pergunta que era de graça.
+     */
+    private const MINUTOS_ATE_ESFRIAR = 30;
+
     public function mensagem(Request $request)
     {
         $request->validate([
@@ -50,9 +64,13 @@ class ChatbotController extends Controller
         //
         // A troca é consciente: enquanto a conversa estiver aberta, perguntas
         // que o FAQ resolveria de graça passam a consumir a cota diária.
-        $conversaAberta = session(self::SESSAO_HISTORICO, []) !== [];
+        if (! $this->conversaAberta()) {
+            // Esfriou: o contexto velho atrapalharia mais do que ajudaria numa
+            // pergunta nova.
+            session()->forget([self::SESSAO_HISTORICO, self::SESSAO_ULTIMA_TROCA]);
+        }
 
-        if (! $conversaAberta && ($faqReply = $this->verificarFaq($text)) !== null) {
+        if (! $this->conversaAberta() && ($faqReply = $this->verificarFaq($text)) !== null) {
             return response()->json([
                 'reply' => $faqReply,
                 'source' => 'faq',
@@ -92,7 +110,7 @@ class ChatbotController extends Controller
                             . 'SEM repetir a lista de ingredientes nem o modo de preparo no texto — esses dados já são enviados pela função. '
                             . 'Não chame a função para perguntas que não sejam pedidos de receita específica de um drink.',
                     ],
-                    ...session(self::SESSAO_HISTORICO, []),
+                    ...($this->conversaAberta() ? session(self::SESSAO_HISTORICO, []) : []),
                     ['role' => 'user', 'content' => $text],
                 ],
                 'tools' => [
@@ -230,6 +248,21 @@ class ChatbotController extends Controller
      * houve sugestão de receita, o nome do drink está nele, que é justamente
      * o que dá sentido à pergunta seguinte.
      */
+    /**
+     * Há conversa em andamento, isto é, houve troca com a IA há pouco.
+     */
+    private function conversaAberta(): bool
+    {
+        if (session(self::SESSAO_HISTORICO, []) === []) {
+            return false;
+        }
+
+        $ultima = session(self::SESSAO_ULTIMA_TROCA);
+
+        return $ultima !== null
+            && Carbon::parse($ultima)->diffInMinutes(now()) < self::MINUTOS_ATE_ESFRIAR;
+    }
+
     private function lembrarDaTroca(string $pergunta, string $resposta): void
     {
         $historico = session(self::SESSAO_HISTORICO, []);
@@ -239,6 +272,7 @@ class ChatbotController extends Controller
 
         session([
             self::SESSAO_HISTORICO => array_slice($historico, -self::HISTORICO_MAX),
+            self::SESSAO_ULTIMA_TROCA => now()->toIso8601String(),
         ]);
     }
 

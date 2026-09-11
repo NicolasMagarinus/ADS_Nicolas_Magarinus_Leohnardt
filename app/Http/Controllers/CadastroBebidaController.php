@@ -99,10 +99,11 @@ class CadastroBebidaController extends Controller
     public function index(Request $request)
     {
         // Valor fora da lista cai na fila em vez de dar 404: é URL que a
-        // pessoa edita à mão.
-        $aba = array_key_exists($request->get('status'), self::ABAS)
-            ? $request->get('status')
-            : 'pendentes';
+        // pessoa edita à mão. O textoDaQuery é o que faz "?status[]=x" cair
+        // aqui também — com get() cru, o array chegava ao array_key_exists e
+        // virava TypeError, ou seja, 500 em vez da fila.
+        $pedida = $this->textoDaQuery($request, 'status');
+        $aba = array_key_exists($pedida, self::ABAS) ? $pedida : 'pendentes';
 
         $status = self::ABAS[$aba];
 

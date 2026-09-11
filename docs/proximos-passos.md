@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **10 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **12 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate --seed
-php artisan test          # 194 testes devem passar
+php artisan test          # 210 testes devem passar
 php artisan serve
 ```
 
@@ -123,7 +123,9 @@ Do mais antigo para o mais novo:
 | `590e604` | **DB-04** — rollback nas migrations e seeder do catálogo |
 | `2494242` | **PERF-01** — perfil deixa de trazer o preparo inteiro |
 | `cae8c02` | **FEAT-10** — abas Pendentes / Aprovadas / Rejeitadas no painel |
-| (este) | **FEAT-16** — registro de quem moderou e quando |
+| `c81658b` | **FEAT-16** — registro de quem moderou e quando |
+| `b795658` | Revisão da branch, leva 1: decisão dupla e descrição nula nas metas |
+| (este) | Revisão da branch, leva 2: parâmetros em array, FAQ que não esfriava, corrida no normalizar |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -145,7 +147,7 @@ Agora que `bebida.id_tipo` e `cadastro_bebida.id_status` são enums (`App\Enums\
 
 ---
 
-## Segurança (1)
+## Segurança (2)
 
 ### SEC-04 · Configuração de produção no Railway · médio · **PENDENTE**
 
@@ -193,7 +195,27 @@ veja se o código de 6 dígitos chega. É o único caminho que exercita remetent
 
 ---
 
-## Qualidade (1)
+## Qualidade (2)
+
+### QA-08 · Mensagem de validação em inglês no formulário de bebida · baixo
+
+`CadastroBebidaController.php` define a mensagem `'id_tipo.in'`, mas `Rule::enum` falha com a chave
+`validation.enum`, nunca `validation.in` — a mensagem é código morto. E `lang/pt_BR/` só tem
+`pagination.php`, então um `id_tipo` adulterado mostra o texto padrão em inglês, *"The selected id
+tipo is invalid."*, num formulário em português.
+
+**Fazer:** renomear a chave para `id_tipo.enum` e, já que o projeto é todo pt-BR, publicar
+`lang/pt_BR/validation.php` — qualquer outra regra sem mensagem própria tem o mesmo problema.
+
+### SEC-06 · A troca de senha não reconfere a validade do código · baixo
+
+`RecuperacaoSenhaController::redefinir()` confia só na marca `recuperacao.email_verificado` da
+sessão. A expiração de 15 minutos é aplicada no `codigoConfere()`, mas não no passo final: quem
+conferiu o código e deixou a aba aberta pode trocar a senha depois de expirado, porque a linha de
+`password_reset_tokens` só é consultada para ser apagada.
+
+**Fazer:** reconferir, antes de gravar a senha nova, que a linha ainda existe e está dentro de
+`MINUTOS_VALIDADE`. É o que faz a propriedade valer de ponta a ponta.
 
 ### QA-06 · Migrar o front para o Vite · médio
 
