@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **11 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **10 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate --seed
-php artisan test          # 188 testes devem passar
+php artisan test          # 194 testes devem passar
 php artisan serve
 ```
 
@@ -122,7 +122,8 @@ Do mais antigo para o mais novo:
 | `a13dcbc` | **PERF-03** — sorteio da bebida aleatória |
 | `590e604` | **DB-04** — rollback nas migrations e seeder do catálogo |
 | `2494242` | **PERF-01** — perfil deixa de trazer o preparo inteiro |
-| (este) | **FEAT-10** — abas Pendentes / Aprovadas / Rejeitadas no painel |
+| `cae8c02` | **FEAT-10** — abas Pendentes / Aprovadas / Rejeitadas no painel |
+| (este) | **FEAT-16** — registro de quem moderou e quando |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -229,7 +230,7 @@ Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com 
 
 ---
 
-## Funcionalidades (7)
+## Funcionalidades (6)
 
 Ordenadas por retorno sobre esforço.
 
@@ -262,16 +263,6 @@ confirmação.
 Favorito é binário. "Drinks de verão", "Para a festa de sábado" — listas nomeadas são o que
 transforma favoritos em algo que se compartilha. Tabelas `colecao` + `colecao_bebida`, com flag de
 pública/privada. Coleção pública com URL própria é conteúdo indexável gerado pelo usuário.
-
-### FEAT-16 · Quem moderou o quê · impacto médio, esforço baixo
-
-As abas Pendentes / Aprovadas / Rejeitadas já existem, então dá para rever uma decisão. O que ainda
-não dá é saber **quem** decidiu e **quando** com precisão: a tela mostra o `updated_at` do cadastro,
-que é só a última escrita na linha, e não há registro do moderador.
-
-**Fazer:** `id_moderador` (FK para `users`) e `dt_moderacao` em `cadastro_bebida`, preenchidos em
-`CadastroBebidaController::aprovar` e `rejeitar`, e exibidos nas abas de histórico. A partir daí,
-desfazer uma decisão vira um item possível — hoje seria desfazer sem saber de quem.
 
 ### FEAT-09 · Escalar receita e converter medidas · impacto médio, esforço alto
 

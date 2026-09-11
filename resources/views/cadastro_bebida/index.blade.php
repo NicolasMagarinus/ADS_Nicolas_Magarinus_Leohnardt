@@ -126,7 +126,13 @@
                                                 <i class="bi {{ $bebida->id_status->icone() }} me-1"></i>{{ $bebida->id_status->label() }}
                                             </span>
                                             <div class="small text-muted">
-                                                em {{ $bebida->updated_at->format('d/m/Y H:i') }}
+                                                {{-- dt_moderacao é nula nas receitas decididas antes
+                                                     de a coluna existir; ali só resta o updated_at,
+                                                     que é a última escrita na linha. --}}
+                                                em {{ ($bebida->dt_moderacao ?? $bebida->updated_at)->format('d/m/Y H:i') }}
+                                            </div>
+                                            <div class="small text-muted">
+                                                Moderada por {{ $bebida->moderador->name ?? 'não registrado' }}
                                             </div>
                                             @if($bebida->ds_motivo_rejeicao)
                                                 <div class="alert alert-danger small text-start mt-2 mb-0">

@@ -111,7 +111,7 @@ class CadastroBebidaController extends Controller
         // O usuario entra no with() junto dos ingredientes: a view mostra quem
         // enviou cada receita, e sem isso era uma consulta por linha.
         $bebidas = CadastroBebida::where('id_status', $status)
-            ->with(['ingredientes', 'usuario'])
+            ->with(['ingredientes', 'usuario', 'moderador'])
             // Pendente é fila: a mais antiga primeiro, que é a que espera há
             // mais tempo. Já decidida é histórico, e histórico se lê de trás
             // para a frente.
@@ -161,7 +161,11 @@ class CadastroBebidaController extends Controller
                 );
             }
 
-            $cadastro->update(['id_status' => StatusCadastro::Aprovada]);
+            $cadastro->update([
+                'id_status' => StatusCadastro::Aprovada,
+                'id_moderador' => Auth::id(),
+                'dt_moderacao' => now(),
+            ]);
             $cdBebida = $bebida->cd_bebida;
         });
 
@@ -187,6 +191,8 @@ class CadastroBebidaController extends Controller
         $cadastro->update([
             'id_status' => StatusCadastro::Rejeitada,
             'ds_motivo_rejeicao' => $request->motivo_rejeicao,
+            'id_moderador' => Auth::id(),
+            'dt_moderacao' => now(),
         ]);
 
         $this->avisarAutor($cadastro);

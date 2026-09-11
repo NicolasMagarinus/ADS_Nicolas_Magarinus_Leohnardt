@@ -20,17 +20,25 @@ class CadastroBebida extends Model
         'ds_preparo',
         'ds_imagem',
         'id_status',
-        'ds_motivo_rejeicao'
+        'ds_motivo_rejeicao',
+        'id_moderador',
+        'dt_moderacao',
     ];
 
     protected $casts = [
         'id_tipo' => TipoBebida::class,
         'id_status' => StatusCadastro::class,
+        'dt_moderacao' => 'datetime',
     ];
 
     public function usuario()
     {
         return $this->belongsTo(User::class, 'id_usuario');
+    }
+
+    public function moderador()
+    {
+        return $this->belongsTo(User::class, 'id_moderador');
     }
 
     public function ingredientes()

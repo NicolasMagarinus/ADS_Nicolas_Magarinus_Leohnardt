@@ -134,6 +134,16 @@ and the mirror is not empty, the page saves it once), and it must be rewritten o
 stale mirror would resurrect a bar the user just cleared. The screen requires login, as it always
 has.
 
+### Moderation panel
+
+`/admin/bebidas` splits into three tabs by `?status=pendentes|aprovadas|rejeitadas` (anything else
+falls back to the queue). Pending is a queue and lists oldest first; the two history tabs are history
+and list the most recent decision first. Approve and reject buttons render only on the pending tab.
+Each decision records `id_moderador` and `dt_moderacao` on `cadastro_bebida`; both are nullable,
+because rows decided before those columns existed cannot be backfilled, and the FK is
+`nullOnDelete` so removing an admin never deletes the recipes they moderated. The view falls back to
+`updated_at` and to "não registrado" for those older rows.
+
 ### Moderation notices
 
 Approving or rejecting a submission notifies its author by e-mail
