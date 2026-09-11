@@ -97,7 +97,7 @@ together, one person's home would show another's state.
 
 ### Query style
 
-Read-heavy pages bypass Eloquent and use `DB::select` with heredoc SQL that aggregates rating (`AVG(id_nota)`), rating count and ingredient JSON in one round trip: `Bebida::getBebida()` (detail + random), `HomeController` (rankings), `MeuBarController::obterBebidasPossiveis` (drinks makeable from owned ingredients, ≤2 missing), `RecomendadasController` (top-5 ingredients from favorites → similar drinks). Eloquent is used for writes and for the paginated `SearchController`, which also carries the search
+Read-heavy pages bypass Eloquent and use `DB::select` with heredoc SQL that aggregates rating (`AVG(id_nota)`), rating count and ingredient JSON in one round trip: `Bebida::getBebida()` (detail + random — the random path draws a `cd_bebida` with a narrow query first, so the heavy aggregate always runs filtered by id and never builds the ingredient JSON for the whole catalog), `HomeController` (rankings), `MeuBarController::obterBebidasPossiveis` (drinks makeable from owned ingredients, ≤2 missing), `RecomendadasController` (top-5 ingredients from favorites → similar drinks). Eloquent is used for writes and for the paginated `SearchController`, which also carries the search
 facets: `tipo`, `nota` (minimum average), `max_ingredientes` and `ingrediente`, all optional query
 parameters that combine with each other and with the free-text `q`. An invalid value is ignored
 rather than rejected — it is a URL people edit by hand. Two of them are aggregates and therefore live
