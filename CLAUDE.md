@@ -166,6 +166,15 @@ OpenAI (`openai-php/laravel`, `config/openai.php`, model from `OPENAI_MODEL`), C
 
 Vite, Tailwind and `resources/js|css` exist from the Laravel skeleton but **the layout does not use `@vite`**. `resources/views/layouts/app.blade.php` loads Bootstrap 5, Bootstrap Icons, Font Awesome and SweetAlert2 from CDNs plus `public/css/custom.css` (the single hand-written stylesheet, CSS variables at the top). Style changes belong in `public/css/custom.css`; adding a class from Tailwind will not work. Pagination is Bootstrap 5-styled via `AppServiceProvider`.
 
+Page JavaScript lives in `public/js/`, served with the `@js('file.js')` Blade directive registered in
+`AppServiceProvider` — it emits a `defer` script tag with a `?v=` stamp from `filemtime`, so there is
+cache busting without a build step. `drinkerito.js` holds the shared helpers (`window.Drinkerito`) and
+**must load from the `<head>`**: deferred scripts run in document order, and the chatbot partial sits
+above the footer, so loading it later would leave `window.Drinkerito` undefined for the scripts that
+read it. Values only the server knows (CSRF token, route URLs, initial data) stay in a short inline
+`<script>` per view that defines a config object the static file reads — that is what lets the bulk of
+the code be a cacheable static file. Vite is still unused; see QA-06 in the backlog for why.
+
 Views extend `layouts.app` and use `@yield('content')`; header/footer/chatbot come from `resources/views/partials/`.
 
 `partials/meta.blade.php`, included from the layout's `<head>`, builds the `<title>`, the meta

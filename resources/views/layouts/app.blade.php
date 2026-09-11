@@ -8,6 +8,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css">
     <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
+
+    {{-- No <head> de propósito: scripts com defer executam na ordem do
+         documento, e o parcial do chatbot aparece antes do rodapé. Carregado
+         mais abaixo, ele rodaria depois de quem lê window.Drinkerito. --}}
+    @js('drinkerito.js')
 </head>
 <body>
     @include('partials.header')

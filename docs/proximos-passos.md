@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate
-php artisan test          # 141 testes devem passar
+php artisan test          # 150 testes devem passar
 php artisan serve
 ```
 
@@ -111,7 +111,8 @@ Do mais antigo para o mais novo:
 | `3d16810` | **FEAT-05** — editar nome e avatar do próprio perfil |
 | `36c8910` | **FEAT-04** — aviso por e-mail ao aprovar ou rejeitar |
 | `cd19f0c` | **FEAT-07** — chatbot com memória da conversa |
-| (este) | **PERF-02** cache da home; parte do **PERF-01**, paginação do painel de moderação |
+| `54eea3d` | **PERF-02** cache da home; parte do **PERF-01**, paginação do painel de moderação |
+| (este) | **QA-03** — JavaScript fora das views, em `public/js/` |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -122,8 +123,8 @@ rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bo
 ## Ordem sugerida
 
 1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
-2. **QA-03 (tirar o JavaScript das views)** — destrava o FEAT-12 (PWA) e é o que mais melhora a manutenção daqui em diante.
-3. **DB-04 (seeder de bebidas)** — depois de um `migrate:fresh` o catálogo só volta chamando a OpenAI, o que custa dinheiro.
+2. **DB-04 (seeder de bebidas)** — depois de um `migrate:fresh` o catálogo só volta chamando a OpenAI, o que custa dinheiro.
+3. **PERF-05** — `loading="lazy"` e transformação do Cloudinary nas imagens; é pouca linha e o ganho aparece no celular.
 4. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
@@ -202,15 +203,27 @@ de teste.
 
 ## Qualidade (1)
 
-### QA-03 · Todo o JavaScript mora dentro das views · médio
+### QA-06 · Migrar o front para o Vite · médio
 
-364 linhas em `partials/chatbot.blade.php`, 345 em `meubar/index.blade.php`. Vite e Tailwind estão
-configurados e não são usados: o layout carrega Bootstrap, jQuery, Select2 e SweetAlert por CDN e
-nunca chama `@vite`. Sem cache, sem versionamento e sem reaproveitar código entre telas — por isso o
-`escapeHtml` existia só no chatbot, que foi a raiz do XSS no Meu Bar.
+O JavaScript saiu das views e virou arquivo estático em `public/js/`, com versionamento por
+`filemtime` (diretiva `@js`). O que **não** foi feito é o bundling: sem Vite não há minificação, não
+há imports entre módulos, e as bibliotecas seguem vindo de CDN.
 
-**Fazer:** não precisa migrar tudo de uma vez. Comece movendo chatbot e Meu Bar para
-`resources/js/`, adicione `@vite` no layout e deixe os utilitários compartilhados num módulo só.
+Três bloqueios concretos para quem for encarar, todos verificados:
+
+- **`public/build` não existe** — o projeto nunca foi buildado. `@vite` no layout lança
+  `ViteManifestNotFoundException` já no primeiro request, local e em produção.
+- **O `railway.toml` não define comando de build**, só liga o nixpacks. Se o `npm run build` não
+  rodar no deploy, o site vai ao ar quebrado. Confirme o que o nixpacks faz antes de tocar no layout.
+- **`resources/css/app.css` importa Tailwind**, com sintaxe v3 e v4 misturadas (`@import 'tailwindcss'`
+  junto de `@tailwind base`). Carregar esse CSS traz o preflight, que reseta estilo de elemento sobre
+  um site inteiro em Bootstrap mais `public/css/custom.css` — regressão visual em todas as telas.
+
+O `package.json` também pede limpeza: o bloco `dependencies` lista dezenas de pacotes transitivos
+(`ansi-styles`, `color-name`, `yallist`), sinal de um `npm install` feito sobre a saída de outro
+comando.
+
+O **FEAT-12 (PWA)** depende deste item, não da extração que já foi feita.
 
 ---
 
