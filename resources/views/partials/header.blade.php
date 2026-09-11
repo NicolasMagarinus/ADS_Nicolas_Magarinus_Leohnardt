@@ -51,7 +51,13 @@
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                                 data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle me-1"></i> {{ Auth::user()->name }}
+                                @if(Auth::user()->ds_avatar)
+                                    <img src="{{ Auth::user()->ds_avatar }}" alt="" class="rounded-circle me-1"
+                                         width="24" height="24" style="object-fit: cover;">
+                                @else
+                                    <i class="bi bi-person-circle me-1"></i>
+                                @endif
+                                {{ Auth::user()->name }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="{{ route('perfil.index') }}"><i

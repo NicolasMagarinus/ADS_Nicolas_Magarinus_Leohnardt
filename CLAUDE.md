@@ -124,6 +124,18 @@ another's attempts. The code is stored hashed in `password_reset_tokens.token`, 
 minutes, and dies after 5 wrong guesses (the `tentativas` column). A request for an unknown email
 returns exactly the same response as a known one.
 
+### Profile editing
+
+`PerfilController::atualizar` (`POST /profile`) changes the user's own `name` and `ds_avatar` — a
+Cloudinary URL on `users`, like every other image in the project. The avatar is cropped square
+(`fill` + `gravity: face`), unlike the drink upload, which uses `limit` to keep the photo's aspect
+ratio. Posting without a file keeps the current avatar instead of clearing it.
+
+**The e-mail is deliberately not editable.** `GoogleController` identifies an account by e-mail
+(`firstOrCreate(['email' => ...])`), so changing it would make the next Google login create a second
+account and strand the first one's favorites, recipes and ratings. Fixing that needs a `google_id`
+column first — it is FEAT-15 in the backlog.
+
 ### External services
 
 OpenAI (`openai-php/laravel`, `config/openai.php`, model from `OPENAI_MODEL`), Cloudinary (all drink/ingredient images — uploads return a secure URL stored in `ds_imagem`; no local disk storage), Laravel Socialite for Google login (`GoogleController`, stateless, auto-creates the user).

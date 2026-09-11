@@ -4,10 +4,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\CadastroBebida;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
 
 class PerfilController extends Controller
@@ -31,6 +33,54 @@ class PerfilController extends Controller
         return view('perfil.index', compact('user', 'arrBebida', 'cntFavoritos', 'cntAvaliacoes'));
     }
 
+    public function atualizar(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'ds_avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+        ], [
+            'name.required' => 'O nome é obrigatório',
+            'ds_avatar.image' => 'O arquivo deve ser uma imagem',
+            'ds_avatar.mimes' => 'A imagem deve ser nos formatos: JPEG, PNG ou JPG',
+            'ds_avatar.max' => 'A imagem não pode ser maior que 5MB',
+        ]);
+
+        $user = Auth::user();
+        $user->name = $request->name;
+
+        if ($request->hasFile('ds_avatar')) {
+            try {
+                // Quadrado, diferente do drink: lá o crop é 'limit' em 1024,
+                // que preserva a proporção da foto da receita. Avatar precisa
+                // fechar no quadro, e gravity 'face' evita cortar a cabeça.
+                $upload = Cloudinary::upload($request->file('ds_avatar')->getRealPath(), [
+                    'folder' => 'avatares',
+                    'transformation' => [
+                        'width' => 400,
+                        'height' => 400,
+                        'crop' => 'fill',
+                        'gravity' => 'face',
+                        'quality' => 'auto',
+                    ],
+                ]);
+
+                $user->ds_avatar = $upload->getSecurePath();
+            } catch (\Exception $e) {
+                Log::error('Erro ao enviar avatar para o Cloudinary: '.$e->getMessage(), [
+                    'user_id' => $user->id,
+                    'exception' => $e,
+                ]);
+
+                return back()->withInput()
+                    ->withErrors(['ds_avatar' => 'Não foi possível enviar a imagem. Tente novamente.']);
+            }
+        }
+
+        $user->save();
+
+        return redirect()->route('perfil.index')->with('success', 'Perfil atualizado!');
+    }
+
     public function alterarSenha(Request $request)
     {
         $request->validate([
@@ -45,10 +95,10 @@ class PerfilController extends Controller
 
         $user = Auth::user();
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Senha atual incorreta'
+                'message' => 'Senha atual incorreta',
             ], 400);
         }
 
@@ -57,8 +107,7 @@ class PerfilController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Senha alterada com sucesso!'
+            'message' => 'Senha alterada com sucesso!',
         ]);
     }
 }
-

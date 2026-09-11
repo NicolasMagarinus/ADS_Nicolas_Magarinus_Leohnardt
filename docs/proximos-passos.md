@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate
-php artisan test          # 106 testes devem passar
+php artisan test          # 116 testes devem passar
 php artisan serve
 ```
 
@@ -107,7 +107,8 @@ Do mais antigo para o mais novo:
 | `b14b644` | **QA-07** — título, meta description e Open Graph por página |
 | `aecbbb7` | **FEAT-06** — página e índice por ingrediente |
 | `e01e09a` | **FEAT-03** — facetas de verdade na busca |
-| (este) | **FEAT-14** — ingredientes da receita viram links |
+| `aacfa6a` | **FEAT-14** — ingredientes da receita viram links |
+| (este) | **FEAT-05** — editar nome e avatar do próprio perfil |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -119,7 +120,7 @@ rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bo
 
 1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
 2. **FEAT-04 (avisar quando a bebida for aprovada ou rejeitada)** — o envio de e-mail já está montado desde a recuperação de senha.
-3. **FEAT-05 (editar o próprio perfil)** — pequena, e reaproveita o fluxo de upload do cadastro de bebida.
+3. **FEAT-07 (chatbot com memória)** — pequena, e cada pergunta desperdiçada pesa com o limite de 5 por dia.
 4. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
@@ -244,10 +245,17 @@ rejeição já é gravado e exibido lá, só falta ele descobrir que existe.
 **Fazer:** uma Notification do Laravel por e-mail — o `User` já usa `Notifiable`, e o envio de e-mail
 agora está montado por causa da recuperação de senha.
 
-### FEAT-05 · Editar o próprio perfil · impacto médio, esforço baixo
+### FEAT-15 · Trocar o e-mail, e a conta do Google por trás dele · impacto baixo, esforço médio
 
-Só dá para trocar a senha. Não dá para corrigir o próprio nome, nem quem entrou pelo Google e veio
-com o nome da conta Google. O upload de avatar reaproveita o fluxo Cloudinary do cadastro de bebida.
+O FEAT-05 deixou o e-mail de fora de propósito, e o motivo não é preguiça: `GoogleController`
+identifica a conta pelo e-mail (`firstOrCreate(['email' => $googleUser->getEmail()])`,
+`GoogleController.php:26`). Quem entrou pelo Google e trocasse o e-mail no perfil passaria a criar
+uma **segunda conta** no próximo login, deixando favoritos, receitas e avaliações na primeira.
+
+**Fazer, nesta ordem:** uma coluna `google_id` em `users`, gravada no primeiro login pelo Google;
+`GoogleController` passa a casar por ela, caindo para o e-mail só quando estiver vazia (as contas que
+já existem); e só então a troca de e-mail no perfil, com unique, validação e a senha atual como
+confirmação.
 
 ### FEAT-07 · Chatbot com memória da conversa · impacto médio, esforço baixo
 

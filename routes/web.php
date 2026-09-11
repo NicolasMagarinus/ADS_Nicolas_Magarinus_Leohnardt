@@ -80,6 +80,7 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [PerfilController::class, 'index'])->name('perfil.index');
+    Route::post('/profile', [PerfilController::class, 'atualizar'])->name('perfil.update');
     Route::post('/profile/change-password', [PerfilController::class, 'alterarSenha'])->name('perfil.change-password');
 
     Route::get('/favoritos', [FavoritoController::class, 'index'])->name('favoritos.index');

@@ -10,7 +10,12 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-body text-center">
                     <div class="mb-3">
-                        <i class="bi bi-person-circle display-1 text-secondary"></i>
+                        @if($user->ds_avatar)
+                            <img src="{{ $user->ds_avatar }}" alt="Foto de {{ $user->name }}"
+                                 class="rounded-circle" width="120" height="120" style="object-fit: cover;">
+                        @else
+                            <i class="bi bi-person-circle display-1 text-secondary"></i>
+                        @endif
                     </div>
                     <h4 class="card-title">{{ $user->name }}</h4>
                     <p class="text-muted">{{ $user->email }}</p>
@@ -43,6 +48,9 @@
                     <h5 class="card-title mb-3">
                         <i class="bi bi-gear-fill me-2 text-secondary"></i>Configurações
                     </h5>
+                    <button type="button" class="btn btn-outline-dark w-100 mb-2" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                        <i class="bi bi-pencil-fill me-2"></i>Editar Perfil
+                    </button>
                     <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
                         <i class="bi bi-key-fill me-2"></i>Alterar Senha
                     </button>
@@ -110,6 +118,44 @@
         </div>
     </div>
 </div>
+
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="POST" action="{{ route('perfil.update') }}" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editProfileModalLabel">
+                            <i class="bi bi-pencil-fill me-2"></i>Editar Perfil
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nome</label>
+                            <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                   id="name" name="name" value="{{ old('name', $user->name) }}" required maxlength="255">
+                            @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="mb-3">
+                            <label for="ds_avatar" class="form-label">Foto <span class="text-muted">(opcional)</span></label>
+                            <input type="file" class="form-control @error('ds_avatar') is-invalid @enderror"
+                                   id="ds_avatar" name="ds_avatar" accept="image/jpeg,image/png,image/jpg">
+                            @error('ds_avatar')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div class="form-text">JPEG, PNG ou JPG, até 5 MB. Deixe em branco para manter a atual.</div>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            <i class="bi bi-info-circle me-1"></i>O e-mail não pode ser alterado por aqui.
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-dark">Salvar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
