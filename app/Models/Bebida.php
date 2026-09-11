@@ -58,7 +58,7 @@ class Bebida extends Model
                    b.updated_at,
                    COALESCE(ROUND(AVG(a.id_nota), 1), 0) AS nota,
                    COUNT(DISTINCT a.cd_avaliacao) AS qt_avaliacao,
-                   COALESCE((SELECT json_agg(json_build_object('nm_ingrediente', i.nm_ingrediente, 'ds_medida', bi.ds_medida) ORDER BY i.nm_ingrediente)
+                   COALESCE((SELECT json_agg(json_build_object('cd_ingrediente', i.cd_ingrediente, 'nm_ingrediente', i.nm_ingrediente, 'ds_medida', bi.ds_medida) ORDER BY i.nm_ingrediente)
                                FROM ingrediente AS i
                                JOIN bebida_ingrediente AS bi ON i.cd_ingrediente = bi.cd_ingrediente
                               WHERE bi.cd_bebida = b.cd_bebida), '[]') AS ingredientes_json

@@ -46,11 +46,7 @@
                     </div>
 
                     <h5 class="mt-4">Ingredientes</h5>
-                    <ul class="list-unstyled">
-                        @foreach($bebida->ingredientes as $ingrediente)
-                            <li class="mb-1"><i class="fas fa-check-circle text-success me-2"></i>{{ $ingrediente["nm_ingrediente"] }} ({{ $ingrediente["ds_medida"] }})</li>
-                        @endforeach
-                    </ul>
+                    @include('partials.lista-ingredientes', ['ingredientes' => $bebida->ingredientes])
 
                     <h5 class="mt-4">Modo de Preparo</h5>
                     <div class="instructions">

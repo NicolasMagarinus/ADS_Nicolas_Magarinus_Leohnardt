@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **18 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **17 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate
-php artisan test          # 102 testes devem passar
+php artisan test          # 106 testes devem passar
 php artisan serve
 ```
 
@@ -106,7 +106,8 @@ Do mais antigo para o mais novo:
 | `121c0a8` | **FEAT-02** — Meu Bar persistente em `usuario_ingrediente` |
 | `b14b644` | **QA-07** — título, meta description e Open Graph por página |
 | `aecbbb7` | **FEAT-06** — página e índice por ingrediente |
-| (este) | **FEAT-03** — facetas de verdade na busca |
+| `e01e09a` | **FEAT-03** — facetas de verdade na busca |
+| (este) | **FEAT-14** — ingredientes da receita viram links |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -117,8 +118,8 @@ rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bo
 ## Ordem sugerida
 
 1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
-2. **FEAT-14 (ingredientes da bebida viram links)** — pequena, e completa o alcance do que o FEAT-06 abriu.
-3. **FEAT-04 (avisar quando a bebida for aprovada ou rejeitada)** — o envio de e-mail já está montado desde a recuperação de senha.
+2. **FEAT-04 (avisar quando a bebida for aprovada ou rejeitada)** — o envio de e-mail já está montado desde a recuperação de senha.
+3. **FEAT-05 (editar o próprio perfil)** — pequena, e reaproveita o fluxo de upload do cadastro de bebida.
 4. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
@@ -219,7 +220,7 @@ Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com 
 
 ---
 
-## Funcionalidades (10)
+## Funcionalidades (9)
 
 Ordenadas por retorno sobre esforço.
 
@@ -247,17 +248,6 @@ agora está montado por causa da recuperação de senha.
 
 Só dá para trocar a senha. Não dá para corrigir o próprio nome, nem quem entrou pelo Google e veio
 com o nome da conta Google. O upload de avatar reaproveita o fluxo Cloudinary do cadastro de bebida.
-
-### FEAT-14 · Ingredientes da tela da bebida viram links · impacto médio, esforço baixo
-
-`resources/views/bebida/show.blade.php:41-43` lista os ingredientes como texto puro. Transformá-los
-em links para `/ingrediente/{cd}` é a forma mais natural de dar alcance ao catálogo inteiro: hoje só
-os quatro da home e o índice `/ingredientes` apontam para lá.
-
-**O que trava:** `Bebida::getBebida()` monta os ingredientes com `json_build_object` trazendo só
-`nm_ingrediente` e `ds_medida`, sem o id (`app/Models/Bebida.php:55`). Linkar exige acrescentar
-`i.cd_ingrediente` àquele `json_build_object` — e aquele SQL serve também à tela de detalhe e à
-aleatória, então a mudança pede teste nas duas.
 
 ### FEAT-07 · Chatbot com memória da conversa · impacto médio, esforço baixo
 

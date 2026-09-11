@@ -121,6 +121,54 @@ class IngredientePaginaTest extends TestCase
             ->assertSee('2 receitas');
     }
 
+    public function test_get_bebida_devolve_o_id_de_cada_ingrediente(): void
+    {
+        $rum = $this->ingrediente('Rum');
+        $hortela = $this->ingrediente('Hortela');
+        $bebida = $this->bebidaCom('Mojito', [$rum, $hortela]);
+
+        $ingredientes = Bebida::getBebida($bebida->cd_bebida)->ingredientes;
+
+        // Ordenados por nome, como o json_agg do SQL manda.
+        $this->assertSame(
+            [$hortela->cd_ingrediente, $rum->cd_ingrediente],
+            array_column($ingredientes, 'cd_ingrediente')
+        );
+        $this->assertSame(['Hortela', 'Rum'], array_column($ingredientes, 'nm_ingrediente'));
+    }
+
+    public function test_tela_da_bebida_linka_cada_ingrediente(): void
+    {
+        $rum = $this->ingrediente('Rum');
+        $bebida = $this->bebidaCom('Mojito', [$rum]);
+
+        $this->get(route('bebida.show', $bebida->cd_bebida))
+            ->assertOk()
+            ->assertSee(route('ingrediente.show', $rum->cd_ingrediente), false)
+            // A medida continua na tela, mas fora do link.
+            ->assertSee('50 ml');
+    }
+
+    public function test_tela_aleatoria_linka_cada_ingrediente(): void
+    {
+        $rum = $this->ingrediente('Rum');
+        $this->bebidaCom('Mojito', [$rum]);
+
+        $this->get(route('random'))
+            ->assertOk()
+            ->assertSee(route('ingrediente.show', $rum->cd_ingrediente), false);
+    }
+
+    public function test_ingrediente_sem_id_cai_para_texto_puro(): void
+    {
+        $ingredientes = [['nm_ingrediente' => 'Rum', 'ds_medida' => '50 ml']];
+
+        $html = view('partials.lista-ingredientes', compact('ingredientes'))->render();
+
+        $this->assertStringContainsString('Rum', $html);
+        $this->assertStringNotContainsString('/ingrediente/', $html);
+    }
+
     public function test_menu_leva_ao_indice_de_ingredientes(): void
     {
         $this->get(route('home'))

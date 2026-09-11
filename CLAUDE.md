@@ -78,6 +78,12 @@ drink ever uses. `/ingrediente/{cd}` shows the drinks that use one. Both are pub
 with Eloquent, following `SearchController` rather than the raw-SQL style. An ingredient with no
 recipes still answers 200 for a typed URL, but ships `robots=noindex`.
 
+The ingredient list on the drink and random pages links here too, through
+`partials/lista-ingredientes.blade.php` — both screens had the same markup duplicated. It expects the
+shape `Bebida::getBebida()` returns (`cd_ingrediente`, `nm_ingrediente`, `ds_medida`) and falls back
+to plain text when the id is missing. Note that `cadastro_bebida/index.blade.php` lists a *staging*
+row's ingredients, which are free text with no id yet, so it does not use this partial.
+
 The home page's "most used ingredients" cards link here. That query had to gain `i.cd_ingrediente` in
 both the `SELECT` and the `GROUP BY` (`HomeController.php:27-35`) — it used to group by name alone.
 
