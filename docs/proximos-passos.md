@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **13 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **12 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -63,14 +63,19 @@ GOOGLE_REDIRECT_URI=
 ```bash
 composer install
 php artisan key:generate
-php artisan migrate
-php artisan test          # 169 testes devem passar
+php artisan migrate --seed
+php artisan test          # 175 testes devem passar
 php artisan serve
 ```
 
-### 4. Popular o catálogo (opcional)
+### 4. Popular o catálogo
 
-O banco local sobe vazio. Para trazer os dados do Railway:
+```bash
+php artisan db:seed          # 16 receitas fixas, sem chamar a OpenAI
+```
+
+O `BebidaSeeder` é idempotente e não gasta cota de API. Para trabalhar com os dados reais, traga um
+dump do Railway:
 
 ```bash
 PGPASSWORD='<senha do Railway>' pg_dump -h <host>.proxy.rlwy.net -p <porta> \
@@ -114,7 +119,8 @@ Do mais antigo para o mais novo:
 | `54eea3d` | **PERF-02** cache da home; parte do **PERF-01**, paginação do painel de moderação |
 | `f7600c7` | **QA-03** — JavaScript fora das views, em `public/js/` |
 | `18ec805` | **PERF-05** — imagens no tamanho em que aparecem |
-| (este) | **PERF-03** — sorteio da bebida aleatória |
+| `a13dcbc` | **PERF-03** — sorteio da bebida aleatória |
+| (este) | **DB-04** — rollback nas migrations e seeder do catálogo |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -125,8 +131,7 @@ rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bo
 ## Ordem sugerida
 
 1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
-2. **DB-04 (seeder de bebidas)** — depois de um `migrate:fresh` o catálogo só volta chamando a OpenAI, o que custa dinheiro.
-3. **FEAT-08 (coleções de drinks)** — a maior das que sobraram por retorno: lista nomeada e pública é conteúdo indexável gerado pelo usuário.
+2. **FEAT-08 (coleções de drinks)** — a maior das que sobraram por retorno: lista nomeada e pública é conteúdo indexável gerado pelo usuário.
 4. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
@@ -182,24 +187,6 @@ Duas armadilhas que custam tempo se não estiverem escritas:
 
 **Como confirmar que funcionou:** peça a recuperação de senha em produção com um e-mail cadastrado e
 veja se o código de 6 dígitos chega. É o único caminho que exercita remetente, SMTP e template juntos.
-
----
-
-## Banco (1)
-
-### DB-04 · Migrations sem rollback · baixo
-
-`down()` vazio ou incompleto em:
-
-- `2025_11_08_023129_drop_column_id_externo_from_bebida_table.php:22`
-- `2025_11_12_231741_alter_table_bebida_change_column_type.php:24`
-
-`migrate:rollback` passa por elas sem fazer nada e deixa o banco num estado que não corresponde a
-nenhuma versão.
-
-Também não existe seeder de bebidas: depois de um `migrate:fresh` o catálogo só volta chamando a
-OpenAI, o que custa dinheiro. Um seeder com 10 ou 20 receitas fixas resolveria — e serviria de massa
-de teste.
 
 ---
 

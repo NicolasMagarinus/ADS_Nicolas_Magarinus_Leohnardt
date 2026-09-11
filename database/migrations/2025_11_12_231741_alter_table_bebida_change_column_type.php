@@ -17,12 +17,16 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Volta ao `string` (varchar 255) da migration original.
+     *
+     * Se alguma URL do Cloudinary passar de 255 caracteres, o Postgres recusa
+     * e o rollback falha — o que é o comportamento certo. Truncar caminho de
+     * imagem em silêncio seria pior que parar.
      */
     public function down(): void
     {
         Schema::table('bebida', function (Blueprint $table) {
-            //
+            $table->string('ds_imagem')->nullable()->change();
         });
     }
 };

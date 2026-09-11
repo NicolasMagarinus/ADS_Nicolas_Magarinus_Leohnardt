@@ -34,8 +34,17 @@ php artisan app:gerar-bebidas-ai --qt_receita=5  # GPT-generated recipes + DALLÂ
 php artisan app:gerar-ingredientes-ai --qt=50    # ingredient list/images via OpenAI
 ```
 
-These are the only way to repopulate the catalog. The original TheCocktailDB import was removed in
-September 2026; the drinks it seeded remain in the database, but nothing re-fetches them.
+They are not the only way to get a catalog any more: `php artisan db:seed` runs `BebidaSeeder`, which
+writes 16 fixed recipes (half of them alcohol-free) without touching OpenAI, and is idempotent. Use it
+for development and test data; keep the AI commands for growing the real catalog. The original
+TheCocktailDB import was removed in September 2026; the drinks it seeded remain in the database, but
+nothing re-fetches them.
+
+Every migration has a working `down()`, so `php artisan migrate:reset` unwinds the schema cleanly â€”
+worth re-checking when you add one. Two of them cannot be exact inverses and say so in a comment:
+`bebida.id_externo` comes back nullable (its TheCocktailDB values are gone, so NOT NULL would fail on
+any populated table), and `bebida.ds_imagem` going back to `varchar(255)` will fail loudly if a
+Cloudinary URL no longer fits, which beats truncating it.
 
 ## Database
 
