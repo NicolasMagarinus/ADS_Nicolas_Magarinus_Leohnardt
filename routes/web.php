@@ -78,8 +78,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/change-password', [PerfilController::class, 'alterarSenha'])->name('perfil.change-password');
 
     Route::get('/favoritos', [FavoritoController::class, 'index'])->name('favoritos.index');
-    Route::post('/favoritos/{cd_bebida}/toggle', [FavoritoController::class, 'alternar'])->name('favoritos.toggle');
-    Route::get('/favoritos/{cd_bebida}/check', [FavoritoController::class, 'verificar'])->name('favoritos.check');
+    Route::post('/favoritos/{cd_bebida}/toggle', [FavoritoController::class, 'alternar'])
+        ->name('favoritos.toggle')->whereNumber('cd_bebida');
+    Route::get('/favoritos/{cd_bebida}/check', [FavoritoController::class, 'verificar'])
+        ->name('favoritos.check')->whereNumber('cd_bebida');
 
     Route::get('/recomendadas', [RecomendadasController::class, 'index'])->name('recomendadas.index');
 

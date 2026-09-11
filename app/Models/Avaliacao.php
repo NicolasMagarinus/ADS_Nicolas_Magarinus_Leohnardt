@@ -25,6 +25,7 @@ class Avaliacao extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        // users é a única tabela com PK 'id', e a coluna daqui é id_usuario.
+        return $this->belongsTo(User::class, 'id_usuario');
     }
 }

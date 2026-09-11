@@ -28,6 +28,10 @@ class FavoritoController extends Controller
 
     public function alternar($cd_bebida)
     {
+        // Sem isso um id inexistente vira violação de chave estrangeira, e o
+        // front, que espera JSON, recebe uma página de erro.
+        Bebida::findOrFail($cd_bebida);
+
         $favorito = Favorito::where('id_usuario', Auth::id())
             ->where('cd_bebida', $cd_bebida)
             ->first();

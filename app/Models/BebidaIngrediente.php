@@ -16,9 +16,14 @@ class BebidaIngrediente extends Model
         'ds_medida'
     ];
 
-    public function bebidaCadastro()
+    public function bebida()
     {
-        return $this->belongsTo(CadastroBebida::class, 'cd_bebida_cadastro');
+        return $this->belongsTo(Bebida::class, 'cd_bebida');
+    }
+
+    public function ingrediente()
+    {
+        return $this->belongsTo(Ingrediente::class, 'cd_ingrediente');
     }
 
 }
