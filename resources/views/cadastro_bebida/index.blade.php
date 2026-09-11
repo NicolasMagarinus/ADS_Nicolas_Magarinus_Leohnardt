@@ -8,7 +8,7 @@
     <div class="row justify-content-center">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2><i class="fas fa-tasks me-2"></i>Fila de Aprovação</h2>
+                <h2><i class="fas fa-tasks me-2"></i>Moderação de receitas</h2>
                 <a href="{{ route('home') }}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Voltar para Tela Inicial
                 </a>
@@ -21,7 +21,21 @@
                 </div>
             @endif
 
-            <div class="card shadow-sm border-0 rounded-lg">
+            <ul class="nav nav-tabs mb-0">
+                @foreach($abas as $chave => $status)
+                    <li class="nav-item">
+                        <a class="nav-link {{ $aba === $chave ? 'active' : '' }}"
+                           href="{{ route('admin.bebidas.index', ['status' => $chave]) }}">
+                            <i class="bi {{ $status->icone() }} me-1"></i>{{ $status->label() }}s
+                            <span class="badge {{ $aba === $chave ? 'bg-dark' : 'bg-secondary' }} ms-1">
+                                {{ $contagens[$status->value] ?? 0 }}
+                            </span>
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+
+            <div class="card shadow-sm border-0 rounded-lg rounded-top-0">
                 <div class="card-body p-0">
                     @forelse($bebidas as $bebida)
                         <div class="list-group list-group-flush">
@@ -57,6 +71,7 @@
                                         </small>
                                     </div>
                                     <div class="col-md-4 text-end">
+                                        @if($aba === 'pendentes')
                                         <form action="{{ route('admin.bebidas.approve', $bebida->cd_bebida_cadastro) }}" method="POST" class="d-inline">
                                             @csrf
                                             <button type="submit" class="btn btn-success me-2" title="Aprovar">
@@ -105,13 +120,33 @@
                                             </div>
                                         </div>
                                     </div>
+                                        @else
+                                            {{-- Já decidida: a tela mostra o desfecho, não oferece ação. --}}
+                                            <span class="badge {{ $bebida->id_status->classeBadge() }} mb-2">
+                                                <i class="bi {{ $bebida->id_status->icone() }} me-1"></i>{{ $bebida->id_status->label() }}
+                                            </span>
+                                            <div class="small text-muted">
+                                                em {{ $bebida->updated_at->format('d/m/Y H:i') }}
+                                            </div>
+                                            @if($bebida->ds_motivo_rejeicao)
+                                                <div class="alert alert-danger small text-start mt-2 mb-0">
+                                                    <strong>Motivo:</strong> {{ $bebida->ds_motivo_rejeicao }}
+                                                </div>
+                                            @endif
+                                        @endif
                                 </div>
                             </div>
                         </div>
                     @empty
                         <div class="text-center py-5">
                             <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Nenhuma bebida pendente de aprovação.</p>
+                            <p class="text-muted">
+                                @if($aba === 'pendentes')
+                                    Nenhuma bebida pendente de aprovação.
+                                @else
+                                    Nenhuma receita {{ strtolower($abas[$aba]->label()) }} até agora.
+                                @endif
+                            </p>
                         </div>
                     @endforelse
 

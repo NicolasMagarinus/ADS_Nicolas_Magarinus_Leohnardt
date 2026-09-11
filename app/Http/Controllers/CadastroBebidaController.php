@@ -88,19 +88,49 @@ class CadastroBebidaController extends Controller
         return redirect()->route('perfil.index')->with('success', 'Bebida enviada para aprovação!');
     }
 
-    public function index()
+    /** Aba do painel → estado do cadastro. */
+    private const ABAS = [
+        'pendentes' => StatusCadastro::Pendente,
+        'aprovadas' => StatusCadastro::Aprovada,
+        'rejeitadas' => StatusCadastro::Rejeitada,
+    ];
+
+    public function index(Request $request)
     {
-        // Nada sai da fila até um admin decidir, então esta é a tela que mais
-        // cresce sem limite.
+        // Valor fora da lista cai na fila em vez de dar 404: é URL que a
+        // pessoa edita à mão.
+        $aba = array_key_exists($request->get('status'), self::ABAS)
+            ? $request->get('status')
+            : 'pendentes';
+
+        $status = self::ABAS[$aba];
+
+        // Nada sai da fila até um admin decidir, então a de pendentes é a
+        // aba que mais cresce sem limite.
         //
         // O usuario entra no with() junto dos ingredientes: a view mostra quem
         // enviou cada receita, e sem isso era uma consulta por linha.
-        $bebidas = CadastroBebida::where('id_status', StatusCadastro::Pendente)
+        $bebidas = CadastroBebida::where('id_status', $status)
             ->with(['ingredientes', 'usuario'])
-            ->orderBy('created_at', 'asc')
-            ->paginate(10);
+            // Pendente é fila: a mais antiga primeiro, que é a que espera há
+            // mais tempo. Já decidida é histórico, e histórico se lê de trás
+            // para a frente.
+            ->when($status === StatusCadastro::Pendente,
+                fn ($q) => $q->orderBy('created_at', 'asc'),
+                fn ($q) => $q->orderBy('updated_at', 'desc'))
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('cadastro_bebida.index', compact('bebidas'));
+        $contagens = CadastroBebida::selectRaw('id_status, COUNT(*) AS total')
+            ->groupBy('id_status')
+            ->pluck('total', 'id_status');
+
+        return view('cadastro_bebida.index', [
+            'bebidas' => $bebidas,
+            'aba' => $aba,
+            'abas' => self::ABAS,
+            'contagens' => $contagens,
+        ]);
     }
 
     public function aprovar($id)

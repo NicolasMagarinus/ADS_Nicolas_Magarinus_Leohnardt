@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate --seed
-php artisan test          # 179 testes devem passar
+php artisan test          # 188 testes devem passar
 php artisan serve
 ```
 
@@ -121,7 +121,8 @@ Do mais antigo para o mais novo:
 | `18ec805` | **PERF-05** — imagens no tamanho em que aparecem |
 | `a13dcbc` | **PERF-03** — sorteio da bebida aleatória |
 | `590e604` | **DB-04** — rollback nas migrations e seeder do catálogo |
-| (este) | **PERF-01** — perfil deixa de trazer o preparo inteiro |
+| `2494242` | **PERF-01** — perfil deixa de trazer o preparo inteiro |
+| (este) | **FEAT-10** — abas Pendentes / Aprovadas / Rejeitadas no painel |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -262,12 +263,15 @@ Favorito é binário. "Drinks de verão", "Para a festa de sábado" — listas n
 transforma favoritos em algo que se compartilha. Tabelas `colecao` + `colecao_bebida`, com flag de
 pública/privada. Coleção pública com URL própria é conteúdo indexável gerado pelo usuário.
 
-### FEAT-10 · Histórico de moderação · impacto médio, esforço médio
+### FEAT-16 · Quem moderou o quê · impacto médio, esforço baixo
 
-`CadastroBebidaController.php:82-88` lista só `id_status = 0`. Depois de aprovar não há como rever,
-desfazer um engano ou saber quem decidiu o quê — não existe nem campo de quem moderou.
+As abas Pendentes / Aprovadas / Rejeitadas já existem, então dá para rever uma decisão. O que ainda
+não dá é saber **quem** decidiu e **quando** com precisão: a tela mostra o `updated_at` do cadastro,
+que é só a última escrita na linha, e não há registro do moderador.
 
-**Fazer:** abas Pendentes / Aprovadas / Rejeitadas, mais `id_moderador` e `dt_moderacao` na tabela.
+**Fazer:** `id_moderador` (FK para `users`) e `dt_moderacao` em `cadastro_bebida`, preenchidos em
+`CadastroBebidaController::aprovar` e `rejeitar`, e exibidos nas abas de histórico. A partir daí,
+desfazer uma decisão vira um item possível — hoje seria desfazer sem saber de quem.
 
 ### FEAT-09 · Escalar receita e converter medidas · impacto médio, esforço alto
 
