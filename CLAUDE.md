@@ -83,7 +83,15 @@ both the `SELECT` and the `GROUP BY` (`HomeController.php:27-35`) — it used to
 
 ### Query style
 
-Read-heavy pages bypass Eloquent and use `DB::select` with heredoc SQL that aggregates rating (`AVG(id_nota)`), rating count and ingredient JSON in one round trip: `Bebida::getBebida()` (detail + random), `HomeController` (rankings), `MeuBarController::obterBebidasPossiveis` (drinks makeable from owned ingredients, ≤2 missing), `RecomendadasController` (top-5 ingredients from favorites → similar drinks). Eloquent is used for writes and for the paginated `SearchController`. Follow the existing style in the file you're editing rather than converting between them.
+Read-heavy pages bypass Eloquent and use `DB::select` with heredoc SQL that aggregates rating (`AVG(id_nota)`), rating count and ingredient JSON in one round trip: `Bebida::getBebida()` (detail + random), `HomeController` (rankings), `MeuBarController::obterBebidasPossiveis` (drinks makeable from owned ingredients, ≤2 missing), `RecomendadasController` (top-5 ingredients from favorites → similar drinks). Eloquent is used for writes and for the paginated `SearchController`, which also carries the search
+facets: `tipo`, `nota` (minimum average), `max_ingredientes` and `ingrediente`, all optional query
+parameters that combine with each other and with the free-text `q`. An invalid value is ignored
+rather than rejected — it is a URL people edit by hand. Two of them are aggregates and therefore live
+in `HAVING`, not `WHERE`; the ingredient count uses a scalar subquery instead of another join,
+because joining `bebida_ingrediente` beside the `leftJoin` on `avaliacao` multiplies rows and would
+make `COUNT(avaliacao.id_nota)` count each rating once per ingredient. A `q` of "alcoólica" or "não
+alcoólica" — the phrase that used to be the only way to filter, and that the chatbot instructed —
+now 302s to the equivalent `?tipo=`, so old links keep working. Follow the existing style in the file you're editing rather than converting between them.
 
 ### Chatbot (`ChatbotController` + `resources/views/partials/chatbot.blade.php`)
 

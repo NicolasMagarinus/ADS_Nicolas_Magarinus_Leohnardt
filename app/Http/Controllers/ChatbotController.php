@@ -272,7 +272,8 @@ class ChatbotController extends Controller
             || str_contains($lower, 'sem alcool')
             || str_contains($lower, 'nao alcool')
         ) {
-            return '🥤 Temos várias opções sem álcool! Use o filtro de <a href="/search" class="chatbot-link">busca</a> e filtre por tipo "Não alcoólico".';
+            return '🥤 Temos várias opções sem álcool! Veja a <a href="/search?tipo='
+                .TipoBebida::NaoAlcoolica->value.'" class="chatbot-link">lista completa já filtrada</a>.';
         }
 
         if (str_contains($lower, 'favorit')) {

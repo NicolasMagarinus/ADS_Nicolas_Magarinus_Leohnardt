@@ -66,17 +66,25 @@ class BuscaTest extends TestCase
             ->assertDontSee('Caipirinha de Açaí');
     }
 
-    public function test_nao_alcoolica_filtra_por_tipo(): void
+    /**
+     * Antes de existir a faceta de tipo, digitar a frase no campo de texto era
+     * o jeito de filtrar. Hoje ela traduz para o filtro de verdade — quem
+     * seguir um link antigo tem de continuar chegando ao mesmo resultado. O
+     * filtro em si é coberto por BuscaFiltrosTest.
+     */
+    public function test_frase_antiga_leva_ao_filtro_de_sem_alcool(): void
     {
-        $this->get(route('search', ['q' => 'não alcoólica']))
+        $this->followingRedirects()
+            ->get(route('search', ['q' => 'não alcoólica']))
             ->assertOk()
             ->assertSee('Limonada Suíça')
             ->assertDontSee('Caipirinha de Açaí');
     }
 
-    public function test_alcoolica_filtra_por_tipo(): void
+    public function test_frase_antiga_leva_ao_filtro_de_alcoolica(): void
     {
-        $this->get(route('search', ['q' => 'alcoolica']))
+        $this->followingRedirects()
+            ->get(route('search', ['q' => 'alcoolica']))
             ->assertOk()
             ->assertSee('Caipirinha de Açaí')
             ->assertDontSee('Limonada Suíça');

@@ -38,6 +38,25 @@ class Ingrediente extends Model
         }
     }
 
+    /**
+     * Ingredientes que aparecem em ao menos uma receita, do mais usado para o
+     * menos usado, já com a contagem em qt_receitas.
+     *
+     * Serve ao índice /ingredientes e ao filtro da busca: órfão fica de fora
+     * dos dois, porque app:gerar-ingredientes-ai cria ingredientes que podem
+     * nunca ter sido usados, e filtrar por um deles devolve sempre nada.
+     */
+    public function scopeUsadosEmReceitas($query)
+    {
+        return $query
+            ->select('ingrediente.cd_ingrediente', 'ingrediente.nm_ingrediente', 'ingrediente.ds_imagem')
+            ->selectRaw('COUNT(bi.cd_bebida) AS qt_receitas')
+            ->join('bebida_ingrediente as bi', 'bi.cd_ingrediente', '=', 'ingrediente.cd_ingrediente')
+            ->groupBy('ingrediente.cd_ingrediente', 'ingrediente.nm_ingrediente', 'ingrediente.ds_imagem')
+            ->orderByDesc('qt_receitas')
+            ->orderBy('ingrediente.nm_ingrediente');
+    }
+
     protected static function porNome(string $nome): ?self
     {
         return static::whereRaw('lower(f_unaccent(nm_ingrediente)) = lower(f_unaccent(?))', [$nome])->first();

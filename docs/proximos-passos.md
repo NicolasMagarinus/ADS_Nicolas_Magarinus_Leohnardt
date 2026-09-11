@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **19 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **18 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -64,7 +64,7 @@ GOOGLE_REDIRECT_URI=
 composer install
 php artisan key:generate
 php artisan migrate
-php artisan test          # 89 testes devem passar
+php artisan test          # 102 testes devem passar
 php artisan serve
 ```
 
@@ -105,7 +105,8 @@ Do mais antigo para o mais novo:
 | `b9bef3f` | **QA-04** — erro do chatbot no canal da aplicação |
 | `121c0a8` | **FEAT-02** — Meu Bar persistente em `usuario_ingrediente` |
 | `b14b644` | **QA-07** — título, meta description e Open Graph por página |
-| (este) | **FEAT-06** — página e índice por ingrediente |
+| `aecbbb7` | **FEAT-06** — página e índice por ingrediente |
+| (este) | **FEAT-03** — facetas de verdade na busca |
 
 Dois defeitos apareceram no caminho e foram junto: o regex de "não alcoólica" na busca não tinha o
 modificador `/u` e só funcionava porque o `limpaString()` tirava o acento antes; e o badge de
@@ -117,7 +118,7 @@ rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bo
 
 1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
 2. **FEAT-14 (ingredientes da bebida viram links)** — pequena, e completa o alcance do que o FEAT-06 abriu.
-3. **FEAT-03 (filtros de verdade na busca)** — mata o regex que hoje adivinha o filtro pelo texto digitado.
+3. **FEAT-04 (avisar quando a bebida for aprovada ou rejeitada)** — o envio de e-mail já está montado desde a recuperação de senha.
 4. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
@@ -218,7 +219,7 @@ Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com 
 
 ---
 
-## Funcionalidades (11)
+## Funcionalidades (10)
 
 Ordenadas por retorno sobre esforço.
 
@@ -233,15 +234,6 @@ dá para preparar e só então cria conta.
 visitante e, no login e no cadastro (inclusive pelo Google), mesclar o que ele montou com o que já
 houver em `usuario_ingrediente`. O ponto delicado é a mesclagem: união, e não substituição, senão
 quem já tinha um bar montado o perde ao entrar de um aparelho novo.
-
-### FEAT-03 · Filtros de verdade na busca · impacto alto, esforço médio
-
-`SearchController.php:25-28` — filtrar por "não alcoólico" depende de um regex tentando adivinhar
-isso no texto digitado, e o chatbot chega a instruir o usuário a digitar essa frase exata. Qualquer
-variação não prevista cai na busca textual e não filtra nada.
-
-**Fazer:** facetas de verdade — tipo, nota mínima, número de ingredientes, ingrediente específico —
-como parâmetros de query. O regex vira código morto.
 
 ### FEAT-04 · Avisar quando a bebida for aprovada ou rejeitada · impacto médio, esforço baixo
 

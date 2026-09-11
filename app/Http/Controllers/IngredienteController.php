@@ -17,14 +17,7 @@ class IngredienteController extends Controller
      */
     public function index()
     {
-        $ingredientes = Ingrediente::query()
-            ->select('ingrediente.cd_ingrediente', 'ingrediente.nm_ingrediente', 'ingrediente.ds_imagem')
-            ->selectRaw('COUNT(bi.cd_bebida) AS qt_receitas')
-            ->join('bebida_ingrediente as bi', 'bi.cd_ingrediente', '=', 'ingrediente.cd_ingrediente')
-            ->groupBy('ingrediente.cd_ingrediente', 'ingrediente.nm_ingrediente', 'ingrediente.ds_imagem')
-            ->orderByDesc('qt_receitas')
-            ->orderBy('ingrediente.nm_ingrediente')
-            ->paginate(24);
+        $ingredientes = Ingrediente::usadosEmReceitas()->paginate(24);
 
         return view('ingrediente.index', compact('ingredientes'));
     }
