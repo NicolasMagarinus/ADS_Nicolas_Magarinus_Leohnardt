@@ -79,6 +79,8 @@ compare against a case. The raw `DB::select` queries are unaffected and still re
 
 `Ingrediente::normalizar()` is the single write path for ingredient names: it matches ignoring accent and case (the same rule as the `ingrediente_nome_unico` index), so `Agua`, `Água` and `ÁGUA` always resolve to one row. Both AI commands go through it too. Writing to `ingrediente` any other way will eventually hit the unique index.
 
+Collection names deliberately do **not** follow that rule: `colecao`'s `unique(id_usuario, nm_colecao)` is accent- and case-sensitive on purpose. An ingredient name is a join key between recipes — two spellings become two rows and Meu Bar stops matching drinks against what the user actually owns — while a collection name joins nothing; the id is what resolves a collection (`Colecao::url()`/`parametroUrl()`, the hybrid `/colecao/{id}-{slug}` route). Don't "fix" this later into an accent/case-insensitive unique index; it would just block "Verão" and "verao" from coexisting for no reason.
+
 ### Ingredient pages
 
 `/ingredientes` (`IngredienteController::index`) lists every ingredient that appears in at least one

@@ -25,6 +25,13 @@ class ColecaoController extends Controller
     public const LIMITE_POR_USUARIO = 50;
 
     /**
+     * Máximo de um INTEGER do Postgres. cd_colecao e cd_bebida são INTEGER
+     * (não bigint) nas tabelas do banco, então nenhum id acima disso pode
+     * corresponder a uma linha de verdade — ver idNaFaixa().
+     */
+    private const MAX_INTEGER_POSTGRES = 2147483647;
+
+    /**
      * Índice das coleções públicas.
      *
      * Só entram as com no mínimo 3 bebidas, pela mesma razão que
@@ -59,24 +66,8 @@ class ColecaoController extends Controller
         // começa com dígito, então o preg_match sempre casa.
         preg_match('/^\d+/', $colecao, $match);
 
-        // cd_colecao é INTEGER no Postgres (máx. 2147483647), mas a rota só
-        // exige "[0-9]+" — qualquer quantidade de dígitos casa. Um id de dez
-        // dígitos ainda cabe no int64 do PHP e segue intacto até o bind do
-        // prepared statement; um de vinte estoura o int64 e o (int) do PHP
-        // satura em PHP_INT_MAX. Nos dois casos o Postgres recusa o bind com
-        // "out of range for type integer" (SQLSTATE 22003), e sem essa
-        // checagem essa QueryException não tratada vira 500 numa rota
-        // pública, sem login — onde o certo é 404, como para qualquer id que
-        // não exista. filter_var com max_range resolve os dois de uma vez:
-        // um valor que não caiba no INTEGER do Postgres nunca corresponde a
-        // uma coleção, então vira 404 antes de chegar à consulta.
-        $id = filter_var($match[0], FILTER_VALIDATE_INT, [
-            'options' => ['min_range' => 1, 'max_range' => 2147483647],
-        ]);
-
-        if ($id === false) {
-            abort(404);
-        }
+        // Ver idNaFaixa() para o porquê da checagem de faixa.
+        $id = $this->idNaFaixa($match[0]);
 
         $registro = Colecao::with('usuario')->findOrFail($id);
 
@@ -132,11 +123,18 @@ class ColecaoController extends Controller
         // faixa que os parâmetros de URL de paraBebida()/alternarBebida()
         // já usam — reaproveitada aqui em vez de reescrita para o corpo
         // JSON.
-        $colecao = DB::transaction(function () use ($request, $dados) {
+        // cd_bebida já chegou validado como inteiro positivo (ou ausente) por
+        // validar() — não faz mais parte dos atributos da coleção, então sai
+        // de $dados antes do create() para não depender do fillable do model
+        // para descartá-lo silenciosamente.
+        $cdBebida = $dados['cd_bebida'] ?? null;
+        unset($dados['cd_bebida']);
+
+        $colecao = DB::transaction(function () use ($cdBebida, $dados) {
             $colecao = Colecao::create($dados + ['id_usuario' => Auth::id()]);
 
-            if ($request->filled('cd_bebida')) {
-                $bebida = $this->bebidaValidada((string) $request->input('cd_bebida'));
+            if ($cdBebida !== null) {
+                $bebida = $this->bebidaValidada((string) $cdBebida);
                 ColecaoBebida::create(['cd_colecao' => $colecao->cd_colecao, 'cd_bebida' => $bebida->cd_bebida]);
             }
 
@@ -145,7 +143,7 @@ class ColecaoController extends Controller
 
         return $request->expectsJson()
             ? response()->json(['cd_colecao' => $colecao->cd_colecao])
-            : redirect()->to($colecao->url())->with('sucesso', 'Coleção criada.');
+            : redirect()->to($colecao->url())->with('success', 'Coleção criada.');
     }
 
     /**
@@ -158,14 +156,20 @@ class ColecaoController extends Controller
 
         $colecoes = Colecao::where('id_usuario', Auth::id())
             ->orderBy('nm_colecao')
-            ->get()
-            ->map(fn (Colecao $colecao) => [
-                'cd_colecao' => $colecao->cd_colecao,
-                'nm_colecao' => $colecao->nm_colecao,
-                'contem' => ColecaoBebida::where('cd_colecao', $colecao->cd_colecao)
-                    ->where('cd_bebida', $bebida->cd_bebida)
-                    ->exists(),
-            ]);
+            ->get();
+
+        // Uma consulta só para os vínculos desta bebida com as coleções de
+        // quem está autenticado, em vez de um exists() por coleção dentro do
+        // map abaixo: com o teto de 50, abrir o modal eram 51 consultas.
+        $comABebida = ColecaoBebida::where('cd_bebida', $bebida->cd_bebida)
+            ->whereIn('cd_colecao', $colecoes->pluck('cd_colecao'))
+            ->pluck('cd_colecao');
+
+        $colecoes = $colecoes->map(fn (Colecao $colecao) => [
+            'cd_colecao' => $colecao->cd_colecao,
+            'nm_colecao' => $colecao->nm_colecao,
+            'contem' => $comABebida->contains($colecao->cd_colecao),
+        ]);
 
         return response()->json(['colecoes' => $colecoes]);
     }
@@ -207,7 +211,7 @@ class ColecaoController extends Controller
         $colecao = $this->minhaColecao($cd_colecao);
         $colecao->update($this->validar($request, $colecao));
 
-        return redirect()->to($colecao->fresh()->url())->with('sucesso', 'Coleção atualizada.');
+        return redirect()->to($colecao->fresh()->url())->with('success', 'Coleção atualizada.');
     }
 
     public function destroy(string $cd_colecao)
@@ -215,62 +219,65 @@ class ColecaoController extends Controller
         // O cascade de colecao_bebida cuida dos vínculos.
         $this->minhaColecao($cd_colecao)->delete();
 
-        return redirect()->route('perfil.index')->with('sucesso', 'Coleção apagada.');
+        return redirect()->route('perfil.index')->with('success', 'Coleção apagada.');
     }
 
     /**
      * Carrega a coleção exigindo que seja de quem está autenticado.
      *
      * 404, e não 403, pelo mesmo motivo do show: 403 confirma que existe.
-     *
-     * O parâmetro chega como string, não como int, de propósito: a rota só
-     * exige "[0-9]+", sem limite de dígitos, e um id de vinte dígitos nem
-     * cabe no int64 do PHP — coagir direto para um parâmetro `int` faria o
-     * PHP lançar TypeError antes mesmo de entrar no método, o que o
-     * ExceptionHandler renderiza como 500, não 404. Com string na entrada, a
-     * checagem de faixa é manual, igual ao show: um id de onze dígitos ainda
-     * cabe no int64 do PHP e seguiria intacto até o bind, e o Postgres
-     * recusaria com "out of range for type integer" (SQLSTATE 22003); um de
-     * vinte nem chega a virar int. Nos dois casos o cd_colecao não pode
-     * existir (é INTEGER no Postgres, máx. 2147483647), então vira 404 antes
-     * de qualquer consulta.
      */
     private function minhaColecao(string $cd_colecao): Colecao
     {
-        $id = filter_var($cd_colecao, FILTER_VALIDATE_INT, [
-            'options' => ['min_range' => 1, 'max_range' => 2147483647],
-        ]);
-
-        if ($id === false) {
-            abort(404);
-        }
-
-        return Colecao::where('cd_colecao', $id)
+        return Colecao::where('cd_colecao', $this->idNaFaixa($cd_colecao))
             ->where('id_usuario', Auth::id())
             ->firstOrFail();
     }
 
     /**
      * Carrega a bebida a partir de um parâmetro de rota, com a mesma checagem
-     * de faixa de minhaColecao(): bebida.cd_bebida também é INTEGER no
-     * Postgres, e as rotas de paraBebida()/alternarBebida() usam
-     * whereNumber(), que casa "[0-9]+" sem limitar a quantidade de dígitos.
-     * Sem isso, um id de vinte dígitos coagido para o `int $cd_bebida` que o
-     * brief original tinha lançaria TypeError antes do método rodar — 500 em
-     * vez do 404 que um id que não existe merece. Por isso os dois métodos
-     * recebem string e passam por aqui.
+     * de faixa de minhaColecao(). bebida.cd_bebida também é INTEGER no
+     * Postgres.
      */
     private function bebidaValidada(string $cd_bebida): Bebida
     {
-        $id = filter_var($cd_bebida, FILTER_VALIDATE_INT, [
-            'options' => ['min_range' => 1, 'max_range' => 2147483647],
+        return Bebida::findOrFail($this->idNaFaixa($cd_bebida));
+    }
+
+    /**
+     * Valida que um id vindo de rota ou de corpo JSON cabe num INTEGER do
+     * Postgres (1..2147483647) e devolve o inteiro; aborta 404 quando não
+     * cabe.
+     *
+     * Recebe string, não int: as rotas de coleção usam "[0-9]+"/whereNumber()
+     * sem limitar a quantidade de dígitos, e um id de vinte dígitos nem cabe
+     * no int64 do PHP — tipar o parâmetro do método como `int` faria o PHP
+     * lançar TypeError *antes* do método rodar, e o ExceptionHandler
+     * renderiza isso como 500, não 404. Com string na entrada a checagem é
+     * manual: um id de onze dígitos ainda cabe no int64 do PHP e seguiria
+     * intacto até o bind do prepared statement, e o Postgres recusaria com
+     * "out of range for type integer" (SQLSTATE 22003); um de vinte nem
+     * chega a virar int, e o (int) do PHP satura em PHP_INT_MAX. Nos dois
+     * casos o id não pode corresponder a uma linha de verdade (cd_colecao e
+     * cd_bebida são INTEGER, não bigint), então filter_var com max_range
+     * resolve os dois de uma vez, antes de qualquer consulta.
+     *
+     * Esse defeito voltou por três portas diferentes nesta branch — show(),
+     * minhaColecao() e bebidaValidada() nasceram em três commits distintos,
+     * cada um com sua própria cópia do filter_var — por isso está
+     * centralizado aqui agora.
+     */
+    private function idNaFaixa(string $valor): int
+    {
+        $id = filter_var($valor, FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1, 'max_range' => self::MAX_INTEGER_POSTGRES],
         ]);
 
         if ($id === false) {
             abort(404);
         }
 
-        return Bebida::findOrFail($id);
+        return $id;
     }
 
     private function validar(Request $request, ?Colecao $colecao = null): array
@@ -285,6 +292,14 @@ class ColecaoController extends Controller
             'nm_colecao' => ['required', 'string', 'max:60', $unico],
             'ds_colecao' => ['nullable', 'string', 'max:200'],
             'id_publica' => ['nullable', 'boolean'],
+            // Só o store() usa isto (o modal da página da bebida, que cria e
+            // já vincula numa tacada), mas validar aqui — em vez de deixar
+            // (string) $request->input('cd_bebida') converter o que vier —
+            // é o que faz um array virar 422 em vez de "Array to string
+            // conversion" (500), e "abc"/"0" virarem 422 com mensagem em vez
+            // do 404 mais opaco. bebidaValidada() continua responsável só
+            // por inexistente e fora da faixa do INTEGER do Postgres.
+            'cd_bebida' => ['nullable', 'integer', 'min:1'],
         ], [
             'nm_colecao.required' => 'Dê um nome à coleção.',
             'nm_colecao.unique' => 'Você já tem uma coleção com esse nome.',

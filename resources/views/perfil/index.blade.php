@@ -5,6 +5,13 @@
 
 @section('content')
 <div class="container py-5">
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-1"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        </div>
+    @endif
+
     <div class="row">
         <div class="col-md-4 mb-4">
             <div class="card shadow-sm mb-4">
@@ -120,154 +127,171 @@
                 </div>
             @endforelse
 
-                <h3 class="mb-3 mt-5">Minhas Coleções</h3>
+            <h3 class="mb-3 mt-5">Minhas Coleções</h3>
 
-                <button class="btn btn-sm btn-outline-primary mb-3"
-                        data-bs-toggle="modal" data-bs-target="#novaColecaoModal">
-                    <i class="bi bi-plus-lg me-1"></i>Nova coleção
-                </button>
+            <button class="btn btn-sm btn-outline-primary mb-3"
+                    data-bs-toggle="modal" data-bs-target="#novaColecaoModal">
+                <i class="bi bi-plus-lg me-1"></i>Nova coleção
+            </button>
 
-                @forelse($colecoes as $colecao)
-                    @php $sendoEditada = old('colecao_form') === 'editar-'.$colecao->cd_colecao; @endphp
-                    <div class="card mb-2">
-                        <div class="card-body d-flex justify-content-between align-items-center py-2">
-                            <div>
-                                <a href="{{ $colecao->url() }}" class="text-decoration-none">
-                                    {{ $colecao->nm_colecao }}
-                                </a>
-                                <span class="text-muted small ms-2">{{ $colecao->bebidas_count }} drinks</span>
-                                @if($colecao->id_publica)
-                                    <span class="badge bg-success ms-1">Pública</span>
-                                @else
-                                    <span class="badge bg-secondary ms-1">Privada</span>
-                                @endif
-                            </div>
-                            <div class="d-flex gap-1">
-                                <button class="btn btn-sm btn-outline-secondary" type="button"
-                                        data-bs-toggle="modal" data-bs-target="#editarColecaoModal{{ $colecao->cd_colecao }}">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <form method="POST" action="{{ route('colecao.destroy', $colecao->cd_colecao) }}"
-                                      onsubmit="return confirm('Apagar a coleção {{ $colecao->nm_colecao }}?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger" type="submit">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
+            @forelse($colecoes as $colecao)
+                @php $sendoEditada = old('colecao_form') === 'editar-'.$colecao->cd_colecao; @endphp
+                <div class="card mb-2">
+                    <div class="card-body d-flex justify-content-between align-items-center py-2">
+                        <div>
+                            <a href="{{ $colecao->url() }}" class="text-decoration-none">
+                                {{ $colecao->nm_colecao }}
+                            </a>
+                            <span class="text-muted small ms-2">{{ $colecao->bebidas_count }} drinks</span>
+                            @if($colecao->id_publica)
+                                <span class="badge bg-success ms-1">Pública</span>
+                            @else
+                                <span class="badge bg-secondary ms-1">Privada</span>
+                            @endif
                         </div>
-                    </div>
-
-                    <div class="modal fade" id="editarColecaoModal{{ $colecao->cd_colecao }}" tabindex="-1">
-                        <div class="modal-dialog">
-                            <form class="modal-content" method="POST"
-                                  action="{{ route('colecao.update', $colecao->cd_colecao) }}">
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-secondary" type="button"
+                                    data-bs-toggle="modal" data-bs-target="#editarColecaoModal{{ $colecao->cd_colecao }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form method="POST" action="{{ route('colecao.destroy', $colecao->cd_colecao) }}"
+                                  class="js-apagar-colecao" data-nome="{{ $colecao->nm_colecao }}">
                                 @csrf
-                                @method('PUT')
-                                <input type="hidden" name="colecao_form" value="editar-{{ $colecao->cd_colecao }}">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Editar coleção</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label class="form-label" for="nm_colecao_{{ $colecao->cd_colecao }}">Nome</label>
-                                        <input class="form-control @if($sendoEditada) @error('nm_colecao') is-invalid @enderror @endif"
-                                               id="nm_colecao_{{ $colecao->cd_colecao }}" name="nm_colecao"
-                                               maxlength="60" required
-                                               value="{{ $sendoEditada ? old('nm_colecao') : $colecao->nm_colecao }}">
-                                        @if($sendoEditada)
-                                            @error('nm_colecao')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                                        @endif
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label" for="ds_colecao_{{ $colecao->cd_colecao }}">Descrição (opcional)</label>
-                                        <input class="form-control @if($sendoEditada) @error('ds_colecao') is-invalid @enderror @endif"
-                                               id="ds_colecao_{{ $colecao->cd_colecao }}" name="ds_colecao"
-                                               maxlength="200"
-                                               value="{{ $sendoEditada ? old('ds_colecao') : $colecao->ds_colecao }}">
-                                        @if($sendoEditada)
-                                            @error('ds_colecao')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                                        @endif
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="1"
-                                               id="id_publica_{{ $colecao->cd_colecao }}" name="id_publica"
-                                               @checked($sendoEditada ? old('id_publica') : $colecao->id_publica)>
-                                        <label class="form-check-label" for="id_publica_{{ $colecao->cd_colecao }}">
-                                            Pública — qualquer pessoa com o link pode ver
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                    <button type="submit" class="btn btn-primary">Salvar</button>
-                                </div>
+                                @method('DELETE')
+                                <button class="btn btn-sm btn-outline-danger" type="submit">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </form>
                         </div>
                     </div>
-                @empty
-                    <p class="text-muted">Nenhuma coleção ainda.</p>
-                @endforelse
+                </div>
 
-                @php $criandoColecao = old('colecao_form') === 'novo'; @endphp
-                <div class="modal fade" id="novaColecaoModal" tabindex="-1">
+                <div class="modal fade" id="editarColecaoModal{{ $colecao->cd_colecao }}" tabindex="-1">
                     <div class="modal-dialog">
-                        <form class="modal-content" method="POST" action="{{ route('colecao.store') }}">
+                        <form class="modal-content" method="POST"
+                              action="{{ route('colecao.update', $colecao->cd_colecao) }}">
                             @csrf
-                            <input type="hidden" name="colecao_form" value="novo">
+                            @method('PUT')
+                            <input type="hidden" name="colecao_form" value="editar-{{ $colecao->cd_colecao }}">
                             <div class="modal-header">
-                                <h5 class="modal-title">Nova coleção</h5>
+                                <h5 class="modal-title">Editar coleção</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
                                 <div class="mb-3">
-                                    <label class="form-label" for="nm_colecao">Nome</label>
-                                    <input class="form-control @if($criandoColecao) @error('nm_colecao') is-invalid @enderror @endif"
-                                           id="nm_colecao" name="nm_colecao"
-                                           maxlength="60" required value="{{ $criandoColecao ? old('nm_colecao') : '' }}">
-                                    @if($criandoColecao)
+                                    <label class="form-label" for="nm_colecao_{{ $colecao->cd_colecao }}">Nome</label>
+                                    <input class="form-control @if($sendoEditada) @error('nm_colecao') is-invalid @enderror @endif"
+                                           id="nm_colecao_{{ $colecao->cd_colecao }}" name="nm_colecao"
+                                           maxlength="60" required
+                                           value="{{ $sendoEditada ? old('nm_colecao') : $colecao->nm_colecao }}">
+                                    @if($sendoEditada)
                                         @error('nm_colecao')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     @endif
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label" for="ds_colecao">Descrição (opcional)</label>
-                                    <input class="form-control @if($criandoColecao) @error('ds_colecao') is-invalid @enderror @endif"
-                                           id="ds_colecao" name="ds_colecao"
-                                           maxlength="200" value="{{ $criandoColecao ? old('ds_colecao') : '' }}">
-                                    @if($criandoColecao)
+                                    <label class="form-label" for="ds_colecao_{{ $colecao->cd_colecao }}">Descrição (opcional)</label>
+                                    <input class="form-control @if($sendoEditada) @error('ds_colecao') is-invalid @enderror @endif"
+                                           id="ds_colecao_{{ $colecao->cd_colecao }}" name="ds_colecao"
+                                           maxlength="200"
+                                           value="{{ $sendoEditada ? old('ds_colecao') : $colecao->ds_colecao }}">
+                                    @if($sendoEditada)
                                         @error('ds_colecao')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     @endif
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" value="1"
-                                           id="id_publica" name="id_publica"
-                                           @checked($criandoColecao && old('id_publica'))>
-                                    <label class="form-check-label" for="id_publica">
+                                           id="id_publica_{{ $colecao->cd_colecao }}" name="id_publica"
+                                           @checked($sendoEditada ? old('id_publica') : $colecao->id_publica)>
+                                    <label class="form-check-label" for="id_publica_{{ $colecao->cd_colecao }}">
                                         Pública — qualquer pessoa com o link pode ver
                                     </label>
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button class="btn btn-primary" type="submit">Criar</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Salvar</button>
                             </div>
                         </form>
                     </div>
                 </div>
+            @empty
+                <p class="text-muted">Nenhuma coleção ainda.</p>
+            @endforelse
 
-                @if($errors->any() && old('colecao_form'))
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function () {
-                            var alvo = @json(old('colecao_form'));
-                            var id = alvo === 'novo' ? 'novaColecaoModal' : 'editarColecaoModal' + alvo.replace('editar-', '');
-                            var modalEl = document.getElementById(id);
-                            if (modalEl) {
-                                new bootstrap.Modal(modalEl).show();
-                            }
-                        });
-                    </script>
-                @endif
+            @php $criandoColecao = old('colecao_form') === 'novo'; @endphp
+            <div class="modal fade" id="novaColecaoModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <form class="modal-content" method="POST" action="{{ route('colecao.store') }}">
+                        @csrf
+                        <input type="hidden" name="colecao_form" value="novo">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Nova coleção</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label" for="nm_colecao">Nome</label>
+                                <input class="form-control @if($criandoColecao) @error('nm_colecao') is-invalid @enderror @endif"
+                                       id="nm_colecao" name="nm_colecao"
+                                       maxlength="60" required value="{{ $criandoColecao ? old('nm_colecao') : '' }}">
+                                @if($criandoColecao)
+                                    @error('nm_colecao')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                @endif
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="ds_colecao">Descrição (opcional)</label>
+                                <input class="form-control @if($criandoColecao) @error('ds_colecao') is-invalid @enderror @endif"
+                                       id="ds_colecao" name="ds_colecao"
+                                       maxlength="200" value="{{ $criandoColecao ? old('ds_colecao') : '' }}">
+                                @if($criandoColecao)
+                                    @error('ds_colecao')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                @endif
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1"
+                                       id="id_publica" name="id_publica"
+                                       @checked($criandoColecao && old('id_publica'))>
+                                <label class="form-check-label" for="id_publica">
+                                    Pública — qualquer pessoa com o link pode ver
+                                </label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" type="submit">Criar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <script>
+                {{-- data-nome já vem decodificado pelo parser de HTML: o
+                     Blade escapa {{ }} (' vira &#039;), e é o próprio
+                     navegador quem desfaz essa entidade ao expor o
+                     atributo em dataset — sem nenhum texto de usuário
+                     entrando no meio de um onsubmit interpolado, que é o
+                     que deixava um apóstrofo no nome quebrar o confirm()
+                     e o navegador descartar o atributo inteiro. --}}
+                document.querySelectorAll('.js-apagar-colecao').forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (! confirm('Apagar a coleção ' + form.dataset.nome + '?')) {
+                            event.preventDefault();
+                        }
+                    });
+                });
+            </script>
+
+            @if($errors->any() && old('colecao_form'))
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var alvo = @json(old('colecao_form'));
+                        var id = alvo === 'novo' ? 'novaColecaoModal' : 'editarColecaoModal' + alvo.replace('editar-', '');
+                        var modalEl = document.getElementById(id);
+                        if (modalEl) {
+                            new bootstrap.Modal(modalEl).show();
+                        }
+                    });
+                </script>
+            @endif
         </div>
     </div>
 </div>
