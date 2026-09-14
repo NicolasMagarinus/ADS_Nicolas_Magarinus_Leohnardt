@@ -254,4 +254,44 @@ class ColecaoCrudTest extends TestCase
 
         $this->assertDatabaseCount('colecao_bebida', 1);
     }
+
+    /**
+     * Sem transação, Colecao::create() já tinha sido commitada antes de
+     * bebidaValidada() estourar 404 — o cliente lia "não achei a bebida" e
+     * achava que nada tinha acontecido, mas ficava uma coleção órfã na
+     * conta, contando para o teto de 50 e aparecendo no perfil sem a bebida
+     * que motivou a criação. Cobrindo os dois jeitos de cd_bebida ser
+     * inválido: fora da faixa do INTEGER do Postgres, e dentro da faixa mas
+     * inexistente. Em ambos a asserção que importa é a contagem: nenhuma
+     * coleção pode sobreviver.
+     */
+    public function test_cd_bebida_fora_da_faixa_nao_deixa_colecao_orfa(): void
+    {
+        $usuario = User::factory()->create();
+
+        $this->actingAs($usuario)
+            ->postJson(route('colecao.store'), [
+                'nm_colecao' => 'Drinks de verão',
+                'cd_bebida' => 9999999999,
+            ])
+            ->assertNotFound();
+
+        $this->assertDatabaseCount('colecao', 0);
+        $this->assertDatabaseCount('colecao_bebida', 0);
+    }
+
+    public function test_cd_bebida_inexistente_nao_deixa_colecao_orfa(): void
+    {
+        $usuario = User::factory()->create();
+
+        $this->actingAs($usuario)
+            ->postJson(route('colecao.store'), [
+                'nm_colecao' => 'Drinks de verão',
+                'cd_bebida' => 999999,
+            ])
+            ->assertNotFound();
+
+        $this->assertDatabaseCount('colecao', 0);
+        $this->assertDatabaseCount('colecao_bebida', 0);
+    }
 }

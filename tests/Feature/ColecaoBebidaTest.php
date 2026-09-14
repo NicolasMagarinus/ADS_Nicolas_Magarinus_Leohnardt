@@ -180,4 +180,33 @@ class ColecaoBebidaTest extends TestCase
             ->getJson('/colecoes/para-bebida/99999999999999999999')
             ->assertNotFound();
     }
+
+    /**
+     * Toda outra visita a bebida.show na suíte é anônima, então o bloco de
+     * autenticação que inclui o modal, o script de config e a diretiva que
+     * carrega colecao.js nunca era renderizado por nenhum teste — um erro
+     * de compilação Blade ali só apareceria para quem estivesse logado de
+     * verdade.
+     */
+    public function test_bebida_autenticado_recebe_modal_e_config_da_colecao(): void
+    {
+        $usuario = User::factory()->create();
+        $bebida = $this->bebida();
+
+        $this->actingAs($usuario)
+            ->get(route('bebida.show', $bebida->cd_bebida))
+            ->assertOk()
+            ->assertSee('id="colecaoModal"', false)
+            ->assertSee('DrinkeritoColecao', false);
+    }
+
+    public function test_visitante_nao_recebe_modal_nem_config_da_colecao(): void
+    {
+        $bebida = $this->bebida();
+
+        $this->get(route('bebida.show', $bebida->cd_bebida))
+            ->assertOk()
+            ->assertDontSee('id="colecaoModal"', false)
+            ->assertDontSee('DrinkeritoColecao', false);
+    }
 }

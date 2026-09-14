@@ -121,13 +121,27 @@ class ColecaoController extends Controller
                 : back()->withInput()->withErrors(['nm_colecao' => $mensagem]);
         }
 
-        $colecao = Colecao::create($dados + ['id_usuario' => Auth::id()]);
+        // O modal da página da bebida cria e já vincula numa tacada. Os dois
+        // passos rodam na mesma transação: sem ela, Colecao::create() já
+        // tinha sido commitada antes de bebidaValidada() estourar 404 para
+        // um cd_bebida inexistente (ou fora da faixa do INTEGER do
+        // Postgres) — o cliente lia "não achei a bebida" e achava que nada
+        // tinha acontecido, mas ficava uma coleção órfã na conta,
+        // contando para o teto de 50 e aparecendo no perfil sem a bebida
+        // que motivou a criação. bebidaValidada() é a mesma checagem de
+        // faixa que os parâmetros de URL de paraBebida()/alternarBebida()
+        // já usam — reaproveitada aqui em vez de reescrita para o corpo
+        // JSON.
+        $colecao = DB::transaction(function () use ($request, $dados) {
+            $colecao = Colecao::create($dados + ['id_usuario' => Auth::id()]);
 
-        // O modal da página da bebida cria e já adiciona numa tacada.
-        if ($cd_bebida = $request->integer('cd_bebida')) {
-            Bebida::findOrFail($cd_bebida);
-            ColecaoBebida::create(['cd_colecao' => $colecao->cd_colecao, 'cd_bebida' => $cd_bebida]);
-        }
+            if ($request->filled('cd_bebida')) {
+                $bebida = $this->bebidaValidada((string) $request->input('cd_bebida'));
+                ColecaoBebida::create(['cd_colecao' => $colecao->cd_colecao, 'cd_bebida' => $bebida->cd_bebida]);
+            }
+
+            return $colecao;
+        });
 
         return $request->expectsJson()
             ? response()->json(['cd_colecao' => $colecao->cd_colecao])
