@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Bebida;
 use App\Models\Colecao;
+use App\Models\ColecaoBebida;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -113,14 +114,78 @@ class ColecaoController extends Controller
         $dados = $this->validar($request);
 
         if (Colecao::where('id_usuario', Auth::id())->count() >= self::LIMITE_POR_USUARIO) {
-            return back()->withInput()->withErrors([
-                'nm_colecao' => 'Você chegou ao limite de '.self::LIMITE_POR_USUARIO.' coleções.',
-            ]);
+            $mensagem = 'Você chegou ao limite de '.self::LIMITE_POR_USUARIO.' coleções.';
+
+            return $request->expectsJson()
+                ? response()->json(['message' => $mensagem], 422)
+                : back()->withInput()->withErrors(['nm_colecao' => $mensagem]);
         }
 
         $colecao = Colecao::create($dados + ['id_usuario' => Auth::id()]);
 
-        return redirect()->to($colecao->url())->with('sucesso', 'Coleção criada.');
+        // O modal da página da bebida cria e já adiciona numa tacada.
+        if ($cd_bebida = $request->integer('cd_bebida')) {
+            Bebida::findOrFail($cd_bebida);
+            ColecaoBebida::create(['cd_colecao' => $colecao->cd_colecao, 'cd_bebida' => $cd_bebida]);
+        }
+
+        return $request->expectsJson()
+            ? response()->json(['cd_colecao' => $colecao->cd_colecao])
+            : redirect()->to($colecao->url())->with('sucesso', 'Coleção criada.');
+    }
+
+    /**
+     * As coleções de quem está autenticado, marcando quais já têm a bebida.
+     * É o que o modal lê ao abrir.
+     */
+    public function paraBebida(string $cd_bebida)
+    {
+        $bebida = $this->bebidaValidada($cd_bebida);
+
+        $colecoes = Colecao::where('id_usuario', Auth::id())
+            ->orderBy('nm_colecao')
+            ->get()
+            ->map(fn (Colecao $colecao) => [
+                'cd_colecao' => $colecao->cd_colecao,
+                'nm_colecao' => $colecao->nm_colecao,
+                'contem' => ColecaoBebida::where('cd_colecao', $colecao->cd_colecao)
+                    ->where('cd_bebida', $bebida->cd_bebida)
+                    ->exists(),
+            ]);
+
+        return response()->json(['colecoes' => $colecoes]);
+    }
+
+    public function alternarBebida(string $cd_colecao, string $cd_bebida)
+    {
+        $colecao = $this->minhaColecao($cd_colecao);
+        $bebida = $this->bebidaValidada($cd_bebida);
+
+        $vinculo = ColecaoBebida::where('cd_colecao', $colecao->cd_colecao)
+            ->where('cd_bebida', $bebida->cd_bebida)
+            ->first();
+
+        if ($vinculo) {
+            $vinculo->delete();
+
+            return response()->json([
+                'success' => true,
+                'contem' => false,
+                'message' => 'Removido de '.$colecao->nm_colecao,
+            ]);
+        }
+
+        ColecaoBebida::create(['cd_colecao' => $colecao->cd_colecao, 'cd_bebida' => $bebida->cd_bebida]);
+
+        // O updated_at ordena o índice /colecoes; sem o touch, a coleção que
+        // acabou de ganhar drink não sobe.
+        $colecao->touch();
+
+        return response()->json([
+            'success' => true,
+            'contem' => true,
+            'message' => 'Adicionado a '.$colecao->nm_colecao,
+        ]);
     }
 
     public function update(Request $request, string $cd_colecao)
@@ -169,6 +234,29 @@ class ColecaoController extends Controller
         return Colecao::where('cd_colecao', $id)
             ->where('id_usuario', Auth::id())
             ->firstOrFail();
+    }
+
+    /**
+     * Carrega a bebida a partir de um parâmetro de rota, com a mesma checagem
+     * de faixa de minhaColecao(): bebida.cd_bebida também é INTEGER no
+     * Postgres, e as rotas de paraBebida()/alternarBebida() usam
+     * whereNumber(), que casa "[0-9]+" sem limitar a quantidade de dígitos.
+     * Sem isso, um id de vinte dígitos coagido para o `int $cd_bebida` que o
+     * brief original tinha lançaria TypeError antes do método rodar — 500 em
+     * vez do 404 que um id que não existe merece. Por isso os dois métodos
+     * recebem string e passam por aqui.
+     */
+    private function bebidaValidada(string $cd_bebida): Bebida
+    {
+        $id = filter_var($cd_bebida, FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1, 'max_range' => 2147483647],
+        ]);
+
+        if ($id === false) {
+            abort(404);
+        }
+
+        return Bebida::findOrFail($id);
     }
 
     private function validar(Request $request, ?Colecao $colecao = null): array

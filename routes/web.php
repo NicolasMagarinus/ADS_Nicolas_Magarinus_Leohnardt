@@ -94,6 +94,10 @@ Route::middleware(['auth'])->group(function () {
         ->name('colecao.update')->whereNumber('cd_colecao');
     Route::delete('/colecao/{cd_colecao}', [ColecaoController::class, 'destroy'])
         ->name('colecao.destroy')->whereNumber('cd_colecao');
+    Route::get('/colecoes/para-bebida/{cd_bebida}', [ColecaoController::class, 'paraBebida'])
+        ->name('colecao.para-bebida')->whereNumber('cd_bebida');
+    Route::post('/colecao/{cd_colecao}/bebida/{cd_bebida}/alternar', [ColecaoController::class, 'alternarBebida'])
+        ->name('colecao.bebida.alternar')->whereNumber('cd_colecao')->whereNumber('cd_bebida');
 
     Route::get('/favoritos', [FavoritoController::class, 'index'])->name('favoritos.index');
     Route::post('/favoritos/{cd_bebida}/toggle', [FavoritoController::class, 'alternar'])
