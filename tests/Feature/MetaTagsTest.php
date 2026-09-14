@@ -149,4 +149,27 @@ class MetaTagsTest extends TestCase
             ->assertOk()
             ->assertDontSee('name="robots"', false);
     }
+
+    public function test_pagina_emite_canonical_da_url_atual(): void
+    {
+        $this->get(route('ingrediente.index'))
+            ->assertOk()
+            ->assertSee('<link rel="canonical" href="'.route('ingrediente.index').'">', false);
+    }
+
+    public function test_canonical_da_pagina_2_carrega_o_page(): void
+    {
+        // Sem o ?page aqui, o canonical declara a página 2 duplicata da 1 e
+        // manda o buscador descartar tudo que vem depois da primeira.
+        $this->get(route('ingrediente.index').'?page=2')
+            ->assertOk()
+            ->assertSee('<link rel="canonical" href="'.route('ingrediente.index').'?page=2">', false);
+    }
+
+    public function test_canonical_ignora_parametro_que_nao_seja_pagina(): void
+    {
+        $this->get(route('ingrediente.index').'?utm_source=whatsapp')
+            ->assertOk()
+            ->assertSee('<link rel="canonical" href="'.route('ingrediente.index').'">', false);
+    }
 }
