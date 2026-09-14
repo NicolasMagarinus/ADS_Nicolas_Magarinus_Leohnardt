@@ -76,6 +76,52 @@ class ColecaoCrudTest extends TestCase
         $this->assertDatabaseCount('colecao', 50);
     }
 
+    /**
+     * O ramo JSON do teto de 50 (usado pelo modal da página da bebida, que
+     * envia postJson) não tinha teste — só o caminho HTML acima cobria
+     * test_recusa_a_colecao_acima_do_limite. Vale confirmar separadamente
+     * que o teto devolve um 422 estruturado nesse ramo, não uma tela de
+     * erro em HTML onde o cliente espera JSON.
+     */
+    public function test_recusa_a_colecao_acima_do_limite_por_json(): void
+    {
+        $usuario = User::factory()->create();
+
+        for ($i = 0; $i < 50; $i++) {
+            Colecao::create(['id_usuario' => $usuario->id, 'nm_colecao' => 'Lista '.$i]);
+        }
+
+        $this->actingAs($usuario)
+            ->postJson(route('colecao.store'), ['nm_colecao' => 'A quinquagésima primeira'])
+            ->assertStatus(422)
+            ->assertJsonStructure(['message']);
+
+        $this->assertDatabaseCount('colecao', 50);
+    }
+
+    /**
+     * cd_bebida chegando como array no corpo JSON batia em
+     * "Array to string conversion" (500) no (string) $request->input(...)
+     * antigo. A regra 'integer' em validar() intercepta antes: filter_var
+     * devolve false para um array sem lançar, então a validação falha limpo
+     * e o endpoint JSON devolve 422 com mensagem — mais honesto que o 404
+     * que "abc" e "0" já davam antes desta correção.
+     */
+    public function test_cd_bebida_como_array_da_422_em_vez_de_500(): void
+    {
+        $usuario = User::factory()->create();
+
+        $this->actingAs($usuario)
+            ->postJson(route('colecao.store'), [
+                'nm_colecao' => 'Drinks de verão',
+                'cd_bebida' => ['1'],
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('cd_bebida');
+
+        $this->assertDatabaseCount('colecao', 0);
+    }
+
     public function test_renomear_muda_a_url_canonica(): void
     {
         $usuario = User::factory()->create();

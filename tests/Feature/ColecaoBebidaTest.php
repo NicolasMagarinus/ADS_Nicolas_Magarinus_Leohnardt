@@ -87,12 +87,20 @@ class ColecaoBebidaTest extends TestCase
         $sem = Colecao::create(['id_usuario' => $usuario->id, 'nm_colecao' => 'Sem o drink']);
         ColecaoBebida::create(['cd_colecao' => $com->cd_colecao, 'cd_bebida' => $bebida->cd_bebida]);
 
+        // Coleção de outra pessoa, também com a bebida — pina o
+        // where('id_usuario', Auth::id()) do controller: tirá-lo deixa este
+        // teste verde do mesmo jeito se a asserção olhar só para "com"/"sem",
+        // mas vaza o nome da coleção alheia no modal de quem está logado.
+        $outroDono = Colecao::create(['id_usuario' => User::factory()->create()->id, 'nm_colecao' => 'De outra pessoa']);
+        ColecaoBebida::create(['cd_colecao' => $outroDono->cd_colecao, 'cd_bebida' => $bebida->cd_bebida]);
+
         $this->actingAs($usuario)
             ->getJson(route('colecao.para-bebida', $bebida->cd_bebida))
             ->assertOk()
             ->assertJsonCount(2, 'colecoes')
             ->assertJsonFragment(['cd_colecao' => $com->cd_colecao, 'nm_colecao' => 'Com o drink', 'contem' => true])
-            ->assertJsonFragment(['cd_colecao' => $sem->cd_colecao, 'nm_colecao' => 'Sem o drink', 'contem' => false]);
+            ->assertJsonFragment(['cd_colecao' => $sem->cd_colecao, 'nm_colecao' => 'Sem o drink', 'contem' => false])
+            ->assertJsonMissing(['nm_colecao' => 'De outra pessoa']);
     }
 
     public function test_visitante_nao_alterna(): void

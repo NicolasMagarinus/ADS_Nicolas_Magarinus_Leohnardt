@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Enums\TipoBebida;
+use App\Models\Bebida;
 use App\Models\Colecao;
+use App\Models\ColecaoBebida;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -99,5 +102,27 @@ class ColecaoUrlTest extends TestCase
         $this->get($colecao->url())
             ->assertOk()
             ->assertSee('<link rel="canonical" href="'.$colecao->url().'">', false);
+    }
+
+    /**
+     * $bebidas->total() conta a coleção inteira; $bebidas->first() é da
+     * página atual. Numa coleção pública com pelo menos uma bebida,
+     * ?page=99 (além do fim) mantém total() > 0 mas first() vira null, e a
+     * view acessava ds_imagem nele — 500 numa rota pública, sem login. A
+     * troca para isNotEmpty() checa a página atual, não o total.
+     */
+    public function test_pagina_alem_do_fim_responde_200_em_vez_de_500(): void
+    {
+        $colecao = $this->colecaoPublica();
+        $bebida = Bebida::create([
+            'nm_bebida' => 'Mojito',
+            'ds_preparo' => 'Macere e complete com rum.',
+            'id_tipo' => TipoBebida::Alcoolica,
+            'ds_bebida' => 'Cubano.',
+        ]);
+        ColecaoBebida::create(['cd_colecao' => $colecao->cd_colecao, 'cd_bebida' => $bebida->cd_bebida]);
+
+        $this->get($colecao->url().'?page=99')
+            ->assertOk();
     }
 }
