@@ -131,8 +131,9 @@ Do mais antigo para o mais novo:
 | `25df560` | **SEC-06** — a troca de senha reconfere a validade do código |
 | `d4cb68e` | **PERF-06** — aviso de moderação na fila, com teste de fila real |
 | (este) | Atualiza o backlog e o CLAUDE.md depois do bloco QA-08 / SEC-06 / PERF-06 |
+| (este) | **FEAT-08** — coleções de drinks, com URL híbrida e índice público |
 
-A suíte saiu de 32 para 216 testes. A última revisão completa da branch (`/code-review high`,
+A suíte saiu de 32 para 269 testes. A última revisão completa da branch (`/code-review high`,
 30 commits) apontou 9 defeitos, nenhum deles pego pela suíte na época: 5 foram corrigidos nos dois
 commits acima, 2 viraram itens (QA-08 e SEC-06) e 2 eram de terceiros já cobertos. Vale repetir a
 revisão depois de um bloco novo de trabalho — foi ela que achou a aprovação duplicando bebida no
@@ -185,11 +186,7 @@ só de estilo.
 2. **Rodar o Pint no projeto todo**, num commit só de estilo. As duas pendências conhecidas
    (`RecuperacaoSenhaController`, `CodigoRecuperacaoSenha`) seguem lá, mais `concat_space` e
    `trailing_comma_in_multiline` em `CadastroBebidaController` — todas anteriores ao trabalho atual.
-3. **FEAT-08 (coleções de drinks)** — a maior das que sobraram por retorno: lista nomeada e pública
-   é conteúdo indexável gerado pelo usuário. **O desenho está fechado e aprovado**, em
-   `docs/superpowers/specs/2026-09-14-feat-08-colecoes-design.md`. O próximo passo é o plano de
-   implementação, não mais discussão de desenho.
-4. O resto, conforme o tempo.
+3. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
 
@@ -247,7 +244,7 @@ veja se o código de 6 dígitos chega. É o único caminho que exercita remetent
 
 ---
 
-## Qualidade (1)
+## Qualidade (2)
 
 ### QA-06 · Migrar o front para o Vite · médio
 
@@ -271,6 +268,28 @@ comando.
 
 O **FEAT-12 (PWA)** depende deste item, não da extração que já foi feita.
 
+### QA-09 · Id fora da faixa do integer devolve 500 · baixo
+
+`/bebida/{cd}` e `/ingrediente/{cd}` respondem **HTTP 500**, não 404, para um id acima de 2147483647
+— por exemplo `/bebida/9999999999`, que tem só dez dígitos e cabe folgado no `int64` do PHP.
+
+A causa: as colunas `bebida.cd_bebida` e `ingrediente.cd_ingrediente` são `increments` (int4 no
+Postgres). O `whereNumber` da rota aceita qualquer quantidade de dígitos, e o valor chega ao banco
+como parâmetro bindado, onde o Postgres recusa com `SQLSTATE[22003]` e a `QueryException` não
+tratada vira erro de servidor. São rotas públicas, sem autenticação.
+
+Foi confirmado com PDO direto contra o banco, não deduzido.
+
+O mesmo defeito existia nas rotas de coleção e foi corrigido lá: veja `ColecaoController::minhaColecao()`
+e `bebidaValidada()`, que validam a faixa com `filter_var(..., ['min_range' => 1, 'max_range' =>
+2147483647])` antes de consultar, e devolvem 404. Há duas portas, não uma: além do erro do Postgres,
+uma assinatura de método tipada como `int` lança `TypeError` na coerção para id de vinte dígitos,
+antes do método rodar — por isso os parâmetros de rota lá são `string`.
+
+Curiosidade que vale registrar: `/favoritos/{cd}/toggle` **não** tem o defeito, e só por acidente —
+é a coluna com o `unsignedBigInteger` de tipo trocado que este mesmo documento aponta como erro.
+O tipo errado a blinda.
+
 ---
 
 ## Performance (1)
@@ -283,7 +302,7 @@ Nenhum dói com o catálogo atual (50 bebidas). São problemas que aparecem com 
 
 ---
 
-## Funcionalidades (6)
+## Funcionalidades (5)
 
 Ordenadas por retorno sobre esforço.
 
@@ -310,35 +329,6 @@ uma **segunda conta** no próximo login, deixando favoritos, receitas e avaliaç
 `GoogleController` passa a casar por ela, caindo para o e-mail só quando estiver vazia (as contas que
 já existem); e só então a troca de e-mail no perfil, com unique, validação e a senha atual como
 confirmação.
-
-### FEAT-08 · Coleções de drinks · impacto alto, esforço médio · **DESENHO FECHADO**
-
-Favorito é binário. "Drinks de verão", "Para a festa de sábado" — listas nomeadas são o que
-transforma favoritos em algo que se compartilha. Coleção pública com URL própria é conteúdo
-indexável gerado pelo usuário.
-
-O desenho foi retomado e fechado em 14/set/2026. **Nada foi implementado ainda.** A spec completa
-está em `docs/superpowers/specs/2026-09-14-feat-08-colecoes-design.md`; o resumo das decisões:
-
-- **URL híbrida `/colecao/{id}-{slug}`.** O id resolve, o slug é decorativo e derivado de
-  `nm_colecao` — não é coluna. `/colecao/12`, `/colecao/12-nome-velho` e `/colecao/12-lixo` dão
-  301 para a forma canônica, então renomear nunca quebra link publicado.
-- **Favoritos e coleções convivem**, em tabelas separadas. Absorver os favoritos mexeria nos 13
-  arquivos que leem `favorito`, incluindo `RecomendadasController` e `HomeController`; assim o
-  item fica enviável sozinho e nenhum deles é tocado.
-- **Descoberta:** `/colecoes` só com as públicas de ≥3 bebidas (a regra do `/ingredientes`); a
-  pública magra responde 200 com `noindex`; privada dá 404 para estranho, não 403.
-- **Limite de 50 coleções por usuário** — superfície indexável criada por usuário precisa de teto.
-- **Tabelas:** `colecao` + `colecao_bebida`. Cuidado com o tipo do FK: `bebida.cd_bebida` é
-  `increments` (int4) e o `favorito` declarou `unsignedBigInteger` — aqui é `unsignedInteger`.
-
-**Pré-requisito com commit próprio:** a URL híbrida exige `<link rel="canonical">`, que o
-`partials/meta.blade.php` não emite hoje. É mudança global, vale para o site inteiro.
-
-**Ponto de partida do código:** o análogo mais próximo é o par `IngredienteController` +
-`resources/views/ingrediente/`, que é Eloquent paginado com breadcrumb e as seções de meta — não o
-estilo de SQL cru das telas de leitura pesada. `FavoritoController::alternar` é o modelo do endpoint
-JSON de adicionar/remover.
 
 ### FEAT-09 · Escalar receita e converter medidas · impacto médio, esforço alto
 
