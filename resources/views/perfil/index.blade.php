@@ -40,6 +40,10 @@
                         <span class="text-muted"><i class="bi bi-cup-straw me-2"></i>Receitas</span>
                         <span class="badge bg-primary rounded-pill">{{ $arrBebida->count() }}</span>
                     </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted"><i class="bi bi-collection me-2"></i>Coleções</span>
+                        <span class="badge bg-primary rounded-pill">{{ $colecoes->count() }}</span>
+                    </div>
                 </div>
             </div>
 
@@ -115,6 +119,75 @@
                     </div>
                 </div>
             @endforelse
+
+                <h3 class="mb-3 mt-5">Minhas Coleções</h3>
+
+                <button class="btn btn-sm btn-outline-primary mb-3"
+                        data-bs-toggle="modal" data-bs-target="#novaColecaoModal">
+                    <i class="bi bi-plus-lg me-1"></i>Nova coleção
+                </button>
+
+                @forelse($colecoes as $colecao)
+                    <div class="card mb-2">
+                        <div class="card-body d-flex justify-content-between align-items-center py-2">
+                            <div>
+                                <a href="{{ $colecao->url() }}" class="text-decoration-none">
+                                    {{ $colecao->nm_colecao }}
+                                </a>
+                                <span class="text-muted small ms-2">{{ $colecao->bebidas_count }} drinks</span>
+                                @if($colecao->id_publica)
+                                    <span class="badge bg-success ms-1">Pública</span>
+                                @else
+                                    <span class="badge bg-secondary ms-1">Privada</span>
+                                @endif
+                            </div>
+                            <form method="POST" action="{{ route('colecao.destroy', $colecao->cd_colecao) }}"
+                                  onsubmit="return confirm('Apagar a coleção {{ $colecao->nm_colecao }}?');">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-sm btn-outline-danger" type="submit">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @empty
+                    <p class="text-muted">Nenhuma coleção ainda.</p>
+                @endforelse
+
+                <div class="modal fade" id="novaColecaoModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <form class="modal-content" method="POST" action="{{ route('colecao.store') }}">
+                            @csrf
+                            <div class="modal-header">
+                                <h5 class="modal-title">Nova coleção</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label" for="nm_colecao">Nome</label>
+                                    <input class="form-control" id="nm_colecao" name="nm_colecao"
+                                           maxlength="60" required value="{{ old('nm_colecao') }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="ds_colecao">Descrição (opcional)</label>
+                                    <input class="form-control" id="ds_colecao" name="ds_colecao"
+                                           maxlength="200" value="{{ old('ds_colecao') }}">
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="1"
+                                           id="id_publica" name="id_publica">
+                                    <label class="form-check-label" for="id_publica">
+                                        Pública — qualquer pessoa com o link pode ver
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-primary" type="submit">Criar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
         </div>
     </div>
 </div>

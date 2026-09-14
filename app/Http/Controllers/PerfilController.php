@@ -1,13 +1,13 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
 use App\Models\CadastroBebida;
+use App\Models\Colecao;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
@@ -43,7 +43,14 @@ class PerfilController extends Controller
             ->where('id_usuario', $user->id)
             ->count();
 
-        return view('perfil.index', compact('user', 'arrBebida', 'cntFavoritos', 'cntAvaliacoes'));
+        $colecoes = Colecao::where('id_usuario', $user->id)
+            ->withCount('bebidas')
+            ->orderBy('nm_colecao')
+            ->get();
+
+        return view('perfil.index', compact(
+            'user', 'arrBebida', 'cntFavoritos', 'cntAvaliacoes', 'colecoes'
+        ));
     }
 
     public function atualizar(Request $request)

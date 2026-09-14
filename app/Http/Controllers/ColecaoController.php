@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Bebida;
 use App\Models\Colecao;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ColecaoController extends Controller
 {
@@ -14,6 +16,12 @@ class ColecaoController extends Controller
      * noindex. Abaixo disso é página magra.
      */
     public const MINIMO_PARA_INDICE = 3;
+
+    /**
+     * Teto de coleções por conta. Coleção pública é superfície indexável
+     * criada por usuário, e superfície indexável sem teto é convite a script.
+     */
+    public const LIMITE_POR_USUARIO = 50;
 
     /**
      * Índice das coleções públicas.
@@ -98,5 +106,71 @@ class ColecaoController extends Controller
             ->paginate(12);
 
         return view('colecao.show', ['colecao' => $registro, 'bebidas' => $bebidas]);
+    }
+
+    public function store(Request $request)
+    {
+        $dados = $this->validar($request);
+
+        if (Colecao::where('id_usuario', Auth::id())->count() >= self::LIMITE_POR_USUARIO) {
+            return back()->withInput()->withErrors([
+                'nm_colecao' => 'Você chegou ao limite de '.self::LIMITE_POR_USUARIO.' coleções.',
+            ]);
+        }
+
+        $colecao = Colecao::create($dados + ['id_usuario' => Auth::id()]);
+
+        return redirect()->to($colecao->url())->with('sucesso', 'Coleção criada.');
+    }
+
+    public function update(Request $request, int $cd_colecao)
+    {
+        $colecao = $this->minhaColecao($cd_colecao);
+        $colecao->update($this->validar($request, $colecao));
+
+        return redirect()->to($colecao->fresh()->url())->with('sucesso', 'Coleção atualizada.');
+    }
+
+    public function destroy(int $cd_colecao)
+    {
+        // O cascade de colecao_bebida cuida dos vínculos.
+        $this->minhaColecao($cd_colecao)->delete();
+
+        return redirect()->route('perfil.index')->with('sucesso', 'Coleção apagada.');
+    }
+
+    /**
+     * Carrega a coleção exigindo que seja de quem está autenticado.
+     *
+     * 404, e não 403, pelo mesmo motivo do show: 403 confirma que existe.
+     */
+    private function minhaColecao(int $cd_colecao): Colecao
+    {
+        return Colecao::where('cd_colecao', $cd_colecao)
+            ->where('id_usuario', Auth::id())
+            ->firstOrFail();
+    }
+
+    private function validar(Request $request, ?Colecao $colecao = null): array
+    {
+        $unico = Rule::unique('colecao', 'nm_colecao')->where('id_usuario', Auth::id());
+
+        if ($colecao) {
+            $unico = $unico->ignore($colecao->cd_colecao, 'cd_colecao');
+        }
+
+        $dados = $request->validate([
+            'nm_colecao' => ['required', 'string', 'max:60', $unico],
+            'ds_colecao' => ['nullable', 'string', 'max:200'],
+            'id_publica' => ['nullable', 'boolean'],
+        ], [
+            'nm_colecao.required' => 'Dê um nome à coleção.',
+            'nm_colecao.unique' => 'Você já tem uma coleção com esse nome.',
+        ]);
+
+        // Checkbox desmarcado não chega no request.
+        $dados['id_publica'] = $request->boolean('id_publica');
+
+        return $dados;
     }
 }

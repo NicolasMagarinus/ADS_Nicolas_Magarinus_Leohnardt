@@ -89,6 +89,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile', [PerfilController::class, 'atualizar'])->name('perfil.update');
     Route::post('/profile/change-password', [PerfilController::class, 'alterarSenha'])->name('perfil.change-password');
 
+    Route::post('/colecoes', [ColecaoController::class, 'store'])->name('colecao.store');
+    Route::put('/colecao/{cd_colecao}', [ColecaoController::class, 'update'])
+        ->name('colecao.update')->whereNumber('cd_colecao');
+    Route::delete('/colecao/{cd_colecao}', [ColecaoController::class, 'destroy'])
+        ->name('colecao.destroy')->whereNumber('cd_colecao');
+
     Route::get('/favoritos', [FavoritoController::class, 'index'])->name('favoritos.index');
     Route::post('/favoritos/{cd_bebida}/toggle', [FavoritoController::class, 'alternar'])
         ->name('favoritos.toggle')->whereNumber('cd_bebida');
