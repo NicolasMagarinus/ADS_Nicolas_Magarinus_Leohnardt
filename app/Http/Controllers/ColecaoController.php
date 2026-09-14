@@ -10,6 +10,33 @@ use Illuminate\Support\Facades\DB;
 class ColecaoController extends Controller
 {
     /**
+     * Mínimo de bebidas para a coleção pública entrar no índice e sair do
+     * noindex. Abaixo disso é página magra.
+     */
+    public const MINIMO_PARA_INDICE = 3;
+
+    /**
+     * Índice das coleções públicas.
+     *
+     * Só entram as com no mínimo 3 bebidas, pela mesma razão que
+     * IngredienteController::index deixa ingrediente órfão de fora: índice
+     * cheio de página magra é pior que índice menor. A coleção pública magra
+     * continua acessível por link direto e pelo perfil do dono.
+     */
+    public function index()
+    {
+        $colecoes = Colecao::query()
+            ->with('usuario')
+            ->withCount('bebidas')
+            ->where('id_publica', true)
+            ->has('bebidas', '>=', self::MINIMO_PARA_INDICE)
+            ->orderByDesc('updated_at')
+            ->paginate(24);
+
+        return view('colecao.index', compact('colecoes'));
+    }
+
+    /**
      * Página da coleção.
      *
      * O parâmetro é híbrido: o id manda, o slug é enfeite. Qualquer forma que

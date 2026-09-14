@@ -2,12 +2,26 @@
 
 @section('titulo', $colecao->nm_colecao)
 
+@section('descricao', $colecao->ds_colecao
+    ?: $bebidas->total().' drinks reunidos na coleção '.$colecao->nm_colecao.', no Drinkerito.')
+
+@if($bebidas->total() > 0 && $bebidas->first()->ds_imagem)
+    {{-- Sem transformação: o WhatsApp e o Facebook querem a imagem grande. --}}
+    @section('og_imagem', $bebidas->first()->ds_imagem)
+@endif
+
+@if(! $colecao->id_publica || $bebidas->total() < \App\Http\Controllers\ColecaoController::MINIMO_PARA_INDICE)
+    {{-- Privada nunca vai ao índice; pública magra é conteúdo fino, e o
+         tratamento é o mesmo que ingrediente/show dá à página sem receita. --}}
+    @section('robots', 'noindex')
+@endif
+
 @section('content')
 <div class="container mt-4">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb small">
             <li class="breadcrumb-item"><a href="{{ route('home') }}">Início</a></li>
-            <li class="breadcrumb-item">Coleções</li>
+            <li class="breadcrumb-item"><a href="{{ route('colecao.index') }}">Coleções</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ $colecao->nm_colecao }}</li>
         </ol>
     </nav>

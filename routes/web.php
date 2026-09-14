@@ -54,6 +54,7 @@ Route::get('/ingredientes', [IngredienteController::class, 'index'])->name('ingr
 Route::get('/ingrediente/{cd_ingrediente}', [IngredienteController::class, 'show'])
     ->name('ingrediente.show')->whereNumber('cd_ingrediente');
 
+Route::get('/colecoes', [ColecaoController::class, 'index'])->name('colecao.index');
 Route::get('/colecao/{colecao}', [ColecaoController::class, 'show'])
     ->name('colecao.show')->where('colecao', '[0-9]+(-.*)?');
 
