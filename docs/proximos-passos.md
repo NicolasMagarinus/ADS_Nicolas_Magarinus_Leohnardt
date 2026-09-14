@@ -186,8 +186,9 @@ só de estilo.
    (`RecuperacaoSenhaController`, `CodigoRecuperacaoSenha`) seguem lá, mais `concat_space` e
    `trailing_comma_in_multiline` em `CadastroBebidaController` — todas anteriores ao trabalho atual.
 3. **FEAT-08 (coleções de drinks)** — a maior das que sobraram por retorno: lista nomeada e pública
-   é conteúdo indexável gerado pelo usuário. **O desenho já está começado**: a descoberta está
-   decidida e a forma da URL é a próxima pergunta. Retome pela seção do item, não do zero.
+   é conteúdo indexável gerado pelo usuário. **O desenho está fechado e aprovado**, em
+   `docs/superpowers/specs/2026-09-14-feat-08-colecoes-design.md`. O próximo passo é o plano de
+   implementação, não mais discussão de desenho.
 4. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
@@ -310,33 +311,29 @@ uma **segunda conta** no próximo login, deixando favoritos, receitas e avaliaç
 já existem); e só então a troca de e-mail no perfil, com unique, validação e a senha atual como
 confirmação.
 
-### FEAT-08 · Coleções de drinks · impacto alto, esforço médio · **DESENHO EM ANDAMENTO**
+### FEAT-08 · Coleções de drinks · impacto alto, esforço médio · **DESENHO FECHADO**
 
 Favorito é binário. "Drinks de verão", "Para a festa de sábado" — listas nomeadas são o que
-transforma favoritos em algo que se compartilha. Tabelas `colecao` + `colecao_bebida`, com flag de
-pública/privada. Coleção pública com URL própria é conteúdo indexável gerado pelo usuário.
+transforma favoritos em algo que se compartilha. Coleção pública com URL própria é conteúdo
+indexável gerado pelo usuário.
 
-O desenho foi começado e interrompido antes do código. **Nada foi implementado.** O que já está
-decidido e o que falta:
+O desenho foi retomado e fechado em 14/set/2026. **Nada foi implementado ainda.** A spec completa
+está em `docs/superpowers/specs/2026-09-14-feat-08-colecoes-design.md`; o resumo das decisões:
 
-**Decidido — descoberta e visibilidade.** Dois estados só, pública ou privada; não entra o
-"não listada". Existe um índice `/colecoes` com as públicas, mas **só entram as que têm no mínimo 3
-bebidas**. É a mesma regra que o `/ingredientes` já aplica ao excluir ingrediente órfão
-(`IngredienteController::index`): índice cheio de página magra é pior que índice menor. As coleções
-públicas com menos de 3 bebidas continuam acessíveis por link direto e pelo perfil do dono, mas
-saem com `robots=noindex` — o mesmo tratamento que `ingrediente/show.blade.php` já dá à página sem
-receita nenhuma.
+- **URL híbrida `/colecao/{id}-{slug}`.** O id resolve, o slug é decorativo e derivado de
+  `nm_colecao` — não é coluna. `/colecao/12`, `/colecao/12-nome-velho` e `/colecao/12-lixo` dão
+  301 para a forma canônica, então renomear nunca quebra link publicado.
+- **Favoritos e coleções convivem**, em tabelas separadas. Absorver os favoritos mexeria nos 13
+  arquivos que leem `favorito`, incluindo `RecomendadasController` e `HomeController`; assim o
+  item fica enviável sozinho e nenhum deles é tocado.
+- **Descoberta:** `/colecoes` só com as públicas de ≥3 bebidas (a regra do `/ingredientes`); a
+  pública magra responde 200 com `noindex`; privada dá 404 para estranho, não 403.
+- **Limite de 50 coleções por usuário** — superfície indexável criada por usuário precisa de teto.
+- **Tabelas:** `colecao` + `colecao_bebida`. Cuidado com o tipo do FK: `bebida.cd_bebida` é
+  `increments` (int4) e o `favorito` declarou `unsignedBigInteger` — aqui é `unsignedInteger`.
 
-**Em aberto — a forma da URL.** A pergunta que estava sendo feita quando o desenho parou. O projeto
-hoje é estritamente numérico (`/ingrediente/{cd}`, `/bebida/{cd}`, todos com `whereNumber`), o que
-pesa pela consistência; um slug (`/colecao/12-drinks-de-verao`) pesa pelo SEO, que é justamente a
-justificativa do item, e obriga a decidir o que acontece com o link quando a pessoa renomeia a
-coleção. É decisão de mão única depois que houver link publicado.
-
-**Em aberto — o resto.** Onde fica a ação de adicionar (o palpite é um modal na página da bebida, ao
-lado do botão de favoritar, listando as coleções da pessoa mais "nova coleção"); se favoritos e
-coleções convivem ou se um absorve o outro (a leitura do enunciado é que convivem); se há limite de
-coleções por usuário; e o que a tela de perfil passa a mostrar.
+**Pré-requisito com commit próprio:** a URL híbrida exige `<link rel="canonical">`, que o
+`partials/meta.blade.php` não emite hoje. É mudança global, vale para o site inteiro.
 
 **Ponto de partida do código:** o análogo mais próximo é o par `IngredienteController` +
 `resources/views/ingrediente/`, que é Eloquent paginado com breadcrumb e as seções de meta — não o
