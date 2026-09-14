@@ -19,9 +19,30 @@ class ColecaoController extends Controller
      */
     public function show(string $colecao)
     {
-        // "12-drinks-de-verao" => 12. A restrição da rota garante que começa
-        // com dígito, então o cast nunca vira 0 por engano.
-        $registro = Colecao::with('usuario')->findOrFail((int) $colecao);
+        // "12-drinks-de-verao" => "12". A restrição da rota garante que
+        // começa com dígito, então o preg_match sempre casa.
+        preg_match('/^\d+/', $colecao, $match);
+
+        // cd_colecao é INTEGER no Postgres (máx. 2147483647), mas a rota só
+        // exige "[0-9]+" — qualquer quantidade de dígitos casa. Um id de dez
+        // dígitos ainda cabe no int64 do PHP e segue intacto até o bind do
+        // prepared statement; um de vinte estoura o int64 e o (int) do PHP
+        // satura em PHP_INT_MAX. Nos dois casos o Postgres recusa o bind com
+        // "out of range for type integer" (SQLSTATE 22003), e sem essa
+        // checagem essa QueryException não tratada vira 500 numa rota
+        // pública, sem login — onde o certo é 404, como para qualquer id que
+        // não exista. filter_var com max_range resolve os dois de uma vez:
+        // um valor que não caiba no INTEGER do Postgres nunca corresponde a
+        // uma coleção, então vira 404 antes de chegar à consulta.
+        $id = filter_var($match[0], FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1, 'max_range' => 2147483647],
+        ]);
+
+        if ($id === false) {
+            abort(404);
+        }
+
+        $registro = Colecao::with('usuario')->findOrFail($id);
 
         // 404, e não 403: 403 confirmaria que a coleção existe.
         if (! $registro->id_publica && $registro->id_usuario !== Auth::id()) {

@@ -70,6 +70,28 @@ class ColecaoUrlTest extends TestCase
         $this->get('/colecao/999999-o-que-for')->assertNotFound();
     }
 
+    /**
+     * cd_colecao é INTEGER no Postgres (máx. 2147483647). A rota só exige
+     * "[0-9]+", então um id de dez dígitos casa e ainda cabe no int64 do
+     * PHP — sem checagem de faixa, esse valor segue para o bind e o
+     * Postgres recusa com "out of range for type integer" (500 em vez de
+     * 404).
+     */
+    public function test_id_acima_da_faixa_do_integer_do_postgres_da_404(): void
+    {
+        $this->get('/colecao/9999999999-qualquer-coisa')->assertNotFound();
+    }
+
+    /**
+     * Um id de vinte dígitos nem cabe no int64 do PHP: é um caminho de cast
+     * diferente do teste acima (o (int) satura em PHP_INT_MAX em vez de
+     * manter o valor digitado), e por isso é pinado à parte.
+     */
+    public function test_id_maior_que_o_int64_do_php_da_404(): void
+    {
+        $this->get('/colecao/99999999999999999999-qualquer-coisa')->assertNotFound();
+    }
+
     public function test_a_canonica_aponta_para_ela_mesma(): void
     {
         $colecao = $this->colecaoPublica();
