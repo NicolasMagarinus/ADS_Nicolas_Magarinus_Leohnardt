@@ -50,6 +50,17 @@ Cloudinary URL no longer fits, which beats truncating it.
 
 PostgreSQL only (`DB_CONNECTION=pgsql`). Much of the query logic is raw PostgreSQL and **will not run on SQLite**: `json_agg`/`json_build_object`, `COUNT(...) FILTER (WHERE ...)`, `= ANY(?)` / `<> ALL(?)` with hand-built array literals (`'{1,2,3}'`), the `unaccent` extension (enabled by its own migration) used for accent-insensitive search, and the `f_unaccent()` IMMUTABLE wrapper that backs the unique index on ingredient names. `phpunit.xml` therefore points at a real Postgres database, not SQLite.
 
+`bebida.cd_bebida`, `ingrediente.cd_ingrediente` and `colecao.cd_colecao` are `increments` —
+`integer` in Postgres, so 2147483647 is the ceiling. A route's `whereNumber` is `[0-9]+` with no
+digit limit, so `/bebida/9999999999` matches the route and only blows up at the bind, where
+Postgres refuses it with `SQLSTATE 22003` and the untreated `QueryException` becomes a **500 on a
+public route**. Every id coming off a URL therefore goes through `App\Support\Id::validar()`,
+which returns the int or 404s. Two things that are easy to get wrong: the controller parameter is
+`string` on purpose — typing it `int` makes PHP throw `TypeError` coercing a twenty-digit id
+*before* the method runs, a 500 no in-method check can reach — and a route whose parameter is
+optional (`{cd_bebida?}`) must accept `?string $x = null`, or the missing argument is its own 500.
+This defect came back through five separate doors before the check was centralised.
+
 ### Naming conventions (non-Laravel)
 
 Tables are singular Portuguese names; columns use Hungarian-style prefixes: `cd_` = primary/foreign key, `nm_` = name, `ds_` = description/text, `id_` = enum or boolean flag, `qt_` = count, `dt_` = date. Because PKs are not `id`, every model must declare `$table` and `$primaryKey` explicitly, and relationships must pass the foreign key by hand (`hasMany(Favorito::class, 'cd_bebida')`). `users` is the one stock Laravel table (`id`), which is why join columns are `id_usuario` → `users.id`.

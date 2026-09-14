@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Avaliacao;
 use App\Models\Bebida;
+use App\Support\Id;
 use Illuminate\Http\Request;
 
 class BebidaController extends Controller
 {
-
-    public function show($cd_bebida)
+    public function show(?string $cd_bebida = null)
     {
-        $bebida = Bebida::getBebida($cd_bebida);
+        $bebida = Bebida::getBebida(Id::validar($cd_bebida));
 
-        if (!$bebida) {
+        if (! $bebida) {
             abort(404);
         }
 
@@ -25,7 +24,7 @@ class BebidaController extends Controller
     {
         $nome = $request->nome;
 
-        if (!$nome || mb_strlen($nome) < 2) {
+        if (! $nome || mb_strlen($nome) < 2) {
             return response()->json([]);
         }
 

@@ -1,6 +1,6 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **9 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **8 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
 ---
@@ -132,6 +132,7 @@ Do mais antigo para o mais novo:
 | `d4cb68e` | **PERF-06** — aviso de moderação na fila, com teste de fila real |
 | (este) | Atualiza o backlog e o CLAUDE.md depois do bloco QA-08 / SEC-06 / PERF-06 |
 | (este) | **FEAT-08** — coleções de drinks, com URL híbrida e índice público |
+| (este) | **QA-09** — id fora da faixa do integer deixa de devolver 500 |
 
 A suíte saiu de 32 para 269 testes. A última revisão completa da branch (`/code-review high`,
 30 commits) apontou 9 defeitos, nenhum deles pego pela suíte na época: 5 foram corrigidos nos dois
@@ -175,6 +176,16 @@ só de estilo.
   um nome de classe do framework não vale uma mensagem que só aparece com payload adulterado — o
   formulário usa radio. Ficou a mensagem genérica de `lang/pt_BR/validation.php`, e só
   `id_tipo.required` tem texto próprio.
+- **Id de rota passa por `App\Support\Id::validar()`.** As chaves do catálogo são `increments`,
+  ou seja `integer` no Postgres (teto 2147483647), e `whereNumber` é `[0-9]+` sem limite de
+  dígitos: `/bebida/9999999999` casava com a rota e só estourava no banco, virando 500. A checagem
+  vive num lugar só porque o defeito já voltou por **cinco** portas diferentes. Duas coisas que
+  não são óbvias: o parâmetro dos controllers é `string` de propósito, porque tipá-lo como `int`
+  faz o PHP lançar `TypeError` na coerção de um id de vinte dígitos **antes** do método rodar — um
+  500 que validação nenhuma dentro do método alcança; e `/favoritos/{cd}` **também** tinha o
+  defeito, ao contrário do que uma análise anterior afirmou: a tabela `favorito` é `bigint` e
+  aguenta, mas o controller faz `Bebida::findOrFail()` antes, e `bebida.cd_bebida` é int4.
+
 - **O front não migra para o Vite agora.** A extração do JavaScript para `public/js/` foi feita sem
   build; a migração é o QA-06, com três bloqueios verificados.
 
@@ -244,7 +255,7 @@ veja se o código de 6 dígitos chega. É o único caminho que exercita remetent
 
 ---
 
-## Qualidade (2)
+## Qualidade (1)
 
 ### QA-06 · Migrar o front para o Vite · médio
 
@@ -267,28 +278,6 @@ O `package.json` também pede limpeza: o bloco `dependencies` lista dezenas de p
 comando.
 
 O **FEAT-12 (PWA)** depende deste item, não da extração que já foi feita.
-
-### QA-09 · Id fora da faixa do integer devolve 500 · baixo
-
-`/bebida/{cd}` e `/ingrediente/{cd}` respondem **HTTP 500**, não 404, para um id acima de 2147483647
-— por exemplo `/bebida/9999999999`, que tem só dez dígitos e cabe folgado no `int64` do PHP.
-
-A causa: as colunas `bebida.cd_bebida` e `ingrediente.cd_ingrediente` são `increments` (int4 no
-Postgres). O `whereNumber` da rota aceita qualquer quantidade de dígitos, e o valor chega ao banco
-como parâmetro bindado, onde o Postgres recusa com `SQLSTATE[22003]` e a `QueryException` não
-tratada vira erro de servidor. São rotas públicas, sem autenticação.
-
-Foi confirmado com PDO direto contra o banco, não deduzido.
-
-O mesmo defeito existia nas rotas de coleção e foi corrigido lá: veja `ColecaoController::minhaColecao()`
-e `bebidaValidada()`, que validam a faixa com `filter_var(..., ['min_range' => 1, 'max_range' =>
-2147483647])` antes de consultar, e devolvem 404. Há duas portas, não uma: além do erro do Postgres,
-uma assinatura de método tipada como `int` lança `TypeError` na coerção para id de vinte dígitos,
-antes do método rodar — por isso os parâmetros de rota lá são `string`.
-
-Curiosidade que vale registrar: `/favoritos/{cd}/toggle` **não** tem o defeito, e só por acidente —
-é a coluna com o `unsignedBigInteger` de tipo trocado que este mesmo documento aponta como erro.
-O tipo errado a blinda.
 
 ---
 

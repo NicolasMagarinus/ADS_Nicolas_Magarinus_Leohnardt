@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Bebida;
 use App\Models\Colecao;
 use App\Models\ColecaoBebida;
+use App\Support\Id;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,13 +24,6 @@ class ColecaoController extends Controller
      * criada por usuário, e superfície indexável sem teto é convite a script.
      */
     public const LIMITE_POR_USUARIO = 50;
-
-    /**
-     * Máximo de um INTEGER do Postgres. cd_colecao e cd_bebida são INTEGER
-     * (não bigint) nas tabelas do banco, então nenhum id acima disso pode
-     * corresponder a uma linha de verdade — ver idNaFaixa().
-     */
-    private const MAX_INTEGER_POSTGRES = 2147483647;
 
     /**
      * Índice das coleções públicas.
@@ -66,8 +60,8 @@ class ColecaoController extends Controller
         // começa com dígito, então o preg_match sempre casa.
         preg_match('/^\d+/', $colecao, $match);
 
-        // Ver idNaFaixa() para o porquê da checagem de faixa.
-        $id = $this->idNaFaixa($match[0]);
+        // Ver App\Support\Id para o porquê da checagem de faixa.
+        $id = Id::validar($match[0]);
 
         $registro = Colecao::with('usuario')->findOrFail($id);
 
@@ -229,7 +223,7 @@ class ColecaoController extends Controller
      */
     private function minhaColecao(string $cd_colecao): Colecao
     {
-        return Colecao::where('cd_colecao', $this->idNaFaixa($cd_colecao))
+        return Colecao::where('cd_colecao', Id::validar($cd_colecao))
             ->where('id_usuario', Auth::id())
             ->firstOrFail();
     }
@@ -241,43 +235,7 @@ class ColecaoController extends Controller
      */
     private function bebidaValidada(string $cd_bebida): Bebida
     {
-        return Bebida::findOrFail($this->idNaFaixa($cd_bebida));
-    }
-
-    /**
-     * Valida que um id vindo de rota ou de corpo JSON cabe num INTEGER do
-     * Postgres (1..2147483647) e devolve o inteiro; aborta 404 quando não
-     * cabe.
-     *
-     * Recebe string, não int: as rotas de coleção usam "[0-9]+"/whereNumber()
-     * sem limitar a quantidade de dígitos, e um id de vinte dígitos nem cabe
-     * no int64 do PHP — tipar o parâmetro do método como `int` faria o PHP
-     * lançar TypeError *antes* do método rodar, e o ExceptionHandler
-     * renderiza isso como 500, não 404. Com string na entrada a checagem é
-     * manual: um id de onze dígitos ainda cabe no int64 do PHP e seguiria
-     * intacto até o bind do prepared statement, e o Postgres recusaria com
-     * "out of range for type integer" (SQLSTATE 22003); um de vinte nem
-     * chega a virar int, e o (int) do PHP satura em PHP_INT_MAX. Nos dois
-     * casos o id não pode corresponder a uma linha de verdade (cd_colecao e
-     * cd_bebida são INTEGER, não bigint), então filter_var com max_range
-     * resolve os dois de uma vez, antes de qualquer consulta.
-     *
-     * Esse defeito voltou por três portas diferentes nesta branch — show(),
-     * minhaColecao() e bebidaValidada() nasceram em três commits distintos,
-     * cada um com sua própria cópia do filter_var — por isso está
-     * centralizado aqui agora.
-     */
-    private function idNaFaixa(string $valor): int
-    {
-        $id = filter_var($valor, FILTER_VALIDATE_INT, [
-            'options' => ['min_range' => 1, 'max_range' => self::MAX_INTEGER_POSTGRES],
-        ]);
-
-        if ($id === false) {
-            abort(404);
-        }
-
-        return $id;
+        return Bebida::findOrFail(Id::validar($cd_bebida));
     }
 
     private function validar(Request $request, ?Colecao $colecao = null): array

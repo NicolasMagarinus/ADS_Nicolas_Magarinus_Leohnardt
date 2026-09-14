@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Favorito;
 use App\Models\Bebida;
-use Illuminate\Http\Request;
+use App\Models\Favorito;
+use App\Support\Id;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -16,8 +16,8 @@ class FavoritoController extends Controller
             ->join('bebida as b', 'f.cd_bebida', '=', 'b.cd_bebida')
             ->leftJoin('avaliacao as a', 'b.cd_bebida', '=', 'a.cd_bebida')
             ->select('b.cd_bebida', 'b.nm_bebida', 'b.ds_imagem',
-                     DB::raw('COALESCE(ROUND(AVG(a.id_nota), 1), 0) AS nota'),
-                     DB::raw('COUNT(DISTINCT a.cd_avaliacao) AS qt_avaliacao'))
+                DB::raw('COALESCE(ROUND(AVG(a.id_nota), 1), 0) AS nota'),
+                DB::raw('COUNT(DISTINCT a.cd_avaliacao) AS qt_avaliacao'))
             ->where('f.id_usuario', Auth::id())
             ->groupBy('b.cd_bebida', 'b.nm_bebida', 'b.ds_imagem', 'f.created_at')
             ->orderBy('f.created_at', 'desc')
@@ -26,8 +26,10 @@ class FavoritoController extends Controller
         return view('favoritos.index', compact('favoritos'));
     }
 
-    public function alternar($cd_bebida)
+    public function alternar(string $cd_bebida)
     {
+        $cd_bebida = Id::validar($cd_bebida);
+
         // Sem isso um id inexistente vira violação de chave estrangeira, e o
         // front, que espera JSON, recebe uma página de erro.
         Bebida::findOrFail($cd_bebida);
@@ -38,32 +40,36 @@ class FavoritoController extends Controller
 
         if ($favorito) {
             $favorito->delete();
+
             return response()->json([
                 'success' => true,
                 'favorited' => false,
-                'message' => 'Removido dos favoritos'
+                'message' => 'Removido dos favoritos',
             ]);
         } else {
             Favorito::create([
                 'id_usuario' => Auth::id(),
                 'cd_bebida' => $cd_bebida,
             ]);
+
             return response()->json([
                 'success' => true,
                 'favorited' => true,
-                'message' => 'Adicionado aos favoritos'
+                'message' => 'Adicionado aos favoritos',
             ]);
         }
     }
 
-    public function verificar($cd_bebida)
+    public function verificar(string $cd_bebida)
     {
+        $cd_bebida = Id::validar($cd_bebida);
+
         $favorited = Favorito::where('id_usuario', Auth::id())
             ->where('cd_bebida', $cd_bebida)
             ->exists();
 
         return response()->json([
-            'favorited' => $favorited
+            'favorited' => $favorited,
         ]);
     }
 }

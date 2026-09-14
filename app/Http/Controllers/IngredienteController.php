@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Bebida;
 use App\Models\Ingrediente;
+use App\Support\Id;
 use Illuminate\Support\Facades\DB;
 
 class IngredienteController extends Controller
@@ -22,9 +23,9 @@ class IngredienteController extends Controller
         return view('ingrediente.index', compact('ingredientes'));
     }
 
-    public function show($cd_ingrediente)
+    public function show(string $cd_ingrediente)
     {
-        $ingrediente = Ingrediente::findOrFail($cd_ingrediente);
+        $ingrediente = Ingrediente::findOrFail(Id::validar($cd_ingrediente));
 
         $bebidas = Bebida::query()
             ->select('bebida.*',
