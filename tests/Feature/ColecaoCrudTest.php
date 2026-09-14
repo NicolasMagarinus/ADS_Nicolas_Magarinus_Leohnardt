@@ -131,4 +131,106 @@ class ColecaoCrudTest extends TestCase
 
         $this->assertDatabaseCount('colecao', 0);
     }
+
+    /**
+     * O mesmo defeito de faixa que o show já corrigia (cd_colecao é INTEGER
+     * no Postgres, máx. 2147483647, mas a rota só exige "[0-9]+"): update e
+     * destroy passavam o id direto para minhaColecao() sem checar faixa, e
+     * qualquer conta autenticada — dona ou não da coleção — batia num 500
+     * do Postgres (SQLSTATE 22003) em vez de um 404. Um id de onze dígitos
+     * ainda cabe no int64 do PHP e chegaria intacto ao bind; um de vinte
+     * nem cabe, e por isso é pinado à parte, como em ColecaoUrlTest.
+     */
+    public function test_id_acima_da_faixa_do_integer_do_postgres_da_404_no_update(): void
+    {
+        $usuario = User::factory()->create();
+
+        $this->actingAs($usuario)
+            ->put('/colecao/9999999999', ['nm_colecao' => 'Sequestrada'])
+            ->assertNotFound();
+    }
+
+    public function test_id_acima_da_faixa_do_integer_do_postgres_da_404_no_destroy(): void
+    {
+        $usuario = User::factory()->create();
+
+        $this->actingAs($usuario)
+            ->delete('/colecao/9999999999')
+            ->assertNotFound();
+    }
+
+    public function test_id_maior_que_o_int64_do_php_da_404_no_update(): void
+    {
+        $usuario = User::factory()->create();
+
+        $this->actingAs($usuario)
+            ->put('/colecao/99999999999999999999', ['nm_colecao' => 'Sequestrada'])
+            ->assertNotFound();
+    }
+
+    public function test_id_maior_que_o_int64_do_php_da_404_no_destroy(): void
+    {
+        $usuario = User::factory()->create();
+
+        $this->actingAs($usuario)
+            ->delete('/colecao/99999999999999999999')
+            ->assertNotFound();
+    }
+
+    /**
+     * A PK aqui é cd_colecao, não id: se o ignore() do Rule::unique usasse a
+     * coluna errada, renomear mantendo o nome bateria na própria linha e
+     * seria recusado como duplicado.
+     */
+    public function test_renomear_mantendo_o_mesmo_nome_nao_e_recusado(): void
+    {
+        $usuario = User::factory()->create();
+        $colecao = Colecao::create(['id_usuario' => $usuario->id, 'nm_colecao' => 'Drinks de verão']);
+
+        $this->actingAs($usuario)
+            ->put(route('colecao.update', $colecao->cd_colecao), [
+                'nm_colecao' => 'Drinks de verão',
+                'ds_colecao' => 'Atualizando só a descrição.',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        $this->assertSame('Atualizando só a descrição.', $colecao->fresh()->ds_colecao);
+    }
+
+    public function test_colecao_publica_vira_privada(): void
+    {
+        $usuario = User::factory()->create();
+        $colecao = Colecao::create([
+            'id_usuario' => $usuario->id,
+            'nm_colecao' => 'Drinks de verão',
+            'id_publica' => true,
+        ]);
+
+        // Checkbox desmarcado não chega no request.
+        $this->actingAs($usuario)
+            ->put(route('colecao.update', $colecao->cd_colecao), ['nm_colecao' => 'Drinks de verão'])
+            ->assertSessionHasNoErrors();
+
+        $this->assertFalse($colecao->fresh()->id_publica);
+    }
+
+    public function test_colecao_privada_vira_publica(): void
+    {
+        $usuario = User::factory()->create();
+        $colecao = Colecao::create([
+            'id_usuario' => $usuario->id,
+            'nm_colecao' => 'Drinks de verão',
+            'id_publica' => false,
+        ]);
+
+        $this->actingAs($usuario)
+            ->put(route('colecao.update', $colecao->cd_colecao), [
+                'nm_colecao' => 'Drinks de verão',
+                'id_publica' => '1',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertTrue($colecao->fresh()->id_publica);
+    }
 }

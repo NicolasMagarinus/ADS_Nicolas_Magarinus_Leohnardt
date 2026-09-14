@@ -123,7 +123,7 @@ class ColecaoController extends Controller
         return redirect()->to($colecao->url())->with('sucesso', 'Coleção criada.');
     }
 
-    public function update(Request $request, int $cd_colecao)
+    public function update(Request $request, string $cd_colecao)
     {
         $colecao = $this->minhaColecao($cd_colecao);
         $colecao->update($this->validar($request, $colecao));
@@ -131,7 +131,7 @@ class ColecaoController extends Controller
         return redirect()->to($colecao->fresh()->url())->with('sucesso', 'Coleção atualizada.');
     }
 
-    public function destroy(int $cd_colecao)
+    public function destroy(string $cd_colecao)
     {
         // O cascade de colecao_bebida cuida dos vínculos.
         $this->minhaColecao($cd_colecao)->delete();
@@ -143,10 +143,30 @@ class ColecaoController extends Controller
      * Carrega a coleção exigindo que seja de quem está autenticado.
      *
      * 404, e não 403, pelo mesmo motivo do show: 403 confirma que existe.
+     *
+     * O parâmetro chega como string, não como int, de propósito: a rota só
+     * exige "[0-9]+", sem limite de dígitos, e um id de vinte dígitos nem
+     * cabe no int64 do PHP — coagir direto para um parâmetro `int` faria o
+     * PHP lançar TypeError antes mesmo de entrar no método, o que o
+     * ExceptionHandler renderiza como 500, não 404. Com string na entrada, a
+     * checagem de faixa é manual, igual ao show: um id de onze dígitos ainda
+     * cabe no int64 do PHP e seguiria intacto até o bind, e o Postgres
+     * recusaria com "out of range for type integer" (SQLSTATE 22003); um de
+     * vinte nem chega a virar int. Nos dois casos o cd_colecao não pode
+     * existir (é INTEGER no Postgres, máx. 2147483647), então vira 404 antes
+     * de qualquer consulta.
      */
-    private function minhaColecao(int $cd_colecao): Colecao
+    private function minhaColecao(string $cd_colecao): Colecao
     {
-        return Colecao::where('cd_colecao', $cd_colecao)
+        $id = filter_var($cd_colecao, FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1, 'max_range' => 2147483647],
+        ]);
+
+        if ($id === false) {
+            abort(404);
+        }
+
+        return Colecao::where('cd_colecao', $id)
             ->where('id_usuario', Auth::id())
             ->firstOrFail();
     }
