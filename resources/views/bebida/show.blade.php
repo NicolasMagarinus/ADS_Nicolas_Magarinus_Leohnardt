@@ -54,8 +54,12 @@
                     <div class="mt-4">
                         @auth
                             <button class="btn btn-primary me-2" id="favoriteBtn" onclick="toggleFavorite({{ $bebida->cd_bebida }})">
-                                <i class="fas fa-heart me-1" id="favoriteIcon"></i> 
+                                <i class="fas fa-heart me-1" id="favoriteIcon"></i>
                                 <span id="favoriteText">Favoritar</span>
+                            </button>
+                            <button class="btn btn-outline-primary me-2"
+                                    data-bs-toggle="modal" data-bs-target="#colecaoModal">
+                                <i class="bi bi-collection me-1"></i> Adicionar a coleção
                             </button>
                         @else
                             <a href="{{ route('login') }}" class="btn btn-primary me-2">
@@ -320,4 +324,19 @@ function confirmDeleteComment(event) {
         });
     }
 </script>
+
+@auth
+    @include('partials.modal-colecao')
+
+    <script>
+        window.DrinkeritoColecao = {
+            csrfToken: '{{ csrf_token() }}',
+            cdBebida: {{ $bebida->cd_bebida }},
+            paraBebidaUrl: '{{ route("colecao.para-bebida", $bebida->cd_bebida) }}',
+            alternarUrl: '{{ route("colecao.bebida.alternar", ["__CD__", $bebida->cd_bebida]) }}',
+            criarUrl: '{{ route("colecao.store") }}',
+        };
+    </script>
+    @js('colecao.js')
+@endauth
 @endsection

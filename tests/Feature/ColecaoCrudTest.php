@@ -233,4 +233,25 @@ class ColecaoCrudTest extends TestCase
 
         $this->assertTrue($colecao->fresh()->id_publica);
     }
+
+    public function test_cria_por_json_ja_vinculando_a_bebida(): void
+    {
+        $usuario = User::factory()->create();
+        $bebida = \App\Models\Bebida::create([
+            'nm_bebida' => 'Mojito',
+            'ds_preparo' => 'Macere e complete com rum.',
+            'id_tipo' => \App\Enums\TipoBebida::Alcoolica,
+            'ds_bebida' => 'Cubano.',
+        ]);
+
+        $this->actingAs($usuario)
+            ->postJson(route('colecao.store'), [
+                'nm_colecao' => 'Drinks de verão',
+                'cd_bebida' => $bebida->cd_bebida,
+            ])
+            ->assertOk()
+            ->assertJsonStructure(['cd_colecao']);
+
+        $this->assertDatabaseCount('colecao_bebida', 1);
+    }
 }
