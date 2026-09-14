@@ -1,21 +1,22 @@
 <?php
 
 use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RecuperacaoSenhaController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\AvaliacaoController;
 use App\Http\Controllers\BebidaController;
 use App\Http\Controllers\CadastroBebidaController;
-use App\Http\Controllers\RandomDrinkController;
+use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\ColecaoController;
+use App\Http\Controllers\FavoritoController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\IngredienteController;
-use App\Http\Controllers\SearchController;
-use App\Http\Controllers\PerfilController;
-use App\Http\Controllers\ChatbotController;
-use App\Http\Controllers\FavoritoController;
 use App\Http\Controllers\MeuBarController;
+use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\RandomDrinkController;
 use App\Http\Controllers\RecomendadasController;
+use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -52,13 +53,17 @@ Route::get('/random', [RandomDrinkController::class, 'index'])->name('random');
 Route::get('/ingredientes', [IngredienteController::class, 'index'])->name('ingrediente.index');
 Route::get('/ingrediente/{cd_ingrediente}', [IngredienteController::class, 'show'])
     ->name('ingrediente.show')->whereNumber('cd_ingrediente');
+
+Route::get('/colecao/{colecao}', [ColecaoController::class, 'show'])
+    ->name('colecao.show')->where('colecao', '[0-9]+(-.*)?');
+
 Route::get('/search', [SearchController::class, 'index'])->name('search');
 
 Route::group(['prefix' => 'bebida'], function () {
     Route::get('/buscar-bebidas', [BebidaController::class, 'search'])->name('bebida.search');
     Route::get('/{cd_bebida?}', [BebidaController::class, 'show'])->name('bebida.show')->whereNumber('cd_bebida');
 
-    //Avaliação
+    // Avaliação
     Route::post('/{cd_bebida}/avaliacao', [AvaliacaoController::class, 'store'])->name('avaliacao.store')->middleware('auth');
     Route::put('/{cd_bebida}/avaliacao/{cd_avaliacao}', [AvaliacaoController::class, 'update'])->name('avaliacao.update')->middleware('auth');
     Route::delete('/{cd_bebida}/avaliacao/{cd_avaliacao}', [AvaliacaoController::class, 'destroy'])->name('avaliacao.destroy')->middleware('auth');

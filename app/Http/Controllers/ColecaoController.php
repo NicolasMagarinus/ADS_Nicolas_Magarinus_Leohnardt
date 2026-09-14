@@ -1,0 +1,54 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Bebida;
+use App\Models\Colecao;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+class ColecaoController extends Controller
+{
+    /**
+     * Página da coleção.
+     *
+     * O parâmetro é híbrido: o id manda, o slug é enfeite. Qualquer forma que
+     * não seja a canônica sai 301 — id puro, slug de antes do rename, ou lixo
+     * no fim. Assim o link publicado continua valendo depois de renomear, sem
+     * duplicar conteúdo no índice do buscador.
+     */
+    public function show(string $colecao)
+    {
+        // "12-drinks-de-verao" => 12. A restrição da rota garante que começa
+        // com dígito, então o cast nunca vira 0 por engano.
+        $registro = Colecao::with('usuario')->findOrFail((int) $colecao);
+
+        // 404, e não 403: 403 confirmaria que a coleção existe.
+        if (! $registro->id_publica && $registro->id_usuario !== Auth::id()) {
+            abort(404);
+        }
+
+        if ($colecao !== $registro->parametroUrl()) {
+            return redirect()->to($registro->url(), 301);
+        }
+
+        $bebidas = Bebida::query()
+            ->select(
+                'bebida.*',
+                DB::raw('COALESCE(ROUND(AVG(avaliacao.id_nota), 1), 0) AS nota'),
+                DB::raw('COUNT(avaliacao.id_nota) AS qt_avaliacao'),
+                DB::raw('MIN(cb.created_at) AS dt_adicionado')
+            )
+            ->join('colecao_bebida as cb', 'cb.cd_bebida', '=', 'bebida.cd_bebida')
+            ->leftJoin('avaliacao', 'bebida.cd_bebida', '=', 'avaliacao.cd_bebida')
+            ->where('cb.cd_colecao', $registro->cd_colecao)
+            // Agrupar só pela PK basta no PostgreSQL (dependência funcional),
+            // e é o que permite ordenar por MIN(cb.created_at) sem arrastar a
+            // coluna para o GROUP BY. O projeto é Postgres only.
+            ->groupBy('bebida.cd_bebida')
+            ->orderBy('dt_adicionado')
+            ->paginate(12);
+
+        return view('colecao.show', ['colecao' => $registro, 'bebidas' => $bebidas]);
+    }
+}
