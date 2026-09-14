@@ -17,7 +17,7 @@ class Bebida extends Model
         'ds_preparo',
         'id_tipo',
         'ds_bebida',
-        'ds_imagem'
+        'ds_imagem',
     ];
 
     protected $casts = [
@@ -61,7 +61,7 @@ class Bebida extends Model
             }
         }
 
-        $sql = <<<SQL
+        $sql = <<<'SQL'
             SELECT b.cd_bebida,
                    b.nm_bebida,
                    b.ds_preparo,
@@ -85,7 +85,7 @@ SQL;
 
         $bebida = DB::selectOne($sql, [$cd_bebida]);
 
-        if (!$bebida) {
+        if (! $bebida) {
             return null;
         }
 
@@ -97,7 +97,7 @@ SQL;
         $bebida->avaliacoes = DB::table('avaliacao as a')
             ->join('users as u', 'a.id_usuario', '=', 'u.id')
             ->select('u.name as nm_usuario', 'a.ds_avaliacao', 'a.created_at', 'a.id_nota as nota',
-                     'a.id_usuario', 'a.cd_avaliacao')
+                'a.id_usuario', 'a.cd_avaliacao')
             ->where('a.cd_bebida', $bebida->cd_bebida)
             ->orderByDesc('a.created_at')
             ->get();

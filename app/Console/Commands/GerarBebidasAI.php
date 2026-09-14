@@ -4,18 +4,18 @@ namespace App\Console\Commands;
 
 use App\Enums\TipoBebida;
 use App\Models\Ingrediente;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use OpenAI\Laravel\Facades\OpenAI;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
-use Exception;
 
 class GerarBebidasAI extends Command
 {
     protected $signature = 'app:gerar-bebidas-ai '.
-                           '{acao? : Parametros}' . 
-                           '{--qt_receita= : Quantidade de receitas a serem geradas}';
-    
+        '{acao? : Parametros}'.
+        '{--qt_receita= : Quantidade de receitas a serem geradas}';
+
     protected $description = 'Gera receitas originais de bebidas e salva no banco usando GPT-4o-mini';
 
     public function handle()
@@ -53,16 +53,18 @@ class GerarBebidasAI extends Command
             ]);
 
             $content = $response['choices'][0]['message']['content'] ?? null;
-            if (!$content) {
+            if (! $content) {
                 $this->error('Nenhum conteúdo retornado pela IA.');
+
                 return;
             }
 
             $json = $this->extrairJson($content);
             $bebidas = json_decode($json, true);
 
-            if (json_last_error() !== JSON_ERROR_NONE || !is_array($bebidas)) {
-                $this->error('Erro ao decodificar JSON retornado: ' . json_last_error_msg());
+            if (json_last_error() !== JSON_ERROR_NONE || ! is_array($bebidas)) {
+                $this->error('Erro ao decodificar JSON retornado: '.json_last_error_msg());
+
                 return;
             }
 
@@ -75,7 +77,7 @@ class GerarBebidasAI extends Command
         } catch (\OpenAI\Exceptions\RateLimitException $e) {
             $this->warn('Limite de requisições atingido. Tente novamente mais tarde.');
         } catch (Exception $e) {
-            $this->error('Erro: ' . $e->getMessage());
+            $this->error('Erro: '.$e->getMessage());
         }
     }
 
@@ -86,6 +88,7 @@ class GerarBebidasAI extends Command
         if ($inicio === false || $fim === false) {
             return $texto;
         }
+
         return substr($texto, $inicio, $fim - $inicio + 1);
     }
 
@@ -102,12 +105,14 @@ class GerarBebidasAI extends Command
                 'updated_at' => now(),
             ], 'cd_bebida');
 
-            if (!empty($bebida['ingredientes'])) {
+            if (! empty($bebida['ingredientes'])) {
                 foreach ($bebida['ingredientes'] as $ing) {
                     $nomeIng = trim($ing['nome'] ?? '');
                     $medida = $ing['medida'] ?? '';
 
-                    if (!$nomeIng) continue;
+                    if (! $nomeIng) {
+                        continue;
+                    }
 
                     $cd_ingrediente = Ingrediente::normalizar($nomeIng)->cd_ingrediente;
 
@@ -135,38 +140,39 @@ class GerarBebidasAI extends Command
 
         } catch (Exception $e) {
             DB::rollBack();
-            $this->error('Erro ao salvar bebida: ' . $e->getMessage());
+            $this->error('Erro ao salvar bebida: '.$e->getMessage());
         }
     }
 
     private function gerarImagemBebida(int $cd_bebida, array $bebida)
     {
         try {
-            $promptImagem = "Fotografia realista de um coquetel chamado {$bebida['nome']}, " .
-                            "feito com " . implode(', ', array_column($bebida['ingredientes'] ?? [], 'nome')) .
-                            ". Fundo neutro, copo bonito, iluminação de estúdio, estilo de foto profissional.";
+            $promptImagem = "Fotografia realista de um coquetel chamado {$bebida['nome']}, ".
+                            'feito com '.implode(', ', array_column($bebida['ingredientes'] ?? [], 'nome')).
+                            '. Fundo neutro, copo bonito, iluminação de estúdio, estilo de foto profissional.';
 
             $this->line("Gerando imagem para: {$bebida['nome']}...");
 
             $result = OpenAI::images()->create([
-                'model'           => 'dall-e-3',
-                'prompt'          => $promptImagem,
-                'size'            => '1024x1024',
-                'response_format' => "b64_json",
-                'n' => 1
+                'model' => 'dall-e-3',
+                'prompt' => $promptImagem,
+                'size' => '1024x1024',
+                'response_format' => 'b64_json',
+                'n' => 1,
             ]);
 
             $imageBase64 = $result['data'][0]['b64_json'] ?? null;
 
-            if (!$imageBase64) {
+            if (! $imageBase64) {
                 $this->warn("Falha ao gerar imagem para {$bebida['nome']}");
+
                 return;
             }
 
-            $dataUri = "data:image/png;base64," . $imageBase64;
+            $dataUri = 'data:image/png;base64,'.$imageBase64;
 
             $upload = Cloudinary::upload($dataUri, [
-                'folder' => 'bebidas'
+                'folder' => 'bebidas',
             ]);
 
             $url = $upload->getSecurePath();
@@ -180,7 +186,7 @@ class GerarBebidasAI extends Command
         } catch (\OpenAI\Exceptions\RateLimitException $e) {
             $this->warn('Limite de requisições de imagem atingido, pulando esta bebida.');
         } catch (Exception $e) {
-            $this->warn('Erro ao gerar imagem: ' . $e->getMessage());
+            $this->warn('Erro ao gerar imagem: '.$e->getMessage());
         }
     }
 }

@@ -77,9 +77,9 @@ class MeuBarController extends Controller
         ]);
 
         $ingredienteIds = $request->input('ingredientes');
-        $idsLiteral = '{' . implode(',', $ingredienteIds) . '}';
+        $idsLiteral = '{'.implode(',', $ingredienteIds).'}';
 
-        $drinks = DB::select("
+        $drinks = DB::select('
             SELECT b.cd_bebida,
                    b.nm_bebida,
                    b.ds_imagem,
@@ -96,7 +96,7 @@ class MeuBarController extends Controller
             HAVING COUNT(DISTINCT bi.cd_ingrediente) - COUNT(DISTINCT bi.cd_ingrediente) FILTER (WHERE bi.cd_ingrediente = ANY(?)) <= 2
                AND COUNT(DISTINCT bi.cd_ingrediente) FILTER (WHERE bi.cd_ingrediente = ANY(?)) > 0
              ORDER BY faltando ASC, nota DESC, b.nm_bebida ASC
-        ", [$idsLiteral, $idsLiteral, $idsLiteral, $idsLiteral]);
+        ', [$idsLiteral, $idsLiteral, $idsLiteral, $idsLiteral]);
 
         $prontos = [];
         $quaseLa = [];
@@ -105,15 +105,15 @@ class MeuBarController extends Controller
             if ((int) $drink->faltando === 0) {
                 $prontos[] = $drink;
             } else {
-                $missing = DB::select("
+                $missing = DB::select('
                     SELECT i.nm_ingrediente
                       FROM bebida_ingrediente bi
                       JOIN ingrediente i ON i.cd_ingrediente = bi.cd_ingrediente
                      WHERE bi.cd_bebida = ?
                        AND bi.cd_ingrediente <> ALL(?)
-                ", [$drink->cd_bebida, $idsLiteral]);
+                ', [$drink->cd_bebida, $idsLiteral]);
 
-                $drink->ingredientes_faltando = array_map(fn($m) => $m->nm_ingrediente, $missing);
+                $drink->ingredientes_faltando = array_map(fn ($m) => $m->nm_ingrediente, $missing);
                 $quaseLa[] = $drink;
             }
         }

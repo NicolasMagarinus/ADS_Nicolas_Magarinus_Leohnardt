@@ -133,6 +133,7 @@ Do mais antigo para o mais novo:
 | (este) | Atualiza o backlog e o CLAUDE.md depois do bloco QA-08 / SEC-06 / PERF-06 |
 | (este) | **FEAT-08** — coleções de drinks, com URL híbrida e índice público |
 | (este) | **QA-09** — id fora da faixa do integer deixa de devolver 500 |
+| (este) | Pint no projeto todo, num commit só de estilo |
 
 A suíte saiu de 32 para 269 testes. A última revisão completa da branch (`/code-review high`,
 30 commits) apontou 9 defeitos, nenhum deles pego pela suíte na época: 5 foram corrigidos nos dois
@@ -151,11 +152,9 @@ rejeitada no perfil usava `bi-times`, que é classe do Font Awesome e não do Bo
 **SEC-04 — as variáveis do Railway.** É o único item que não se resolve no repositório, e é o que hoje
 derruba a recuperação de senha em produção. Detalhado na seção de Segurança abaixo.
 
-**Duas pendências de estilo** em arquivos do commit `39c1a9a`, que já está no remoto:
-`RecuperacaoSenhaController` (`not_operator_with_successor_space`) e `CodigoRecuperacaoSenha`
-(`single_line_empty_body`). `vendor/bin/pint` resolve; ficaram de fora para não misturar formatação
-com correção. O resto do projeto também não está formatado — rodar o Pint no todo merece um commit
-só de estilo.
+O Pint já foi rodado no projeto todo, num commit só de estilo — as pendências antigas de
+`RecuperacaoSenhaController` e `CodigoRecuperacaoSenha` saíram junto. `vendor/bin/pint --test`
+passa limpo hoje; vale mantê-lo assim rodando o Pint só nos arquivos que você tocar.
 
 ---
 
@@ -194,10 +193,7 @@ só de estilo.
 ## Ordem sugerida
 
 1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
-2. **Rodar o Pint no projeto todo**, num commit só de estilo. As duas pendências conhecidas
-   (`RecuperacaoSenhaController`, `CodigoRecuperacaoSenha`) seguem lá, mais `concat_space` e
-   `trailing_comma_in_multiline` em `CadastroBebidaController` — todas anteriores ao trabalho atual.
-3. O resto, conforme o tempo.
+2. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
 

@@ -13,7 +13,7 @@ class BebidaIngrediente extends Model
     protected $fillable = [
         'cd_bebida',
         'cd_ingrediente',
-        'ds_medida'
+        'ds_medida',
     ];
 
     public function bebida()
@@ -25,5 +25,4 @@ class BebidaIngrediente extends Model
     {
         return $this->belongsTo(Ingrediente::class, 'cd_ingrediente');
     }
-
 }

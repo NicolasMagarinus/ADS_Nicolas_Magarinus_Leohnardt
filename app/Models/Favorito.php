@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Favorito extends Model
 {
     protected $table = 'favorito';
+
     protected $primaryKey = 'cd_favorito';
 
     protected $fillable = [

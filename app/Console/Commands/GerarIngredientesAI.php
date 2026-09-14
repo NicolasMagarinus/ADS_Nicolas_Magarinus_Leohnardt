@@ -3,16 +3,16 @@
 namespace App\Console\Commands;
 
 use App\Models\Ingrediente;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use OpenAI\Laravel\Facades\OpenAI;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
-use Exception;
 
 class GerarIngredientesAI extends Command
 {
     protected $signature = 'app:gerar-ingredientes-ai {--qt=50 : Quantidade de ingredientes a listar}';
-    
+
     protected $description = 'Gera (ou atualiza imagens de) ingredientes mais usados em drinks usando gpt-3.5 e DALL·E';
 
     public function handle()
@@ -37,22 +37,26 @@ class GerarIngredientesAI extends Command
             ]);
 
             $content = $response['choices'][0]['message']['content'] ?? null;
-            if (!$content) {
+            if (! $content) {
                 $this->error('Nenhum conteúdo retornado pela IA.');
+
                 return;
             }
 
             $json = $this->extrairJson($content);
             $ingredientes = json_decode($json, true);
 
-            if (json_last_error() !== JSON_ERROR_NONE || !is_array($ingredientes)) {
-                $this->error('Erro ao decodificar JSON retornado: ' . json_last_error_msg());
+            if (json_last_error() !== JSON_ERROR_NONE || ! is_array($ingredientes)) {
+                $this->error('Erro ao decodificar JSON retornado: '.json_last_error_msg());
+
                 return;
             }
 
             foreach ($ingredientes as $nome) {
-                $nome = trim((string)$nome);
-                if ($nome === '') continue;
+                $nome = trim((string) $nome);
+                if ($nome === '') {
+                    continue;
+                }
 
                 DB::beginTransaction();
                 try {
@@ -70,7 +74,7 @@ class GerarIngredientesAI extends Command
                     DB::commit();
                 } catch (Exception $e) {
                     DB::rollBack();
-                    $this->error("Erro ao processar ingrediente '{$nome}': " . $e->getMessage());
+                    $this->error("Erro ao processar ingrediente '{$nome}': ".$e->getMessage());
                 }
             }
 
@@ -79,7 +83,7 @@ class GerarIngredientesAI extends Command
         } catch (\OpenAI\Exceptions\RateLimitException $e) {
             $this->warn('Limite de requisições atingido. Tente novamente mais tarde.');
         } catch (Exception $e) {
-            $this->error('Erro: ' . $e->getMessage());
+            $this->error('Erro: '.$e->getMessage());
         }
     }
 
@@ -90,35 +94,37 @@ class GerarIngredientesAI extends Command
         if ($inicio === false || $fim === false) {
             return $texto;
         }
+
         return substr($texto, $inicio, $fim - $inicio + 1);
     }
 
     private function gerarImagemIngrediente(int $cd_ingrediente, string $nome)
     {
         try {
-            $promptImagem = "Fotografia realista de alta qualidade do ingrediente '{$nome}' usado em drinks. " .
-                            "Foco no item, fundo neutro (branco ou cinza suave), iluminação de estúdio, detalhes nítidos, estilo profissional.";
+            $promptImagem = "Fotografia realista de alta qualidade do ingrediente '{$nome}' usado em drinks. ".
+                            'Foco no item, fundo neutro (branco ou cinza suave), iluminação de estúdio, detalhes nítidos, estilo profissional.';
 
             $this->line("Gerando imagem para ingrediente: {$nome}...");
 
             $result = OpenAI::images()->create([
-                'model'           => 'dall-e-3',
-                'prompt'          => $promptImagem,
-                'size'            => '1024x1024',
+                'model' => 'dall-e-3',
+                'prompt' => $promptImagem,
+                'size' => '1024x1024',
                 'response_format' => 'b64_json',
-                'n' => 1
+                'n' => 1,
             ]);
 
             $imageBase64 = $result['data'][0]['b64_json'] ?? null;
-            if (!$imageBase64) {
+            if (! $imageBase64) {
                 $this->warn("Falha ao gerar imagem para {$nome}");
+
                 return;
             }
 
-            $dataUri = "data:image/png;base64," . $imageBase64;
+            $dataUri = 'data:image/png;base64,'.$imageBase64;
 
             $upload = Cloudinary::upload($dataUri, [
-                'folder' => 'ingredientes'
+                'folder' => 'ingredientes',
             ]);
 
             $url = $upload->getSecurePath();
@@ -132,7 +138,7 @@ class GerarIngredientesAI extends Command
         } catch (\OpenAI\Exceptions\RateLimitException $e) {
             $this->warn('Limite de requisições de imagem atingido, pulando este ingrediente.');
         } catch (Exception $e) {
-            $this->warn('Erro ao gerar/enviar imagem: ' . $e->getMessage());
+            $this->warn('Erro ao gerar/enviar imagem: '.$e->getMessage());
         }
     }
 }

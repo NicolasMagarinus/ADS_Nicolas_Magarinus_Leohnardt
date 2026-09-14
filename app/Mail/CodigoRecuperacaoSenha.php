@@ -15,8 +15,7 @@ class CodigoRecuperacaoSenha extends Mailable
     public function __construct(
         public string $codigo,
         public int $minutosValidade,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

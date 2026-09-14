@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Bebida;
 
 class RandomDrinkController extends Controller
@@ -11,7 +10,7 @@ class RandomDrinkController extends Controller
     {
         $random = Bebida::getBebida();
 
-        if (!$random) {
+        if (! $random) {
             abort(404);
         }
 

@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
 use App\Enums\StatusCadastro;
@@ -18,7 +17,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class CadastroBebidaController extends Controller
@@ -64,12 +62,12 @@ class CadastroBebidaController extends Controller
                             'width' => 1024,
                             'height' => 1024,
                             'crop' => 'limit',
-                            'quality' => 'auto'
-                        ]
+                            'quality' => 'auto',
+                        ],
                     ]);
                     $imageUrl = $uploadedFile->getSecurePath();
                 } catch (\Exception $e) {
-                    throw new \Exception('Erro ao fazer upload da imagem: ' . $e->getMessage());
+                    throw new \Exception('Erro ao fazer upload da imagem: '.$e->getMessage());
                 }
             }
 
@@ -157,7 +155,7 @@ class CadastroBebidaController extends Controller
                 'ds_preparo' => $cadastro->ds_preparo,
                 'ds_imagem' => $cadastro->ds_imagem,
                 'id_tipo' => $cadastro->id_tipo,
-                'ds_bebida' => $cadastro->ds_bebida ?: 'Bebida cadastrada por usuário'
+                'ds_bebida' => $cadastro->ds_bebida ?: 'Bebida cadastrada por usuário',
             ]);
 
             foreach ($cadastro->ingredientes as $item) {
@@ -277,7 +275,7 @@ class CadastroBebidaController extends Controller
         $results = $ingredientes->map(function ($item) {
             return [
                 'id' => $item->nm_ingrediente,
-                'text' => $item->nm_ingrediente
+                'text' => $item->nm_ingrediente,
             ];
         });
 

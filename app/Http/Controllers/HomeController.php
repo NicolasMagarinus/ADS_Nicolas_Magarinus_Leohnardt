@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +19,7 @@ class HomeController extends Controller
 
     public function index()
     {
-        $sqlAvaliacao = <<<SQL
+        $sqlAvaliacao = <<<'SQL'
             SELECT b.cd_bebida, b.nm_bebida, b.ds_imagem, b.id_tipo,
                    ROUND(AVG(a.id_nota), 1) AS nota,
                    COUNT(a.cd_avaliacao)    AS qt_avaliacao
@@ -37,7 +36,7 @@ class HomeController extends Controller
         $arrAvaliacao = Cache::remember('home.avaliadas', self::TTL_CACHE,
             fn () => DB::select($sqlAvaliacao));
 
-        $sqlIngrediente = <<<SQL
+        $sqlIngrediente = <<<'SQL'
             SELECT i.cd_ingrediente, i.nm_ingrediente, count(bi.cd_ingrediente) AS qt_utilizado, i.ds_imagem
               FROM ingrediente i
               JOIN bebida_ingrediente bi ON bi.cd_ingrediente = i.cd_ingrediente
@@ -49,7 +48,7 @@ SQL;
         $arrIngrediente = Cache::remember('home.ingredientes', self::TTL_CACHE,
             fn () => DB::select($sqlIngrediente));
 
-        $sqlRecente = <<<SQL
+        $sqlRecente = <<<'SQL'
             SELECT b.cd_bebida, b.nm_bebida, b.ds_imagem
               FROM bebida b
              ORDER BY b.created_at DESC

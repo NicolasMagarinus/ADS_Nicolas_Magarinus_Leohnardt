@@ -43,10 +43,10 @@ class RecomendadasController extends Controller
             ]);
         }
 
-        $topIdsLiteral = '{' . implode(',', $topIngredienteIds) . '}';
-        $favoritasLiteral = '{' . implode(',', $favoritas) . '}';
+        $topIdsLiteral = '{'.implode(',', $topIngredienteIds).'}';
+        $favoritasLiteral = '{'.implode(',', $favoritas).'}';
 
-        $recomendadas = DB::select("
+        $recomendadas = DB::select('
             SELECT b.cd_bebida,
                    b.nm_bebida,
                    b.ds_imagem,
@@ -69,7 +69,7 @@ class RecomendadasController extends Controller
                    END) > 0
              ORDER BY match_count DESC, nota DESC
              LIMIT 8
-        ", [$topIdsLiteral, $topIdsLiteral, $favoritasLiteral, $topIdsLiteral]);
+        ', [$topIdsLiteral, $topIdsLiteral, $favoritasLiteral, $topIdsLiteral]);
 
         return view('recomendadas.index', [
             'hasFavorites' => true,

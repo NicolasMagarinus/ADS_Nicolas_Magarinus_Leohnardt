@@ -13,13 +13,13 @@ class RegisterController extends Controller
 {
     public function index()
     {
-        return view("auth.register");
+        return view('auth.register');
     }
 
     public function register(Request $request)
     {
         $validator = $this->validator($request->all());
-        
+
         if ($validator->fails()) {
             return redirect()->back()
                 ->withErrors($validator)
@@ -60,7 +60,7 @@ class RegisterController extends Controller
         return User::create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => Hash::make($data['password'])
+            'password' => Hash::make($data['password']),
         ]);
     }
 }

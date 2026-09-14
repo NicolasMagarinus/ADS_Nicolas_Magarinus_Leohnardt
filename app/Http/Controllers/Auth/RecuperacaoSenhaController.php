@@ -83,7 +83,7 @@ class RecuperacaoSenhaController extends Controller
     {
         $email = $request->session()->get(self::EMAIL_PENDENTE);
 
-        if (!$email) {
+        if (! $email) {
             return redirect()->route('password.request');
         }
 
@@ -94,7 +94,7 @@ class RecuperacaoSenhaController extends Controller
     {
         $email = $request->session()->get(self::EMAIL_PENDENTE);
 
-        if (!$email) {
+        if (! $email) {
             return redirect()->route('password.request');
         }
 
@@ -106,7 +106,7 @@ class RecuperacaoSenhaController extends Controller
             ]
         );
 
-        if (!$this->codigoConfere($email, $request->codigo)) {
+        if (! $this->codigoConfere($email, $request->codigo)) {
             return redirect()->route('password.code')
                 ->withErrors(['codigo' => 'Código inválido ou expirado. Peça um novo código.']);
         }
@@ -125,7 +125,7 @@ class RecuperacaoSenhaController extends Controller
     {
         $registro = DB::table('password_reset_tokens')->where('email', $email)->first();
 
-        if (!$registro) {
+        if (! $registro) {
             return false;
         }
 
@@ -157,7 +157,7 @@ class RecuperacaoSenhaController extends Controller
 
     public function formularioNovaSenha(Request $request)
     {
-        if (!$request->session()->has(self::EMAIL_VERIFICADO)) {
+        if (! $request->session()->has(self::EMAIL_VERIFICADO)) {
             return redirect()->route('password.request');
         }
 
@@ -168,7 +168,7 @@ class RecuperacaoSenhaController extends Controller
     {
         $email = $request->session()->get(self::EMAIL_VERIFICADO);
 
-        if (!$email) {
+        if (! $email) {
             return redirect()->route('password.request');
         }
 
@@ -183,7 +183,7 @@ class RecuperacaoSenhaController extends Controller
 
         $usuario = User::where('email', $email)->first();
 
-        if (!$usuario) {
+        if (! $usuario) {
             return redirect()->route('password.request');
         }
 
@@ -193,7 +193,7 @@ class RecuperacaoSenhaController extends Controller
         // pedido é reconferido no banco antes de gravar a senha.
         $registro = DB::table('password_reset_tokens')->where('email', $email)->first();
 
-        if (!$registro || $this->expirou($registro)) {
+        if (! $registro || $this->expirou($registro)) {
             DB::table('password_reset_tokens')->where('email', $email)->delete();
             $request->session()->forget(self::EMAIL_VERIFICADO);
 

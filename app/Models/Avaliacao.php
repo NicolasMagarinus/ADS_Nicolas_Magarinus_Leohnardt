@@ -15,7 +15,7 @@ class Avaliacao extends Model
         'id_usuario',
         'id_nota',
         'cd_bebida',
-        'dt_avaliacao'
+        'dt_avaliacao',
     ];
 
     public function bebida()

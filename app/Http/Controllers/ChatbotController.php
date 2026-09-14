@@ -9,10 +9,10 @@ use App\Models\CadastroBebida;
 use App\Models\CadastroBebidaIngrediente;
 use App\Models\ChatbotUsage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use OpenAI\Laravel\Facades\OpenAI;
 
@@ -87,7 +87,7 @@ class ChatbotController extends Controller
 
         if ($usage->ai_calls_count >= self::AI_DAILY_LIMIT) {
             return response()->json([
-                'reply' => '⚠️ Você atingiu o limite de ' . self::AI_DAILY_LIMIT . ' perguntas à IA por hoje. Volte amanhã! 🍹',
+                'reply' => '⚠️ Você atingiu o limite de '.self::AI_DAILY_LIMIT.' perguntas à IA por hoje. Volte amanhã! 🍹',
                 'source' => 'limit',
                 'limit_reached' => true,
                 'remaining' => 0,
@@ -101,14 +101,14 @@ class ChatbotController extends Controller
                     [
                         'role' => 'system',
                         'content' => 'Você é o Drinky, um assistente especialista em drinks e coquetéis do aplicativo Drinkerito. '
-                            . 'Responda sempre em português do Brasil, de forma amigável e concisa (máximo 3 parágrafos). '
-                            . 'Foque exclusivamente em bebidas, receitas, ingredientes e dicas de drinks. '
-                            . 'Se a pergunta não for sobre bebidas, gentilmente redirecione o usuário para o tema de drinks. '
-                            . 'IMPORTANTE: Quando o usuário pedir uma receita específica de drink ou coquetel, você DEVE chamar a função '
-                            . '"sugerir_receita" com os dados estruturados da receita (nome, ingredientes e modo de preparo). '
-                            . 'Além da chamada de função, escreva também uma resposta curta e amigável em texto apresentando o drink, '
-                            . 'SEM repetir a lista de ingredientes nem o modo de preparo no texto — esses dados já são enviados pela função. '
-                            . 'Não chame a função para perguntas que não sejam pedidos de receita específica de um drink.',
+                            .'Responda sempre em português do Brasil, de forma amigável e concisa (máximo 3 parágrafos). '
+                            .'Foque exclusivamente em bebidas, receitas, ingredientes e dicas de drinks. '
+                            .'Se a pergunta não for sobre bebidas, gentilmente redirecione o usuário para o tema de drinks. '
+                            .'IMPORTANTE: Quando o usuário pedir uma receita específica de drink ou coquetel, você DEVE chamar a função '
+                            .'"sugerir_receita" com os dados estruturados da receita (nome, ingredientes e modo de preparo). '
+                            .'Além da chamada de função, escreva também uma resposta curta e amigável em texto apresentando o drink, '
+                            .'SEM repetir a lista de ingredientes nem o modo de preparo no texto — esses dados já são enviados pela função. '
+                            .'Não chame a função para perguntas que não sejam pedidos de receita específica de um drink.',
                     ],
                     ...($this->conversaAberta() ? session(self::SESSAO_HISTORICO, []) : []),
                     ['role' => 'user', 'content' => $text],
@@ -161,7 +161,7 @@ class ChatbotController extends Controller
             $cleanReply = $message->content ?? '';
             $drinkSuggestion = null;
 
-            if (!empty($message->toolCalls)) {
+            if (! empty($message->toolCalls)) {
                 foreach ($message->toolCalls as $toolCall) {
                     if ($toolCall->type === 'function' && $toolCall->function->name === 'sugerir_receita') {
                         $decoded = json_decode($toolCall->function->arguments, true);
@@ -223,11 +223,12 @@ class ChatbotController extends Controller
         } catch (\Throwable $e) {
             // Vai para o canal da aplicação, não para o log do PHP: fora de
             // storage/logs isto some do `php artisan pail`.
-            Log::error('Erro na chamada à IA do chatbot: ' . $e->getMessage(), [
+            Log::error('Erro na chamada à IA do chatbot: '.$e->getMessage(), [
                 'user_id' => $userId,
                 'mensagem' => $text,
                 'exception' => $e,
             ]);
+
             return response()->json([
                 'reply' => '😔 Ops! Ocorreu um erro ao consultar a IA. Tente novamente em instantes.',
                 'source' => 'error',
@@ -404,6 +405,7 @@ class ChatbotController extends Controller
     {
         $from = ['á', 'à', 'ã', 'â', 'ä', 'é', 'è', 'ê', 'ë', 'í', 'ì', 'î', 'ï', 'ó', 'ò', 'õ', 'ô', 'ö', 'ú', 'ù', 'û', 'ü', 'ç', 'ñ'];
         $to = ['a', 'a', 'a', 'a', 'a', 'e', 'e', 'e', 'e', 'i', 'i', 'i', 'i', 'o', 'o', 'o', 'o', 'o', 'u', 'u', 'u', 'u', 'c', 'n'];
+
         return str_replace($from, $to, $str);
     }
 }

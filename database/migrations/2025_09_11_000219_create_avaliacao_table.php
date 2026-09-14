@@ -12,17 +12,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create("avaliacao", function (Blueprint $table) {
-            $table->increments("cd_avaliacao");
-            $table->bigInteger("id_usuario");
-            $table->integer("cd_bebida");
+        Schema::create('avaliacao', function (Blueprint $table) {
+            $table->increments('cd_avaliacao');
+            $table->bigInteger('id_usuario');
+            $table->integer('cd_bebida');
             $table->tinyInteger('id_nota');
-            $table->timestamp("dt_avaliacao")->default(now());
-            $table->text("ds_avaliacao");
+            $table->timestamp('dt_avaliacao')->default(now());
+            $table->text('ds_avaliacao');
             $table->timestamps();
         });
 
-        DB::statement("ALTER TABLE avaliacao ADD CONSTRAINT chk_id_nota CHECK (id_nota BETWEEN 1 AND 10)");
+        DB::statement('ALTER TABLE avaliacao ADD CONSTRAINT chk_id_nota CHECK (id_nota BETWEEN 1 AND 10)');
     }
 
     /**
