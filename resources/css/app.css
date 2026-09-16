@@ -1,15 +1,10 @@
-@import 'tailwindcss';
-
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
-
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-}
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/*
+ * Entry de CSS do projeto.
+ *
+ * Ainda vazio de propósito: o layout continua carregando Bootstrap e os
+ * ícones por CDN, mais public/css/custom.css. A fase 2 do QA-06 traz esses
+ * imports para cá. Ver docs/superpowers/specs/2026-09-16-migracao-vite-design.md
+ *
+ * O arquivo precisa existir e buildar já agora, senão a fase 1 não consegue
+ * provar que o build roda no Railway.
+ */
