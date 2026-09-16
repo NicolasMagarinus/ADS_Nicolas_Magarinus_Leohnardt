@@ -1,7 +1,10 @@
 # Próximos passos
 
-Pendências levantadas na varredura de 10/set/2026. Restam **8 itens**, nenhum de severidade alta —
+Pendências levantadas na varredura de 10/set/2026. Restam **9 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
+
+O QA-06 (Vite) foi feito em 16/set/2026, mas **não foi ao ar**: falta declarar o build no Railway,
+e sem isso o deploy derruba o site inteiro. Leia o item antes de qualquer push.
 
 ---
 
@@ -185,15 +188,19 @@ passa limpo hoje; vale mantê-lo assim rodando o Pint só nos arquivos que você
   defeito, ao contrário do que uma análise anterior afirmou: a tabela `favorito` é `bigint` e
   aguenta, mas o controller faz `Bebida::findOrFail()` antes, e `bebida.cd_bebida` é int4.
 
-- **O front não migra para o Vite agora.** A extração do JavaScript para `public/js/` foi feita sem
-  build; a migração é o QA-06, com três bloqueios verificados.
+- **O front foi migrado para o Vite** em 16/set/2026 (QA-06). `public/build` é gitignored, então
+  numa máquina nova é `npm ci && npm run build` antes do primeiro `php artisan serve`. O item segue
+  na lista porque o build ainda não foi declarado no Railway.
 
 ---
 
 ## Ordem sugerida
 
-1. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
-2. O resto, conforme o tempo.
+1. **QA-06** — declarar o build no `railway.toml`. O código do Vite já está na branch, então o
+   próximo deploy que não rode `npm run build` põe o site inteiro fora do ar. É a única pendência
+   que piora sozinha com o tempo.
+2. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
+3. O resto, conforme o tempo.
 
 Escreva o teste antes da correção. `php artisan test --filter=<Nome>` roda em menos de um segundo.
 
@@ -251,29 +258,51 @@ veja se o código de 6 dígitos chega. É o único caminho que exercita remetent
 
 ---
 
-## Qualidade (1)
+## Qualidade (2)
 
-### QA-06 · Migrar o front para o Vite · médio
+### QA-06 · Migrar o front para o Vite · médio · **FEITO (16/set/2026), falta o deploy**
 
-O JavaScript saiu das views e virou arquivo estático em `public/js/`, com versionamento por
-`filemtime` (diretiva `@js`). O que **não** foi feito é o bundling: sem Vite não há minificação, não
-há imports entre módulos, e as bibliotecas seguem vindo de CDN.
+O código está pronto e verificado localmente: seis entries, zero CDN no projeto, Tailwind e
+`axios` removidos, `package.json` de ~300 pacotes para 46. O desenho está em
+`docs/superpowers/specs/2026-09-16-migracao-vite-design.md` e o detalhe operacional na seção
+"Frontend assets" do `CLAUDE.md`.
 
-Três bloqueios concretos para quem for encarar, todos verificados:
+**O que falta, e é a única coisa que falta: declarar o build no Railway.** É a fase 1 do spec, e
+não pode ser pulada. O `railway.toml` só liga o nixpacks e não declara comando de build; com o
+`@vite` já no layout, um deploy em que o `npm run build` não rode derruba **todas** as rotas com
+`ViteManifestNotFoundException` — não é degradação, é o site fora do ar. O spec manda declarar
+`npm ci && npm run build` explicitamente e validar num deploy próprio antes de confiar. Como o
+layout já mudou, esse deploy de validação não existe mais como rede de segurança: confira a
+configuração antes do push.
 
-- **`public/build` não existe** — o projeto nunca foi buildado. `@vite` no layout lança
-  `ViteManifestNotFoundException` já no primeiro request, local e em produção.
-- **O `railway.toml` não define comando de build**, só liga o nixpacks. Se o `npm run build` não
-  rodar no deploy, o site vai ao ar quebrado. Confirme o que o nixpacks faz antes de tocar no layout.
-- **`resources/css/app.css` importa Tailwind**, com sintaxe v3 e v4 misturadas (`@import 'tailwindcss'`
-  junto de `@tailwind base`). Carregar esse CSS traz o preflight, que reseta estilo de elemento sobre
-  um site inteiro em Bootstrap mais `public/css/custom.css` — regressão visual em todas as telas.
+Os três bloqueios do enunciado antigo foram resolvidos: `public/build` agora é gerado (e segue
+gitignored, então um clone novo precisa de `npm ci && npm run build`); o `resources/css/app.css`
+que misturava Tailwind v3 e v4 foi apagado e reescrito sem Tailwind; e o `package.json` foi limpo.
 
-O `package.json` também pede limpeza: o bloco `dependencies` lista dezenas de pacotes transitivos
-(`ansi-styles`, `color-name`, `yallist`), sinal de um `npm install` feito sobre a saída de outro
-comando.
+Quatro defeitos pré-existentes apareceram na auditoria e foram corrigidos junto: `fa-solid
+fa-champagne-glasses` no Meu Bar (nome do FA 6 numa tela servida com FA 5 — o ícone simplesmente
+não aparecia), as telas de auth carregando FA 6.4.0 enquanto o resto do site carregava 5.0.7, o
+`register` baixando 80 kB do JS do Bootstrap sem usar um componente sequer, e as duas telas de
+`cadastro_bebida` recarregando o SweetAlert2 que o layout já trazia.
 
-O **FEAT-12 (PWA)** depende deste item, não da extração que já foi feita.
+O **FEAT-12 (PWA)** dependia deste item e está destravado.
+
+**Fica aberto** o QA-10, que nasceu daqui.
+
+### QA-10 · JavaScript inline nas views · baixo
+
+Sobram **574 linhas** de JavaScript inline em 14 views e **492 de `<style>`** em 4, fora do
+bundle e sem minificação. Não é só estética: por não serem módulos, esses blocos leem
+`window.Drinkerito`, `window.Swal` e `window.bootstrap` do escopo global, e é só por causa deles
+que `resources/js/app.js` precisa atribuir os três à mão.
+
+O risco concreto está documentado no `CLAUDE.md`: script clássico inline roda durante o parse,
+módulo roda depois. Foi o que quebrou a tela de envio de receita na migração (`$ is not defined`),
+e `AssetsJsTest` hoje prende só o padrão do jQuery. Extrair esses blocos para módulos elimina a
+classe inteira de defeito e deixa os três globais morrerem.
+
+Maiores primeiro: `bebida/show` (130), `perfil/index` (108), `cadastro_bebida/create` (87),
+`partials/header` (54).
 
 ---
 
@@ -330,9 +359,9 @@ pessoa. Seguir e feed vêm depois, se fizer sentido.
 ### FEAT-12 · Funcionar offline (PWA) · impacto médio, esforço médio
 
 O contexto de uso é alguém preparando um drink com o celular na bancada, muitas vezes com internet
-ruim. Manifest, ícones e um service worker cacheando as telas já visitadas. Depende do **QA-06**
-(bundling via Vite) para ficar organizado — não do QA-03, que era a extração do JavaScript para
-`public/js/` e já está feito em `f7600c7`.
+ruim. Manifest, ícones e um service worker cacheando as telas já visitadas. Dependia do **QA-06**
+(bundling via Vite), que foi feito em 16/set/2026 — o caminho está livre. Os assets agora saem de
+`public/build` com hash no nome, que é o que torna o cache do service worker simples de invalidar.
 
 ---
 

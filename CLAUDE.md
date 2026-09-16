@@ -13,7 +13,7 @@ Drinkerito — Laravel 12 web app (PHP 8.2) for discovering, rating, submitting 
 
 ```bash
 composer dev                      # serve + queue:listen + pail (logs) + vite, all at once
-php artisan serve                 # app only, http://localhost:8000
+php artisan serve                 # app only, http://localhost:8000 — needs a prior npm run build
 
 composer test                     # config:clear + artisan test
 php artisan test --filter=NomeDoTeste
@@ -24,8 +24,13 @@ vendor/bin/pint                   # code style (Laravel preset)
 php artisan migrate
 php artisan migrate:fresh         # drops everything; the drink catalog is only repopulated by the commands below
 
-npm run dev / npm run build       # Vite — see "Frontend assets" caveat
+npm run dev                       # Vite dev server with HMR; composer dev already starts it
+npm run build                     # required before serving without npm run dev
 ```
+
+`public/build` is gitignored, so a fresh clone has no assets: `npm ci && npm run build` before the
+first `php artisan serve`, or every page dies on `ViteManifestNotFoundException`. `composer dev`
+runs the Vite dev server alongside, so it needs no build.
 
 Data-population commands (both hit OpenAI and cost money/quota):
 
@@ -207,7 +212,44 @@ OpenAI (`openai-php/laravel`, `config/openai.php`, model from `OPENAI_MODEL`), C
 
 ### Frontend assets
 
-Vite, Tailwind and `resources/js|css` exist from the Laravel skeleton but **the layout does not use `@vite`**. `resources/views/layouts/app.blade.php` loads Bootstrap 5, Bootstrap Icons, Font Awesome and SweetAlert2 from CDNs plus `public/css/custom.css` (the single hand-written stylesheet, CSS variables at the top). Style changes belong in `public/css/custom.css`; adding a class from Tailwind will not work. Pagination is Bootstrap 5-styled via `AppServiceProvider`.
+Everything is bundled by **Vite**, and **nothing comes from a CDN** — that was QA-06, done in
+September 2026. `public/` holds no hand-written asset any more: the sources live in
+`resources/css|js`, and `public/build` is the build output (gitignored, so it does not exist in a
+fresh clone).
+
+Six entries, declared in `vite.config.js`. Adding one there is not optional: a view that asks for
+an entry the config does not declare passes every test that renders and only fails in production,
+where the manifest is real. `AssetsJsTest` cross-checks the two.
+
+| Entry | Where |
+|---|---|
+| `resources/css/app.css` | the layout, every page |
+| `resources/js/app.js` | the layout, every page |
+| `resources/css/auth.css` | login, register, the recovery layout |
+| `resources/js/chatbot.js` | the chatbot partial |
+| `resources/js/meubar.js` | Meu Bar |
+| `resources/js/colecao.js` | the drink page |
+| `resources/js/cadastro-bebida.js` | the submission form |
+
+`app.css` imports Bootstrap, both icon packs and then **`custom.css` last** — that order is what
+keeps the hand-written stylesheet (941 lines, CSS variables at the top) winning over Bootstrap.
+Style changes still belong in `custom.css`, now at `resources/css/custom.css`. Tailwind was
+removed entirely, with `postcss` and `autoprefixer`: its preflight would reset element styling
+across a site built on Bootstrap. Adding a Tailwind class will not work. Pagination is Bootstrap
+5-styled via `AppServiceProvider`.
+
+`auth.css` exists because login, register and the recovery screens build their own `<html>` and
+never passed through `layouts/app.blade.php`. It deliberately **does not** import `custom.css`:
+those screens never received it, and their 472 lines of inline `<style>` were written against
+plain Bootstrap. Importing it there would be redesigning five screens, not migrating a pipeline.
+
+Library versions are **pinned on purpose** (`bootstrap-icons` 1.10.0, `@fortawesome/fontawesome-free`
+5.15.4): they are what the CDNs used to serve, across 73 and 83 icon usages in 17 views, with no
+visual test that would catch one going missing. Font Awesome 6 renames icons, so a bare upgrade
+silently empties them. The migration already found two screens carrying FA6 names — `fa-solid
+fa-champagne-glasses` in Meu Bar, which was simply not rendering, and `fa-rotate-right` in the
+recovery screens, which worked only because those screens loaded a different FA version than the
+rest of the site.
 
 Images are requested from Cloudinary at the size they are displayed, through `App\Support\Imagem`
 and its `@imagem($url, $largura)` Blade directive — the transformation (`w_N,f_auto,q_auto`) is
@@ -218,14 +260,42 @@ mirrors it for the screens built in JavaScript. Two rules worth keeping: `og:ima
 image at the top of the drink and random pages is not `loading="lazy"`, since it is the content the
 visitor came for.
 
-Page JavaScript lives in `public/js/`, served with the `@js('file.js')` Blade directive registered in
-`AppServiceProvider` — it emits a `defer` script tag with a `?v=` stamp from `filemtime`, so there is
-cache busting without a build step. `drinkerito.js` holds the shared helpers (`window.Drinkerito`) and
-**must load from the `<head>`**: deferred scripts run in document order, and the chatbot partial sits
-above the footer, so loading it later would leave `window.Drinkerito` undefined for the scripts that
-read it. Values only the server knows (CSRF token, route URLs, initial data) stay in a short inline
-`<script>` per view that defines a config object the static file reads — that is what lets the bulk of
-the code be a cacheable static file. Vite is still unused; see QA-06 in the backlog for why.
+Page JavaScript lives in `resources/js/`. Values only the server knows (CSRF token, route URLs,
+initial data) stay in a short inline `<script>` per view that defines a config object the module
+reads — `window.DrinkeritoChatbot`, `DrinkeritoMeuBar`, `DrinkeritoColecao`. That is what lets the
+bulk of the code be a hashed, cacheable file.
+
+**Three globals are still assigned by hand** in `resources/js/app.js`, and removing any of them
+breaks one screen, silently and only that one: `window.Drinkerito` (the header's live search),
+`window.Swal` (favourites, both `cadastro_bebida` screens, the drink page) and `window.bootstrap`
+(the profile's `new bootstrap.Modal`). They exist because the 574 lines of JavaScript still inline
+in the views are not modules and read these names off the global scope. `AssetsJsTest` pins all
+three; the assertions look at the assignment, not the docblock, because the first version of that
+test matched its own comment and passed with the code deleted.
+
+Two ordering rules that bit during the migration and will bite again:
+
+- **A page script that reads `window.Drinkerito` at module level must `import './drinkerito.js'`.**
+  `chatbot.js` and `meubar.js` do it in the body of the IIFE, not inside a handler. Under the old
+  `@js` directive this worked by tag order in the document; as separate entries it would depend on
+  the same fragile order. The import makes the module graph guarantee it, and Rollup pulls the
+  helper into one shared 577-byte chunk.
+- **An inline `<script>` must not touch `$`, `Swal` or `bootstrap` at top level.** Classic inline
+  scripts run *during* parsing; `@vite` emits modules, which are deferred and run *after*. The
+  submission form opened with `$(document).ready` and became `$ is not defined` the moment jQuery
+  became a module — the whole screen lost its behaviour, with nothing failing anywhere. Wrap the
+  block in `DOMContentLoaded`, which fires after the modules. `AssetsJsTest` guards the pattern.
+
+`cadastro-bebida.js` carries jQuery and select2 for the submission form, and is the fiddliest file
+in the project for two reasons worth reading its comments before touching: the jQuery global lives
+in its own module (`jquery-global.js`) because import declarations are hoisted, so assigning it
+between two imports runs too late; and select2, over CommonJS, exports a factory that **must be
+called** — importing it is not enough to register `$.fn.select2`.
+
+The test suite runs with `withoutVite()` (`Tests\TestCase`), because `public/build` is gitignored
+and absent from a fresh clone; without it all 28 view-rendering test files would die on
+`ViteManifestNotFoundException` at once. The cost is that nothing asserts on the rendered asset
+HTML, which is why `AssetsJsTest` checks the contract from the source side instead.
 
 ### Validation messages
 
@@ -266,8 +336,15 @@ php artisan test --filter=MeuBarTest
 Coverage is deliberately narrow: the chatbot's daily AI quota, the approval pipeline (drink type and
 ingredient normalization), the Meu Bar ingredient matching, password recovery, admin access to the
 moderation panel, accent-insensitive search, the favorite toggle, the submission form, the enum
-casts, and the moderation notice surviving a real queue round trip. Those carry the logic that costs money, corrupts the catalog, or breaks silently. Tests fake OpenAI via
-`OpenAI::fake()` and never reach the real API.
+casts, the moderation notice surviving a real queue round trip, and the asset contract described
+under "Frontend assets". Those carry the logic that costs money, corrupts the catalog, or breaks
+silently. Tests fake OpenAI via `OpenAI::fake()` and never reach the real API.
+
+**The suite cannot see a broken front end.** It runs with `withoutVite()`, no browser executes
+anything, and the asset tests read sources rather than rendered HTML. Every defect the Vite
+migration turned up — select2 never registering, `$ is not defined` wiping out the submission
+form, an icon silently absent — was found by rendering a page and running its JavaScript, and
+would have shipped green. When you touch assets, render the screens.
 
 `Mail::fake()` intercepts before the message is built, so it never catches a broken email template or
 a missing sender. `RecuperacaoSenhaTest` therefore also renders the Mailable for real and asserts

@@ -1,6 +1,7 @@
 # QA-06 — Migração do front para o Vite
 
-**Data:** 16/set/2026 · **Status:** desenho aprovado, implementação não iniciada
+**Data:** 16/set/2026 · **Status:** implementado em 16/set/2026, **exceto a fase 1** (o build
+no Railway). O que a execução contrariou está anotado ao fim, em "O que o desenho errou".
 
 Fecha o QA-06 do `docs/proximos-passos.md`, cujo enunciado listava três bloqueios
 verificados mas não decidia nada. Este documento decide, e serve de base para o plano de
@@ -68,8 +69,7 @@ alguma mudou, a migração errou.
 `public/css/custom.css` → `resources/css/custom.css`, e os quatro `public/js/*.js` →
 `resources/js/`. Com `git mv`, para o histórico dessas 1.692 linhas sobreviver.
 
-O conteúdo não é reescrito nesta migração. Só `drinkerito.js` ganha uma linha (ver decisão
-3). Misturar "mover para o pipeline" com "reescrever" tornaria impossível saber, diante de
+O conteúdo não é reescrito nesta migração. Misturar "mover para o pipeline" com "reescrever" tornaria impossível saber, diante de
 uma regressão, qual das duas causou.
 
 ### 2. Entries separados por página, não um bundle único
@@ -291,3 +291,30 @@ Não é um teste bonito, mas é o único que roda sem navegador e pega a regress
   CSS/JS. Esquecer significa editar e não ver efeito.
 - **Ganho:** 7 requisições externas viram 2; nenhuma CDN de terceiro no caminho crítico;
   1.692 linhas de CSS+JS minificadas; cache imutável por hash; FEAT-12 destravado.
+
+
+---
+
+## O que o desenho errou
+
+Anotado depois da execução, porque é o que o próximo desenho deve prever.
+
+**O levantamento só olhou o layout.** Ficaram de fora um `postcss.config.js` versionado (que
+derrubou o primeiro build ao carregar o Tailwind recém-removido), as cinco telas de auth com
+`<html>` próprio e CDNs próprias, o `ImagensOtimizadasTest` lendo `public/js/drinkerito.js`, e a
+stack jQuery + select2 escondida dentro de uma view. Um levantamento de assets tem de varrer as
+views e a raiz do projeto, não só o layout.
+
+**O risco real não era a ordem das tags, era a ordem de avaliação.** O desenho previu que os
+scripts de página dependiam de `window.Drinkerito` e resolveu com imports. O que ele não viu é que
+`@vite` emite módulos, que são **deferidos**, enquanto os blocos `<script>` inline continuam
+clássicos e rodam durante o parse — antes deles. A tela de envio de receita ficou sem
+comportamento nenhum por isso (`$ is not defined`), e nada no build, na suíte ou no HTML acusava.
+
+**Uma biblioteca pode não se instalar ao ser importada.** Sob CommonJS o select2 exporta uma
+factory que precisa ser chamada; `import 'select2'` deixava `$.fn.select2` undefined com o build
+verde. Trazer biblioteca de CDN para bundle não é trocar a origem do arquivo: muda o formato de
+módulo, e com ele o contrato de inicialização.
+
+**A verificação que achou tudo isso não foi a suíte.** Foi renderizar a página e executar o
+JavaScript num DOM. Os três defeitos acima passariam com 296 testes verdes.
