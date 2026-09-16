@@ -3,8 +3,8 @@
 Pendências levantadas na varredura de 10/set/2026. Restam **9 itens**, nenhum de severidade alta —
 os altos foram todos fechados. Cada um traz o arquivo e a linha onde mexer.
 
-O QA-06 (Vite) foi feito em 16/set/2026, mas **não foi ao ar**: falta declarar o build no Railway,
-e sem isso o deploy derruba o site inteiro. Leia o item antes de qualquer push.
+O QA-06 (Vite) foi feito em 16/set/2026 e o build está configurado, mas **ainda não foi ao ar**:
+falta o push e conferir o primeiro deploy.
 
 ---
 
@@ -189,16 +189,16 @@ passa limpo hoje; vale mantê-lo assim rodando o Pint só nos arquivos que você
   aguenta, mas o controller faz `Bebida::findOrFail()` antes, e `bebida.cd_bebida` é int4.
 
 - **O front foi migrado para o Vite** em 16/set/2026 (QA-06). `public/build` é gitignored, então
-  numa máquina nova é `npm ci && npm run build` antes do primeiro `php artisan serve`. O item segue
-  na lista porque o build ainda não foi declarado no Railway.
+  numa máquina nova é `npm ci && npm run build` antes do primeiro `php artisan serve`. O Node
+  precisa ser 22 (`engines.node` no `package.json`); o `composer dev` já sobe o `npm run dev` e
+  dispensa o build.
 
 ---
 
 ## Ordem sugerida
 
-1. **QA-06** — declarar o build no `railway.toml`. O código do Vite já está na branch, então o
-   próximo deploy que não rode `npm run build` põe o site inteiro fora do ar. É a única pendência
-   que piora sozinha com o tempo.
+1. **QA-06** — só falta subir e conferir o primeiro deploy. O build já está declarado e foi
+   verificado com o nixpacks rodando local.
 2. **SEC-04** — só painel do Railway, nenhuma linha de código, e destrava a recuperação de senha em produção. **Pendente.**
 3. O resto, conforme o tempo.
 
@@ -260,20 +260,30 @@ veja se o código de 6 dígitos chega. É o único caminho que exercita remetent
 
 ## Qualidade (2)
 
-### QA-06 · Migrar o front para o Vite · médio · **FEITO (16/set/2026), falta o deploy**
+### QA-06 · Migrar o front para o Vite · médio · **FEITO (16/set/2026), falta subir**
 
 O código está pronto e verificado localmente: seis entries, zero CDN no projeto, Tailwind e
 `axios` removidos, `package.json` de ~300 pacotes para 46. O desenho está em
 `docs/superpowers/specs/2026-09-16-migracao-vite-design.md` e o detalhe operacional na seção
 "Frontend assets" do `CLAUDE.md`.
 
-**O que falta, e é a única coisa que falta: declarar o build no Railway.** É a fase 1 do spec, e
-não pode ser pulada. O `railway.toml` só liga o nixpacks e não declara comando de build; com o
-`@vite` já no layout, um deploy em que o `npm run build` não rode derruba **todas** as rotas com
-`ViteManifestNotFoundException` — não é degradação, é o site fora do ar. O spec manda declarar
-`npm ci && npm run build` explicitamente e validar num deploy próprio antes de confiar. Como o
-layout já mudou, esse deploy de validação não existe mais como rede de segurança: confira a
-configuração antes do push.
+**O build está configurado e verificado.** O `railway.toml` declara `builder = "NIXPACKS"` e
+`buildCommand = "npm run build"`, e a versão do Node vem de `engines.node` no `package.json`.
+
+O medo do enunciado antigo era infundado, mas só dá para saber medindo: rodando o `nixpacks` local
+sobre o projeto, ele **já** fazia `npm ci` e `npm run build` por detectar o `package.json`. O
+`buildCommand` está declarado mesmo assim, para não depender de heurística. O que a medição achou
+de verdade foi outra coisa: sem `engines.node`, o nixpacks escolhia **Node 18**, fora de suporte
+desde abril de 2025, enquanto o desenvolvimento é em 22. (Cuidado com a faixa: `>=22` faz ele
+escolher o 24; `^22.0.0` resolve para `nodejs_22`.)
+
+Verificado rodando o build real do nixpacks sobre um contexto montado a partir do `git ls-files`,
+que é o que o deploy recebe: a imagem sai com `public/build/manifest.json`, os 7 entries e 27
+assets, com os mesmos hashes do build local, em Node v22.12.0 e PHP 8.2.27. O `COPY . /app` que
+roda depois da fase de build não apaga o que ela gerou.
+
+**Falta só o push**, e conferir o primeiro deploy — nenhuma dessas medições substitui ver o site
+no ar.
 
 Os três bloqueios do enunciado antigo foram resolvidos: `public/build` agora é gerado (e segue
 gitignored, então um clone novo precisa de `npm ci && npm run build`); o `resources/css/app.css`

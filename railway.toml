@@ -1,5 +1,20 @@
+# O front do Drinkerito passa pelo Vite desde setembro de 2026 (QA-06), e
+# `public/build` é gitignored: o que vai ao ar é montado aqui. Se o
+# `npm run build` não rodar, TODA rota responde ViteManifestNotFoundException —
+# não é degradação, é o site fora do ar.
+#
+# O nixpacks já rodaria `npm ci` e `npm run build` sozinho, por detectar o
+# package.json; buildCommand está declarado mesmo assim para que isso não
+# dependa de uma heurística que pode mudar de versão para versão.
+#
+# A versão do Node não mora aqui: vem de `engines.node` no package.json
+# (^22.0.0 -> nodejs_22). Sem ela o nixpacks escolhe o 18, que está fora de
+# suporte desde abril de 2025 — o build passa nele, mas não é onde o projeto
+# é desenvolvido. Conferido com `nixpacks plan .`.
+
 [build]
-nixpacks = true
+builder = "NIXPACKS"
+buildCommand = "npm run build"
 
 [shell]
 enabled = true
