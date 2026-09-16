@@ -10,6 +10,7 @@ export default defineConfig({
             // disso. O que for comum entre eles o Rollup extrai sozinho.
             input: [
                 'resources/css/app.css',
+                'resources/css/auth.css',
                 'resources/js/app.js',
                 'resources/js/chatbot.js',
                 'resources/js/meubar.js',

@@ -30,7 +30,7 @@
 
     <div class="text-center mt-4">
         <a href="{{ route('password.request') }}" class="voltar-link">
-            <i class="fas fa-rotate-right me-1"></i>Pedir um novo código
+            <i class="fas fa-redo-alt me-1"></i>Pedir um novo código
         </a>
     </div>
 @endsection

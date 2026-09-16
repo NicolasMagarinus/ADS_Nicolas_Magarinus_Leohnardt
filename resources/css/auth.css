@@ -1,0 +1,17 @@
+/*
+ * Entry de CSS das telas de entrada: login, cadastro e as três de
+ * recuperação de senha.
+ *
+ * Elas não passam pelo layouts/app.blade.php — cada uma monta o próprio
+ * <html> — e por isso nunca receberam o custom.css. As 472 linhas de <style>
+ * que elas carregam inline foram escritas nesse contexto, contra o Bootstrap
+ * puro. Importar o custom.css aqui colocaria 941 linhas que nunca as viram
+ * para competir com esse estilo, e o objetivo da migração era tirar as CDNs
+ * do caminho, não redesenhar tela.
+ *
+ * Por isso este entry existe em vez de reaproveitarem o app.css: é o mesmo
+ * CSS que elas já recebiam, vindo do bundle em vez da CDN.
+ */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import '@fortawesome/fontawesome-free/css/all.min.css';
