@@ -5,6 +5,14 @@
  * salvo — chegam em window.DrinkeritoMeuBar, montado pela view. É o que
  * permite este arquivo ser estático e cacheado entre visitas.
  */
+// O escapeHtml é lido de window.Drinkerito no corpo deste módulo, não dentro de
+// um handler. Sob a diretiva @js isso dependia da ordem das tags no documento;
+// aqui o import garante que drinkerito.js já foi avaliado.
+import './drinkerito.js';
+
+// Idem para o Swal, usado em duas confirmações desta tela.
+import Swal from 'sweetalert2';
+
 (function () {
     'use strict';
 

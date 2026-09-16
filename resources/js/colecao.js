@@ -5,6 +5,11 @@
  * olhando. O escapeHtml vem do window.Drinkerito, carregado pelo layout — os
  * nomes de coleção são texto livre do usuário.
  */
+// O escapeHtml é lido de window.Drinkerito no corpo deste módulo, não dentro de
+// um handler. Sob a diretiva @js isso dependia da ordem das tags no documento;
+// aqui o import garante que drinkerito.js já foi avaliado.
+import './drinkerito.js';
+
 (function () {
     'use strict';
 

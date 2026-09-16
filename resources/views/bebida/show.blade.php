@@ -337,6 +337,6 @@ function confirmDeleteComment(event) {
             criarUrl: '{{ route("colecao.store") }}',
         };
     </script>
-    @js('colecao.js')
+    @vite('resources/js/colecao.js')
 @endauth
 @endsection

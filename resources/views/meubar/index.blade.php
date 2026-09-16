@@ -7,7 +7,7 @@
 @section('content')
     <div class="container py-4">
         <div class="mb-4">
-            <h2 class="mb-1"><i class="fa-solid fa-champagne-glasses"></i>Meu Bar</h2>
+            <h2 class="mb-1"><i class="fas fa-glass-cheers me-2"></i>Meu Bar</h2>
             <p class="text-muted">Adicione os ingredientes que você tem em casa e descubra quais drinks pode preparar.</p>
         </div>
 
@@ -85,5 +85,5 @@
             ingredientesSalvos: @json($ingredientesSalvos),
         };
     </script>
-    @js('meubar.js')
+    @vite('resources/js/meubar.js')
 @endsection

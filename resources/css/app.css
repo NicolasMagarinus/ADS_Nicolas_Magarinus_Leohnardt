@@ -1,10 +1,14 @@
 /*
  * Entry de CSS do projeto.
  *
- * Ainda vazio de propósito: o layout continua carregando Bootstrap e os
- * ícones por CDN, mais public/css/custom.css. A fase 2 do QA-06 traz esses
- * imports para cá. Ver docs/superpowers/specs/2026-09-16-migracao-vite-design.md
+ * A ordem é o que preserva as sobrescritas: o custom.css nasceu para vencer o
+ * Bootstrap, e continua precisando vir depois dele.
  *
- * O arquivo precisa existir e buildar já agora, senão a fase 1 não consegue
- * provar que o build roda no Railway.
+ * As versões estão presas de propósito no package.json (bootstrap-icons 1.10.0,
+ * font-awesome 5.15.4): são as que as CDNs serviam, e são 73 e 83 usos de ícone
+ * espalhados por 17 views, sem teste visual que pegue um que suma.
  */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+@import './custom.css';

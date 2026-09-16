@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @include('partials.meta')
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css">
-    <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
+    {{-- Bootstrap, os dois pacotes de ícones, o SweetAlert2 e o custom.css vêm
+         daqui, bundlados: eram sete tags, quatro delas apontando para CDN de
+         terceiro no caminho crítico de renderização.
 
-    {{-- No <head> de propósito: scripts com defer executam na ordem do
-         documento, e o parcial do chatbot aparece antes do rodapé. Carregado
-         mais abaixo, ele rodaria depois de quem lê window.Drinkerito. --}}
-    @js('drinkerito.js')
+         No <head> de propósito. @vite emite type="module", que é deferido, e
+         módulos executam na ordem do documento — o parcial do chatbot aparece
+         antes do rodapé e precisa encontrar window.Drinkerito já definido. --}}
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
     @include('partials.header')
@@ -27,7 +26,5 @@
 
     @include('partials.chatbot')
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

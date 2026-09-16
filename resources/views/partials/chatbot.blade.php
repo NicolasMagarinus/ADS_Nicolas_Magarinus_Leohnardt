@@ -90,4 +90,4 @@
         saveDrinkUrl: '{{ route("chatbot.salvar-bebida") }}',
     };
 </script>
-@js('chatbot.js')
+@vite('resources/js/chatbot.js')

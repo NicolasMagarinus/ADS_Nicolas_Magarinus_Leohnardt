@@ -94,7 +94,7 @@ class ImagensOtimizadasTest extends TestCase
 
     public function test_utilitario_javascript_tambem_redimensiona(): void
     {
-        $js = file_get_contents(public_path('js/drinkerito.js'));
+        $js = file_get_contents(resource_path('js/drinkerito.js'));
 
         $this->assertStringContainsString('f_auto,q_auto', $js);
         $this->assertStringContainsString('imagem:', $js);
