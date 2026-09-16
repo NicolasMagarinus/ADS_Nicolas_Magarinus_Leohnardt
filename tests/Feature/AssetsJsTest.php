@@ -122,6 +122,73 @@ class AssetsJsTest extends TestCase
         }
     }
 
+    /**
+     * Pelo caminho CommonJS — o que o Vite usa — o select2 não se instala ao
+     * ser importado: exporta uma factory que precisa ser chamada. Sem a
+     * chamada, o build passa, a página carrega e o campo de ingrediente fica
+     * um <select> comum, sem erro em lugar nenhum.
+     *
+     * A ordem dos imports é a segunda metade da mesma armadilha: o plugin
+     * procura o jQuery ao ser avaliado, e declarações de import são içadas,
+     * então a atribuição global tem de morar no seu próprio módulo.
+     */
+    public function test_entry_do_cadastro_instala_o_select2_no_jquery(): void
+    {
+        $entry = file_get_contents(resource_path('js/cadastro-bebida.js'));
+
+        $ondeJquery = strpos($entry, "import $ from './jquery-global.js'");
+        $ondeSelect2 = strpos($entry, "from 'select2'");
+
+        $this->assertNotFalse($ondeJquery, 'o entry não importa o jquery-global');
+        $this->assertNotFalse($ondeSelect2, 'o entry não importa o select2');
+        $this->assertLessThan(
+            $ondeSelect2,
+            $ondeJquery,
+            'o jQuery global precisa ser importado antes do select2, que o procura ao ser avaliado'
+        );
+
+        $this->assertStringContainsString(
+            'instalarSelect2(',
+            $entry,
+            'a factory do select2 foi importada mas nunca chamada'
+        );
+
+        $this->assertMatchesRegularExpression(
+            '/window\\.jQuery\\s*=/',
+            file_get_contents(resource_path('js/jquery-global.js'))
+        );
+    }
+
+    /**
+     * Scripts clássicos inline executam durante o parse; @vite emite módulos,
+     * que são deferidos e só rodam depois dele. Um bloco inline que chame $,
+     * Swal ou bootstrap no nível de topo, portanto, roda antes de eles
+     * existirem.
+     *
+     * Foi o que aconteceu com a tela de envio de receita: "$(document).ready"
+     * virou "$ is not defined", e a tela inteira ficou sem comportamento — sem
+     * erro no build, sem falha em nenhum teste, e sem nada visível além de um
+     * campo que não abre. O invólucro certo é DOMContentLoaded, que dispara
+     * depois dos módulos.
+     */
+    public function test_nenhuma_view_chama_jquery_durante_o_parse(): void
+    {
+        $culpadas = [];
+
+        foreach (glob(resource_path('views').'/{,*/,*/*/}*.blade.php', GLOB_BRACE) as $view) {
+            // Sem os comentários do Blade: o que explica a armadilha cita a
+            // chamada, e casar com a explicação acusaria o arquivo corrigido.
+            $fonte = preg_replace('/\{\{--.*?--\}\}/s', '', file_get_contents($view));
+
+            if (str_contains($fonte, '$(document).ready')) {
+                $culpadas[] = basename($view);
+            }
+        }
+
+        $this->assertSame([], $culpadas,
+            'o $ vem de um módulo deferido: envolva o bloco em DOMContentLoaded');
+    }
+
     public function test_configuracao_do_chatbot_chega_ao_navegador(): void
     {
         $html = $this->actingAs(User::factory()->create())

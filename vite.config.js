@@ -15,6 +15,7 @@ export default defineConfig({
                 'resources/js/chatbot.js',
                 'resources/js/meubar.js',
                 'resources/js/colecao.js',
+                'resources/js/cadastro-bebida.js',
             ],
             refresh: true,
         }),

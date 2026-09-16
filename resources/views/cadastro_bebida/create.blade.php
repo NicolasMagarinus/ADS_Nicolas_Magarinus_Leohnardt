@@ -102,13 +102,18 @@
     </div>
 </div>
 
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{{-- jQuery, select2 e o tema bootstrap-5 do select2. O bloco inline abaixo
+     usa $ direto, e por isso o entry precisa vir antes dele. --}}
+@vite('resources/js/cadastro-bebida.js')
 
 <script>
-    $(document).ready(function() {
+    {{-- DOMContentLoaded, e não $(document).ready: este bloco é um script
+         clássico e roda durante o parse, enquanto o @vite acima emite um
+         módulo, que é deferido. Chamar $ aqui dava "$ is not defined" e
+         deixava a tela inteira sem comportamento — select de ingredientes,
+         adicionar linha e prévia da imagem. Módulos deferidos executam antes
+         do DOMContentLoaded, então aqui dentro o $ já existe. --}}
+    document.addEventListener('DOMContentLoaded', function () {
         @if(session('success'))
             Swal.fire({
                 icon: 'success',
